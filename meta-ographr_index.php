@@ -356,13 +356,7 @@ function get_opengraph_thumbnails($post_id=null) {
 			}
 			
 		}
-		/*
-		$input = 'http://neue.whyeye.org/testing/wp-includes/images/smilies/icon_smile.gif';
-		preg_match('/\/images\/smilies\/icon_.+/', $input, $output);
-		print "<!-- $output[0]\n";
-		var_dump($output);
-		print "-->";
-*/
+
 };
 
 add_action('wp_head', 'get_opengraph_thumbnails');
