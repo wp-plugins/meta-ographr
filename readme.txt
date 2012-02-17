@@ -29,6 +29,10 @@ Currently, these widgets are supported:
 
 == Frequently Asked Questions ==
 
+= Why does Facebook not display the cover artwork? =
+
+Facebook caches previously submitted links for an undisclosed time. If your post has been shared/liked on Facebook before, the cover artwork will not appear until the cache has expired. To make sure the plugin is active and working, you can always look for the og:image tags in the source of your post.
+
 = Do I need a SoundCloud API key? =
 
 No. By default this plugin uses its own registered API key, but if you prefer -for whatever reason- to use your own,
@@ -47,6 +51,8 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 == Screenshots ==
 
 1. a link with a Mixcloud widget added as Facebook status update
+
+2. a link with a SoundCloud widget added as Google+ status update
 
 == Changelog ==
 
