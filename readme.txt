@@ -29,7 +29,7 @@ Currently, these widgets are supported:
 
 == Frequently Asked Questions ==
 
-= Why does Facebook not display the cover artwork? =
+= Why doesn't Facebook display the cover artwork? =
 
 Facebook caches previously submitted links for an undisclosed time. If your post has been shared/liked on Facebook before, the cover artwork will not appear until the cache has expired. To make sure the plugin is active and working, you can always look for the og:image tags in the source of your post.
 
