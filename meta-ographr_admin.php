@@ -15,15 +15,15 @@ class meta_ographr_config {
  
 // MAIN CONFIGURATION SETTINGS
  
-var $group = "MetaOGraphr"; // defines setting groups (should be bespoke to your settings)
+var $group = "Meta-OGraphr"; // defines setting groups (should be bespoke to your settings)
 var $page_name = "meta_ographr"; // defines which pages settings will appear on. Either bespoke or media/discussion/reading etc
  
 //  DISPLAY SETTINGS
 //  (only used if bespoke page_name)
  
-var $title = "OGraphr Settings";  // page title that is displayed
-var $intro_text = "<span style=\"margin:32px 0;color:grey;font-family:Georgia;font-style:italic;\">Work in progress by Jan T. Sott</span><br/>"; // text below title
-var $nav_title = "OGraphr"; // how page is listed on left-hand Settings panel
+var $title = "Meta-OGraphr Settings";  // page title that is displayed
+var $intro_text = "<p style=\"margin:32px 0;color:grey;font-family:Georgia;font-style:italic;\">Work in progress by Jan T. Sott</p>"; // text below title
+var $nav_title = "Meta-OGraphr"; // how page is listed on left-hand Settings panel
  
 //  SECTIONS
 //  Each section should be own array within $sections.
@@ -43,12 +43,6 @@ var $sections = array(
     'title' => "Website Thumbnail",
     'description' => "This is the default thumbnail image for your website.",
     'fields' => array (
-      'page_title' => array (
-          'label' => "Title",
-          'description' => "(optional)",
-          'length' => "128",
-          'default_value' => "%post%"
-          ),
       'website_thumbnail' => array (
           'label' => "Image URL",
           'description' => "(optional)",
@@ -131,7 +125,7 @@ printf('</pre>
 <form action="options.php" method="post">',$meta_ographr['title'],$meta_ographr['intro_text']);
  settings_fields($meta_ographr['group']);
  do_settings_sections($meta_ographr['page_name']);
- printf('<p><input type="submit" class="button-primary" name="Submit" value="%s" /></p></form></div>
+ printf('<input type="submit" name="Submit" value="%s" /></form></div>
 <pre>
 ',__('Save Changes'));
   }

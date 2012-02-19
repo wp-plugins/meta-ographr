@@ -1,9 +1,9 @@
 <?php
 /*
-Plugin Name: OGraphr
+Plugin Name: Meta-OGraphr
 Plugin URI: http://whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion) and music players (SoundCloud, Mixcloud, Bandcamp) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.1.3
+Version: 0.1.1
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -33,12 +33,23 @@ if ( is_admin() )
 
 
 //get first image of a post
-function get_article_img() {
+function getFirstImage() {
   global $post, $posts;
   $image = '';
   
   $image = get_post_meta($post->ID, 'articleimg', true);
+
+  if(empty($image)){ //Gets first image
+	ob_start();
+	ob_end_clean();
+	$output = preg_match_all('/<img.+src=[\'"]([^\'"]+)[\'"].*>/i', $post->post_content, $matches);
+	$image = $matches [1] [0];
+  }
   
+  if(empty($image)){ //Defines a default image
+	$image = get_option('MetaOGraphr_website_thumbnail');
+	$image = ($image['text_string']);
+  }
   return $image;
 }
 
@@ -183,37 +194,20 @@ function get_opengraph_thumbnails($post_id=null) {
 	$markup = apply_filters('the_content',$markup);
 	$og_thumbnails[] = null;
 	
-	
-	// Get default website thumbnail
-	$web_thumb = get_option('MetaOGraphr_website_thumbnail');
-	$web_thumb = ($web_thumb['text_string']);
-	if ($web_thumb) {
-		$og_thumbnails[] = $web_thumb;
-	}
-	
-	// Get images in post
-	preg_match_all('/<img.+src=[\'"]([^\'"]+)[\'"].*>/i', $markup, $matches);
-	foreach($matches[1] as $match) {
-	  	// filter Wordpress smilies
-		preg_match('/\/images\/smilies\/icon_.+/', $match, $filter);
-		if (!$filter[0]) {
-			$og_thumbnails[] = $match;
-		}
-	}
-	
-	// Get images attached to post (duplicates will be filtered later)
-	$website_thumbnail = get_article_img();
+	//
+	$website_thumbnail = getFirstImage();
 	if ($website_thumbnail) {
 		$og_thumbnails[] = $website_thumbnail;
 	}
+	
 	
 	// YOUTUBE
 		// Checks for the old standard YouTube embed
 		preg_match_all('#<object[^>]+>.+?https?://www.youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s', $markup, $matches);
 
 		// Now if we've found a Vimeo ID, let's set the thumbnail URL
-		foreach($matches[1] as $match) {
-			  $yt_thumbnail = 'http://img.youtube.com/vi/' . $match . '/0.jpg';
+		foreach($matches[1] as $matche) {
+			  $yt_thumbnail = 'http://img.youtube.com/vi/' . $matche. '/0.jpg';
 			if (isset($yt_thumbnail)) {
 			  $og_thumbnails[] = $yt_thumbnail;
 			}
@@ -345,26 +339,10 @@ function get_opengraph_thumbnails($post_id=null) {
 			}
 		}
 		
-		$title = get_option('MetaOGraphr_page_title');
-		$title = ($title['text_string']);
-		$wp_title = get_the_title();
-		$wp_name = get_bloginfo('name');
-		$title = str_replace("%post%", $wp_title, $title);
-		$title = str_replace("%site%", $wp_name, $title);
-		if (!$title) {
-			$title = $wp_title;
-		}
-		
 		// Let's print all this
-		if($title) {
-			print "<meta property=\"og:title\" content=\"$title\" />\n\r"; 
-		}
-		if($description = wp_strip_all_tags((get_the_excerpt()), true)) {
-			print "<meta property=\"og:description\" content=\"$description\" />\n\r";
-		}
-		if($link = get_permalink()) {
-			print "<meta property=\"og:url\" content=\"$link\" />\n\r";
-		}
+		if($title = get_the_title()) {print "<meta property=\"og:title\" content=\"$title\" />\n\r"; }
+		if($description = wp_strip_all_tags((get_the_excerpt()), true)) { print "<meta property=\"og:description\" content=\"$description\" />\n\r"; }
+		if($link = get_permalink()) { print "<meta property=\"og:url\" content=\"$link\" />\n\r"; }
 		$og_thumbnails = array_unique($og_thumbnails);
 		foreach ($og_thumbnails as $og_thumbnail) {
 			if ($og_thumbnail) {
@@ -372,6 +350,7 @@ function get_opengraph_thumbnails($post_id=null) {
 			}
 			
 		}
+
 };
 
 add_action('wp_head', 'get_opengraph_thumbnails');
