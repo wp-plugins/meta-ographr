@@ -21,6 +21,8 @@ Currently, these widgets are supported:
 *  YouTube (embed and iframe players)
 *  DailyMotion
 
+OpenGraph tags will be used by social-media sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you will hopeful find this plug-in useful.
+
 == Installation ==
 
 1. Upload the folder `meta-ographr` with all its contents to the `/wp-content/plugins/` directory
@@ -58,7 +60,7 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 == Changelog ==
 
 = 0.1.4 =
-* limited plugin functionality to work in posts only	
+* limited plugin functionality to posts only (option to follow in future)	
 * added default image-size definitions for developers
 * added debug option
 * fixed detection for embedded images
