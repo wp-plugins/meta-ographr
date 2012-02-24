@@ -4,7 +4,7 @@ Donate link: http://example.com/
 Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.1.4
+Stable tag: 0.2
 
 This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion SoundCloud, Mixcloud, Bandcamp player widget and puts them in the meta-tags.
 
@@ -20,6 +20,8 @@ Currently, these widgets are supported:
 *  Vimeo (embed and iframe players)
 *  YouTube (embed and iframe players)
 *  DailyMotion
+
+OpenGraph tags will be used by social-media sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you will hopeful find this plug-in useful.
 
 == Installation ==
 
@@ -57,6 +59,9 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 
 == Changelog ==
 
+= 0.2 =
+* reworked option page
+
 = 0.1.4 =
 * limited plugin functionality to posts only (option to follow in future)	
 * added default image-size definitions for developers
@@ -79,3 +84,7 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 = 0.1 =
 * first release
 
+== Upgrade Notice ==
+
+= 0.2 =
+Please adjust your settings after upgrading

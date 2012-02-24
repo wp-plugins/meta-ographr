@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion) and music players (SoundCloud, Mixcloud, Bandcamp) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.1.4
+Version: 0.2
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -110,8 +110,9 @@ function get_soundcloud_thumbnail($type, $id, $image_size = 't300xt300') {
 	if (!function_exists('curl_init')) {
 		return null;
 	} else {
+		global $options;
 		$ch = curl_init();
-		$key = get_option('MetaOGraphr_soundcloud_api');
+		$key = $options['soundcloud_api'];
 		$key = ($key['text_string']);
 		if ($key == null) {
 			$key = SOUNDCLOUD_API_KEY;
@@ -162,8 +163,9 @@ function get_bandcamp_thumbnail($type, $id) {
 	if (!function_exists('curl_init')) {
 		return null;
 	} else {
+		global $options;
 		$ch = curl_init();
-		$key = get_option('MetaOGraphr_bandcamp_api');
+		$key = $options['bandcamp_api'];
 		$key = ($key['text_string']);
 		if ($type == 'album') {
 			$videoinfo_url = "http://api.bandcamp.com/api/album/2/info?key=$key&album_id=$id";
@@ -191,7 +193,11 @@ function get_bandcamp_thumbnail($type, $id) {
 //
 function get_opengraph_thumbnails($post_id=null) {
 	
-	if (is_single() || is_page()) {
+	// Get this plugins' settings
+	$options = get_option('ographr_options');
+	
+	if (($enable_on_front = $options['enable_on_front']) && (is_front_page()) || (is_single() || is_page())) {
+	//if (is_single() || is_page()) {
 	
 		// Get the post ID if none is provided
 		if($post_id==null OR $post_id=='') $post_id = get_the_ID();
@@ -202,9 +208,8 @@ function get_opengraph_thumbnails($post_id=null) {
 		$markup = apply_filters('the_content',$markup);
 		$og_thumbnails[] = null;
 	
-	
 		// Get default website thumbnail
-		$web_thumb = get_option('MetaOGraphr_website_thumbnail');
+		$web_thumb = $options['website_thumbnail'];
 		$web_thumb = ($web_thumb['text_string']);
 		if ($web_thumb) {
 			$og_thumbnails[] = $web_thumb;
@@ -212,7 +217,11 @@ function get_opengraph_thumbnails($post_id=null) {
 		
 		// debugging?
 		if(OGRAPHR_DEBUG == TRUE) {
-			print "\n\r<!-- OGRAPH DEBUGGER -->\n\r";
+			print "\n\r<!-- OGRAPHR DEBUGGER -->\n\r";
+			$soundcloud_api = $options['soundcloud_api'];
+			print "<!-- SoundCloud API key: $soundcloud_api; -->\n\r";
+			$bandcamp_api = $options['bandcamp_api'];
+			print "<!-- Bandcamp API key: $bandcamp_api; -->\n\r";
 		}
 		
 		// Get images in post
@@ -405,30 +414,47 @@ function get_opengraph_thumbnails($post_id=null) {
 				}
 			}
 		
-			$title = get_option('MetaOGraphr_page_title');
-			$title = ($title['text_string']);
+			// get data
+			$title = $options['website_title'];
 			$wp_title = get_the_title();
 			$wp_name = get_bloginfo('name');
-			$title = str_replace("%post%", $wp_title, $title);
-			$title = str_replace("%site%", $wp_name, $title);
+			$title = str_replace("%postname%", $wp_title, $title);
+			$title = str_replace("%sitename%", $wp_name, $title);
 			if (!$title) {
 				$title = $wp_title;
 			}
 		
 			// Let's print all this
-			if(OGRAPHR_VERBOSE == TRUE) {
+			if((OGRAPHR_VERBOSE == TRUE) && (OGRAPHR_DEBUG == FALSE)) {
 				print "<!-- OGraphr http://wordpress.org/extend/plugins/meta-ographr/ -->\n\r";
 			}
 			
-			if($title) {
+			// title & description
+			if (($options['website_description']) && (is_front_page())) {
+				// Blog title
+				$title = get_settings('blogname');
 				print "<meta property=\"og:title\" content=\"$title\" />\n\r"; 
-			}
-			if($description = wp_strip_all_tags((get_the_excerpt()), true)) {
+				// Custom description
+				$description = $options['website_description'];
 				print "<meta property=\"og:description\" content=\"$description\" />\n\r";
+			} else {
+				if ($options['add_title'] && ($title)) {
+					// Post title
+					print "<meta property=\"og:title\" content=\"$title\" />\n\r"; 
+				}
+				
+				if($options['add_excerpt'] && ($description = wp_strip_all_tags((get_the_excerpt()), true))) {
+					// Post excerpt
+					print "<meta property=\"og:description\" content=\"$description\" />\n\r";
+				}
 			}
-			if($link = get_permalink()) {
+			
+			// permalink
+			if($options['add_excerpt'] && ($link = get_permalink())) {
 				print "<meta property=\"og:url\" content=\"$link\" />\n\r";
 			}
+			
+			// thumbnails
 			$og_thumbnails = array_unique($og_thumbnails);
 			foreach ($og_thumbnails as $og_thumbnail) {
 				if ($og_thumbnail) {

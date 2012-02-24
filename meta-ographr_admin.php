@@ -1,194 +1,303 @@
 <?php
-//
-//  SETTINGS CONFIGURATION CLASS
-//
-//  By Olly Benson / v 1.2 / 13 July 2011 / http://code.olib.co.uk
-//  Modified / Bugfix by Karl Cohrs / 17 July 2011 / http://karlcohrs.com
-//
-//  HOW TO USE
-//  * add a include() to this file in your plugin.
-//  * amend the config class below to add your own settings requirements.
-//  * to avoid potential conflicts recommended you do a global search/replace on this page to replace 'meta_ograph' with something unique
-//  * Full details of how to use Settings see here: http://codex.wordpress.org/Settings_API
- 
-class meta_ographr_config {
- 
-// MAIN CONFIGURATION SETTINGS
- 
-var $group = "MetaOGraphr"; // defines setting groups (should be bespoke to your settings)
-var $page_name = "meta_ographr"; // defines which pages settings will appear on. Either bespoke or media/discussion/reading etc
- 
-//  DISPLAY SETTINGS
-//  (only used if bespoke page_name)
- 
-var $title = "OGraphr Settings";  // page title that is displayed
-var $intro_text = "<span style=\"margin:32px 0;color:grey;font-family:Georgia;font-style:italic;\">Work in progress by Jan T. Sott</span><br/>"; // text below title
-var $nav_title = "OGraphr"; // how page is listed on left-hand Settings panel
- 
-//  SECTIONS
-//  Each section should be own array within $sections.
-//  Should contatin title, description and fields, which should be array of all fields.
-//  Fields array should contain:
-//  * label: the displayed label of the field. Required.
-//  * description: the field description, displayed under the field. Optional
-//  * suffix: displays right of the field entry. Optional
-//  * default_value: default value if field is empty. Optional
-//  * dropdown: allows you to offer dropdown functionality on field. Value is array listed below. Optional
-//  * function: will call function other than default text field to display options. Option
-//  * callback: will run callback function to validate field. Optional
-//  * All variables are sent to display function as array, therefore other variables can be added if needed for display purposes
- 
-var $sections = array(
-'website' => array(
-    'title' => "Website Specifics",
-    'description' => "Here you specify the title formatting (use <span style=\"font-family:monospace;\">%site%</span> for the site name, <span style=\"font-family:monospace;\">%post%</span> for the post/page title) and the default thumbnail",
-    'fields' => array (
-      'page_title' => array (
-          'label' => "Title",
-          'description' => "(optional)",
-          'length' => "128",
-          'default_value' => "%post%"
-          ),
-      'website_thumbnail' => array (
-          'label' => "Image URL",
-          'description' => "(optional)",
-          'length' => "128",
-          'default_value' => ""
-          ),
-      )
-    ),
 
-    'bandcamp' => array(
-        'title' => "Bandcamp",
-        'description' => "Bandcamp provides only limited access to their API and in any case you need to provide a valid developer key. You can apply for one <a href=\"http://bandcamp.com/developer#key_request\" target\"_blank\">here</a>.",
-        'fields' => array (
-          'bandcamp_api' => array (
-              'label' => "Bandcamp API key",
-              'description' => "(<span style=\"font-weight:bold\">required</span>)",
-              'length' => "64",
-              'default_value' => ""
-              ),
-          )
-        ),
+/*  Copyright 2009 David Gwyer (email : d.v.gwyer@presscoders.com)
 
-	'soundcloud' => array(
-        'title' => "SoundCloud",
-        'description' => "If for some reason you prefer using your own SoundCloud API key, you can specify it below. You can get one <a href=\http://soundcloud.com/you/apps\" target=\"blank\">here</a>.",
-        'fields' => array (
-          'soundcloud_api' => array (
-              'label' => "SoundCloud API key",
-              'description' => "(optional)",
-              'length' => "64",
-              'default_value' => SOUNDCLOUD_API_KEY
-              ),
-          )
-        ),
-    );
- 
- // DROPDOWN OPTIONS
- // For drop down choices.  Each set of choices should be unique array
- // Use key => value to indicate name => display name
- // For default_value in options field use key, not value
- // You can have multiple instances of the same dropdown options
- 
-var $dropdown_options = array (
-    'dd_colour' => array (
-        '#f00' => "Red",
-        '#0f0' => "Green",
-        '#00f' => "Blue",
-        '#fff' => "White",
-        '#000' => "Black",
-        '#aaa' => "Gray",
-        )
-    );
- 
-//  end class
-};
- 
-class meta_ographr {
- 
-function meta_ographr($settings_class) {
-    global $meta_ographr;
-    $meta_ographr = get_class_vars($settings_class);
- 
-    if (function_exists('add_action')) :
-      add_action('admin_init', array( &$this, 'plugin_admin_init'));
-      add_action('admin_menu', array( &$this, 'plugin_admin_add_page'));
-      endif;
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
+// ------------------------------------------------------------------------
+// REQUIRE MINIMUM VERSION OF WORDPRESS:                                               
+// ------------------------------------------------------------------------
+// THIS IS USEFUL IF YOU REQUIRE A MINIMUM VERSION OF WORDPRESS TO RUN YOUR
+// PLUGIN. IN THIS PLUGIN THE WP_EDITOR() FUNCTION REQUIRES WORDPRESS 3.3 
+// OR ABOVE. ANYTHING LESS SHOWS A WARNING AND THE PLUGIN IS DEACTIVATED.                    
+// ------------------------------------------------------------------------
+
+function requires_wordpress_version() {
+	global $wp_version;
+	$plugin = plugin_basename( __FILE__ );
+	$plugin_data = get_plugin_data( __FILE__, false );
+
+	if ( version_compare($wp_version, "3.0", "<" ) ) {
+		if( is_plugin_active($plugin) ) {
+			deactivate_plugins( $plugin );
+			wp_die( "'".$plugin_data['Name']."' requires WordPress 3.0 or higher, and has been deactivated! Please upgrade WordPress and try again.<br /><br />Back to <a href='".admin_url()."'>WordPress admin</a>." );
+		}
+	}
 }
- 
-function plugin_admin_add_page() {
-  global $meta_ographr;
-  add_options_page($meta_ographr['title'], $meta_ographr['nav_title'], 'manage_options', $meta_ographr['page_name'], array( &$this,'plugin_options_page'));
-  }
- 
-function plugin_options_page() {
-  global $meta_ographr;
-printf('</pre>
-<div>
-<h2>%s</h2>
-%s
-<form action="options.php" method="post">',$meta_ographr['title'],$meta_ographr['intro_text']);
- settings_fields($meta_ographr['group']);
- do_settings_sections($meta_ographr['page_name']);
- printf('<p><input type="submit" class="button-primary" name="Submit" value="%s" /></p></form></div>
-<pre>
-',__('Save Changes'));
-  }
- 
-function plugin_admin_init(){
-  global $meta_ographr;
-  foreach ($meta_ographr["sections"] AS $section_key=>$section_value) :
-    add_settings_section($section_key, $section_value['title'], array( &$this, 'plugin_section_text'), $meta_ographr['page_name'], $section_value);
-    foreach ($section_value['fields'] AS $field_key=>$field_value) :
-      $function = (!empty($field_value['dropdown'])) ? array( &$this, 'plugin_setting_dropdown' ) : array( &$this, 'plugin_setting_string' );
-      $function = (!empty($field_value['function'])) ? $field_value['function'] : $function;
-      $callback = (!empty($field_value['callback'])) ? $field_value['callback'] : NULL;
-      add_settings_field($meta_ographr['group'].'_'.$field_key, $field_value['label'], $function, $meta_ographr['page_name'], $section_key,array_merge($field_value,array('name' => $meta_ographr['group'].'_'.$field_key)));
-      register_setting($meta_ographr['group'], $meta_ographr['group'].'_'.$field_key,$callback);
-      endforeach;
-    endforeach;
-  }
- 
-function plugin_section_text($value = NULL) {
-  global $meta_ographr;
-  printf("
-%s
- 
-",$meta_ographr['sections'][$value['id']]['description']);
-}
- 
-function plugin_setting_string($value = NULL) {
-  $options = get_option($value['name']);
-  $default_value = (!empty ($value['default_value'])) ? $value['default_value'] : NULL;
-  printf('<input id="%s" type="text" name="%1$s[text_string]" value="%2$s" size="40" /> %3$s%4$s',
-    $value['name'],
-    (!empty ($options['text_string'])) ? $options['text_string'] : $default_value,
-    (!empty ($value['suffix'])) ? $value['suffix'] : NULL,
-    (!empty ($value['description'])) ? sprintf("<em>%s</em>",$value['description']) : NULL);
-  }
- 
-function plugin_setting_dropdown($value = NULL) {
-  global $meta_ographr;
-  $options = get_option($value['name']);
-  $default_value = (!empty ($value['default_value'])) ? $value['default_value'] : NULL;
-  $current_value = ($options['text_string']) ? $options['text_string'] : $default_value;
-    $chooseFrom = "";
-    $choices = $meta_ographr['dropdown_options'][$value['dropdown']];
-  foreach($choices AS $key=>$option) :
-    $chooseFrom .= sprintf('<option value="%s" %s>%s</option>',
-      $key,($current_value == $key ) ? ' selected="selected"' : NULL,$option);
-    endforeach;
-    printf('
-<select id="%s" name="%1$s[text_string]">%2$s</select>
-%3$s',$value['name'],$chooseFrom,
-  (!empty ($value['description'])) ? sprintf("<em>%s</em>",$value['description']) : NULL);
-  }
+add_action( 'admin_init', 'requires_wordpress_version' );
 
- 
-//end class
-}
- 
-$meta_ographr_init = new meta_ographr('meta_ographr_config');
+// ------------------------------------------------------------------------
+// PLUGIN PREFIX:                                                          
+// ------------------------------------------------------------------------
+// A PREFIX IS USED TO AVOID CONFLICTS WITH EXISTING PLUGIN FUNCTION NAMES.
+// WHEN CREATING A NEW PLUGIN, CHANGE THE PREFIX AND USE YOUR TEXT EDITORS 
+// SEARCH/REPLACE FUNCTION TO RENAME THEM ALL QUICKLY.
+// ------------------------------------------------------------------------
 
-?>
+// 'ographr_' prefix is derived from [p]plugin [o]ptions [s]tarter [k]it
+
+// ------------------------------------------------------------------------
+// REGISTER HOOKS & CALLBACK FUNCTIONS:
+// ------------------------------------------------------------------------
+// HOOKS TO SETUP DEFAULT PLUGIN OPTIONS, HANDLE CLEAN-UP OF OPTIONS WHEN
+// PLUGIN IS DEACTIVATED AND DELETED, INITIALISE PLUGIN, ADD OPTIONS PAGE.
+// ------------------------------------------------------------------------
+
+// Set-up Action and Filter Hooks
+//register_activation_hook(__FILE__, 'ographr_restore_defaults');
+register_uninstall_hook(__FILE__, 'ographr_delete_plugin_options');
+add_action('admin_init', 'ographr_init' );
+add_action('admin_menu', 'ographr_add_options_page');
+add_filter( 'plugin_action_links', 'ographr_plugin_action_links', 10, 2 );
+
+// --------------------------------------------------------------------------------------
+// CALLBACK FUNCTION FOR: register_uninstall_hook(__FILE__, 'ographr_delete_plugin_options')
+// --------------------------------------------------------------------------------------
+// THIS FUNCTION RUNS WHEN THE USER DEACTIVATES AND DELETES THE PLUGIN. IT SIMPLY DELETES
+// THE PLUGIN OPTIONS DB ENTRY (WHICH IS AN ARRAY STORING ALL THE PLUGIN OPTIONS).
+// --------------------------------------------------------------------------------------
+
+// Delete options table entries ONLY when plugin deactivated AND deleted
+function ographr_delete_plugin_options() {
+	delete_option('ographr_options');
+	
+	$pointone = get_option('MetaOGraphr_soundcloud_api');
+	if (!isset($pointone)) {
+		ographr_delete_old_plugin_options();
+	}
+}
+
+// Delete options from 0.1 of this plugin
+function ographr_delete_old_plugin_options() {
+	delete_option('MetaOGraphr_page_title');
+	delete_option('MetaOGraphr_website_thumbnail');
+	delete_option('MetaOGraphr_soundcloud_api');
+	delete_option('MetaOGraphr_bandcamp_api');
+}
+
+// ------------------------------------------------------------------------------
+// CALLBACK FUNCTION FOR: register_activation_hook(__FILE__, 'ographr_restore_defaults')
+// ------------------------------------------------------------------------------
+// THIS FUNCTION RUNS WHEN THE PLUGIN IS ACTIVATED. IF THERE ARE NO THEME OPTIONS
+// CURRENTLY SET, OR THE USER HAS SELECTED THE CHECKBOX TO RESET OPTIONS TO THEIR
+// DEFAULTS THEN THE OPTIONS ARE SET/RESET.
+//
+// OTHERWISE, THE PLUGIN OPTIONS REMAIN UNCHANGED.
+// ------------------------------------------------------------------------------
+
+// Define default option settings
+function ographr_restore_defaults() {
+	$tmp = get_option('ographr_options');
+    if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
+		delete_option('ographr_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
+		$arr = array(	"website_title" => "%postname%",
+						"website_thumbnail" => "",
+						"bandcamp_api" => "",
+						"soundcloud_api" => SOUNDCLOUD_API_KEY,
+						"enable_on_front" => "0",
+						"website_description" => "",
+						"add_title" => 1,
+						"add_excerpt" => "1",
+						"add_permalink" => "1"
+		);
+		
+		update_option('ographr_options', $arr);
+	}
+}
+
+// ------------------------------------------------------------------------------
+// CALLBACK FUNCTION FOR: add_action('admin_init', 'ographr_init' )
+// ------------------------------------------------------------------------------
+// THIS FUNCTION RUNS WHEN THE 'admin_init' HOOK FIRES, AND REGISTERS YOUR PLUGIN
+// SETTING WITH THE WORDPRESS SETTINGS API. YOU WON'T BE ABLE TO USE THE SETTINGS
+// API UNTIL YOU DO.
+// ------------------------------------------------------------------------------
+
+// Init plugin options to white list our options
+function ographr_init(){
+	register_setting( 'ographr_plugin_options', 'ographr_options', 'ographr_validate_options' );
+	
+}
+
+// ------------------------------------------------------------------------------
+// CALLBACK FUNCTION FOR: add_action('admin_menu', 'ographr_add_options_page');
+// ------------------------------------------------------------------------------
+// THIS FUNCTION RUNS WHEN THE 'admin_menu' HOOK FIRES, AND ADDS A NEW OPTIONS
+// PAGE FOR YOUR PLUGIN TO THE SETTINGS MENU.
+// ------------------------------------------------------------------------------
+
+// Add menu page
+function ographr_add_options_page() {
+	add_options_page('OGraphr Settings', 'OGraphr', 'manage_options', __FILE__, 'ographr_render_form');
+}
+
+// ------------------------------------------------------------------------------
+// CALLBACK FUNCTION SPECIFIED IN: add_options_page()
+// ------------------------------------------------------------------------------
+// THIS FUNCTION IS SPECIFIED IN add_options_page() AS THE CALLBACK FUNCTION THAT
+// ACTUALLY RENDER THE PLUGIN OPTIONS FORM AS A SUB-MENU UNDER THE EXISTING
+// SETTINGS ADMIN MENU.
+// ------------------------------------------------------------------------------
+
+// Render the Plugin options form
+function ographr_render_form() {
+	ographr_restore_defaults();
+	?>
+	<div class="wrap">
+		
+		<!-- Display Plugin Icon, Header, and Description -->
+		<div class="icon32" id="icon-options-general"><br></div>
+		<h2>OGraphr Settings</h2>
+		<p style="font-family:Georgia,serif;font-style:italic;color:grey;">Work in progress by Jan T. Sott</p>
+
+		<!-- Beginning of the Plugin Options Form -->
+		<form method="post" action="options.php">
+			<?php settings_fields('ographr_plugin_options'); ?>
+			<?php $options = get_option('ographr_options'); ?>
+
+			<!-- Table Structure Containing Form Controls -->
+			<!-- Each Plugin Option Defined on a New Table Row -->
+			<table class="form-table">
+				
+				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
+				<tr valign="top" style="border-top:#dddddd 1px solid;">
+					<th scope="row"><h3>General Settings</h3></th>
+				</tr>
+				
+				<!-- Textbox Control -->
+				<tr>
+					<th scope="row">Link Title</th>
+					<td>
+						<input type="text" size="57" name="ographr_options[website_title]" value="<?php if ($options['website_title']) { echo $options['website_title']; } else { echo '%postname%';} ?>" />
+					</td>
+				</tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><span style="font-family:monospace;">%sitename%</span> &#8211; your blog's name (<em><?php echo get_option('blogname'); ?></em>)<br/>
+					<span style="font-family:monospace;">%postname%</span> &#8211; page or post title</th></div></td></tr>
+				
+				<!-- Textbox Control -->
+				<tr>
+					<th scope="row">Thumbnail</th>
+					<td>
+						<input type="text" size="57" name="ographr_options[website_thumbnail]" value="<?php echo $options['website_thumbnail']; ?>" /> (optional)
+					</td>
+				</tr>
+				
+				<!-- Checkbox Buttons -->
+				<tr valign="top">
+					<th scope="row">Meta-tags</th>
+					<td>
+
+						<!-- Checkbox -->
+						<label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label><br />
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add page </label><br />
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label><br />
+					</td>
+				</tr>
+				
+				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
+				<tr valign="top" style="border-top:#dddddd 1px solid;">
+					<th scope="row"><h3>Front page</h3></th>
+				</tr>
+				
+				<tr>
+					<th scope="row">Custom Description</th>
+					<td>
+						<input type="text" size="57" name="ographr_options[website_description]" value="<?php echo $options['website_description']; ?>" /> (optional)
+					</td>
+				</tr>
+				<tr valign="top">
+					<th scope="row">Meta-tags</th>
+					<td>
+
+						<label><input name="ographr_options[enable_on_front]" type="checkbox" value="1" <?php if (isset($options['enable_on_front'])) { checked('1', $options['enable_on_front']); } ?> /> Enable on front page </label><br />
+					</td>
+				</tr>
+				
+				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
+				<tr valign="top" style="border-top:#dddddd 1px solid;">
+					<th scope="row"><h3>Bandcamp</h3></th>
+				</tr>
+				
+				<!-- Textbox Control -->
+				<tr>
+					<th scope="row">Bandcamp API Key</th>
+					<td>
+						<input type="text" size="57" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /> (<strong>required</strong>)
+					</td>
+				</tr>
+				
+				<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp provides only limited access to their API and in any case you need to provide a valid developer key. You can apply for one <a href="http://bandcamp.com/developer#key_request" target"_blank">here</a>.</th></div></td></tr>
+				
+				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
+				<tr valign="top" style="border-top:#dddddd 1px solid;">
+					<th scope="row"><h3>SoundCloud</h3></th>
+				</tr>
+				
+				<!-- Textbox Control -->
+				<tr valign="top">
+					<th scope="row">SoundCloud API Key</th>
+					<td>
+						<input type="text" size="57" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /> (optional)
+					</td>
+				</tr>
+				
+				<tr><td><th scope="row"><div style="margin-top:-10px;">If for some reason you prefer using your own SoundCloud API key, you can specify it below. You can get one <a href="http://soundcloud.com/you/apps" target="_blank">here</a>.</th></div></td></tr>
+
+				<tr><td colspan="2"><div style="margin-top:10px;"></div></td></tr>
+				<tr valign="top" style="border-top:#dddddd 1px solid;">
+					<th scope="row"><!--Database Options--></th>
+					<td>
+						<label><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon plugin saving</label>
+						<br />
+					</td>
+				</tr>
+
+			</table>
+			<p class="submit">
+			<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
+			</p>
+		</form>
+
+		<p style="margin-top:15px;">
+			<p style="font-family:Georgia,serif;font-style:italic;color:grey;">If you have found this plug-in any useful, why not <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FVPU9H7CMUU6U" target="_blank" style="color:grey;">buy me a coffee</a>? Thanks!</p>
+	</div>
+	<?php	
+}
+
+// Sanitize and validate input. Accepts an array, return a sanitized array.
+function ographr_validate_options($input) {
+	 // strip html from textboxes
+	$input['website_title'] =  htmlentities($input['website_title']);
+	$input['soundcloud_api'] =  htmlentities($input['soundcloud_api']);
+	$input['bandcamp_api'] =  htmlentities($input['bandcamp_api']);
+	return $input;
+}
+
+// Display a Settings link on the main Plugins page
+function ographr_plugin_action_links( $links, $file ) {
+
+	if ( $file == plugin_basename( __FILE__ ) ) {
+		$ographr_links = '<a href="'.get_admin_url().'options-general.php?page=plugin-options-starter-kit/plugin-options-starter-kit.php">'.__('Settings').'</a>';
+		// make the 'Settings' link appear first
+		array_unshift( $links, $ographr_links );
+	}
+
+	return $links;
+}
