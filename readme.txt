@@ -4,7 +4,7 @@ Donate link: http://example.com/
 Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.2.1
+Stable tag: 0.2.2
 
 This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion SoundCloud, Mixcloud, Bandcamp player widget and puts them in the meta-tags.
 
@@ -35,9 +35,15 @@ OpenGraph tags will be used by social-media sites such as Facebook or Google+ to
 
 Facebook caches previously submitted links for an undisclosed time. If your post has been shared/liked on Facebook before, the cover artwork will not appear until the cache has expired. To make sure the plugin is active and working, you can always look for the og:image tags in the source of your post.
 
+= I don't use social media, why would I use this? =
+
+People share links with their friends on social media sites whether you like it or not. This plug-in gives you some control over how your content is presented on platforms such as Facebook and Google+. Displaying cover artwork or video snapshots with your link usually looks nicer and attracts the attention of potential visitors.
+
+Facebook caches previously submitted links for an undisclosed time. If your post has been shared/liked on Facebook before, the cover artwork will not appear until the cache has expired. To make sure the plug-in is active and working, you can always look for the og:image tags in the source of your post.
+
 = Do I need a SoundCloud API key? =
 
-No. By default this plugin uses its own registered API key, but if you prefer -for whatever reason- to use your own,
+No. By default this plug-in uses its own registered API key, but if you prefer -for whatever reason- to use your own,
 you can easily do so.
 
 = Why do I need a Bandcamp API key? =
@@ -47,7 +53,7 @@ their platform. In order to get an API key, you have to apply via email.
 
 = Why is the artwork of a Bandcamp track not displayed? =
 
-As of now, this plugin will only retrieve the artwork assigned to a track. Many tracks are part of an album where no
+As of now, this plug-in will only retrieve the artwork assigned to a track. Many tracks are part of an album where no
 artwork has been assigned to its individual tracks. Support for this is planned for a future version.
 
 == Screenshots ==
@@ -58,6 +64,11 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 
 
 == Changelog ==
+
+= 0.2.2 =
+* added hardcoded option to set Bandcamp imagesize
+* added option to display plug-in name and version in HTML source
+* fixed permalink on front page
 
 = 0.2.1 =
 * wrapped functions inside class

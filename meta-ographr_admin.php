@@ -88,7 +88,8 @@ function ographr_restore_defaults() {
 						"soundcloud_api" => SOUNDCLOUD_API_KEY,
 						"enable_on_front" => "0",
 						"website_description" => "",
-						"add_title" => 1,
+						"add_comment" => "1",
+						"add_title" => "1",
 						"add_excerpt" => "1",
 						"add_permalink" => "1"
 		);
@@ -178,8 +179,6 @@ function ographr_render_form() {
 				<tr valign="top">
 					<th scope="row">Meta-tags</th>
 					<td>
-
-						<!-- Checkbox -->
 						<label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label><br />
 						
 						<!-- Checkbox -->
@@ -187,6 +186,15 @@ function ographr_render_form() {
 						
 						<!-- Checkbox -->
 						<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label><br />
+					</td>
+				</tr>
+				
+				<!-- Checkbox Buttons -->
+				<tr valign="top">
+					<th scope="row">Advertisement</th>
+					<td>
+						<!-- Checkbox -->
+						<label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source (<em>OGraphr v<? echo OGRAPHR_VERSION ?></em>)</label>
 					</td>
 				</tr>
 				

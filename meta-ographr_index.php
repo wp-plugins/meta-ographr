@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion) and music players (SoundCloud, Mixcloud, Bandcamp) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.2.1
+Version: 0.2.2
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,10 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.2.1");
+    define("OGRAPHR_VERSION", "0.2.2");
 
-	// begin output with comment
-	define("OGRAPHR_VERBOSE", TRUE);
 	// output all values in comments
 	define("OGRAPHR_DEBUG", FALSE);
 
@@ -44,8 +42,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	define("VIMEO_IMAGE_SIZE", "large");
 
 //MIXCLOUD
-	// small=25x25, thumbnail=50x50, medium_mobile=80x80, medium=150x150, large=300x300, extra_large=600x600)
+	// default artwork size (small=25x25, thumbnail=50x50, medium_mobile=80x80, medium=150x150, large=300x300, extra_large=600x600)
 	define("MIXCLOUD_IMAGE_SIZE", "large");
+	
+//BANDCAMP
+	// default artwork size (small_art_url=100x100, large_art_url=350x350)
+	define("BANDCAMP_IMAGE_SIZE", "large_art_url");
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -157,7 +159,7 @@ class OGraphr_Core {
 	}
 
 	// Get Bandcamp Thumbnail
-	function get_bandcamp_thumbnail($type, $api_key, $id) {
+	function get_bandcamp_thumbnail($type, $api_key, $id, $image_size = 'large_art_url') {
 		if (!function_exists('curl_init')) {
 			return null;
 		} else {
@@ -175,7 +177,7 @@ class OGraphr_Core {
 			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
 			$output = curl_exec($ch);
 			$output = json_decode($output);
-			$output = $output->large_art_url;
+			$output = $output->$image_size;
 			if (curl_error($ch) != null) {
 				$output = ''; //new WP_Error('bandcamp_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
 			}
@@ -380,7 +382,7 @@ class OGraphr_Core {
 		
 				// Now if we've found a Bandcamp ID, let's set the thumbnail URL
 				foreach($matches[1] as $match) {
-					$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('album', $bandcamp_api, $match);
+					$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('album', $bandcamp_api, $match , BANDCAMP_IMAGE_SIZE);
 					if(OGRAPHR_DEBUG == TRUE) {
 						print "<!-- Bandcamp album: $bandcamp_thumbnail (ID:$match) -->\n\r";
 					}
@@ -414,7 +416,7 @@ class OGraphr_Core {
 				}
 				
 				// Let's print all this
-				if((OGRAPHR_VERBOSE == TRUE) && (OGRAPHR_DEBUG == FALSE)) {
+				if(($options['add_comment']) && (OGRAPHR_DEBUG == FALSE)) {
 					print "<!-- OGraphr v" . OGRAPHR_VERSION . " - http://wordpress.org/extend/plugins/meta-ographr/ -->\n\r";
 				}
 			
@@ -445,8 +447,12 @@ class OGraphr_Core {
 				}
 			
 				// Add permalink
-				if($options['add_permalink'] && ($link = get_permalink())) {
+				if (($options['add_permalink']) && (is_front_page()) && ($link = get_option('home'))) {
 					print "<meta property=\"og:url\" content=\"$link\" />\n\r";
+				} else {
+					if($options['add_permalink'] && ($link = get_permalink())) {
+						print "<meta property=\"og:url\" content=\"$link\" />\n\r";
+					}
 				}
 			
 				// Add thumbnails
@@ -464,7 +470,7 @@ add_action('wp_head', 'OGraphr_Core_Init');
 
 function OGraphr_Core_Init() {
 	$core = new OGraphr_Core();
-	$core->get_ographr_thumbnails();	
+	$core->get_ographr_thumbnails();
 }
 
 
