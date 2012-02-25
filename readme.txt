@@ -4,7 +4,7 @@ Donate link: http://example.com/
 Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.2
+Stable tag: 0.2.1
 
 This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion SoundCloud, Mixcloud, Bandcamp player widget and puts them in the meta-tags.
 
@@ -15,7 +15,7 @@ This plugin adds several OpenGraph meta-tags to the header of your theme. These 
 Currently, these widgets are supported:
 
 *  SoundCloud (HTML5 and Flash), single tracks and albums
-*  Mixcloud (APIv1 and APIv2 players)
+*  Mixcloud (APIv2 players)
 *  Bandcamp, single tracks and albums - requires valid Bandcamp API key!
 *  Vimeo (embed and iframe players)
 *  YouTube (embed and iframe players)
@@ -58,6 +58,19 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 
 
 == Changelog ==
+
+= 0.2.1 =
+* wrapped functions inside class
+* added option to use tagline as custom description
+* added rudimentary support for Viper's Video Quicktags
+* added support for SoundCloud shortcodes
+* compacted detection code
+* improved Dailymotion detection
+* fixed disabling 'Add permalink'
+* fixed bug retrieving website thumbnail
+* fixed typo in debugger output
+* fixed typo in the SoundCloud API label
+* fixed typo in the 'Add excerpt' label
 
 = 0.2 =
 * reworked option page

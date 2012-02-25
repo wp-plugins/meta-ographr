@@ -17,27 +17,6 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-// ------------------------------------------------------------------------
-// REQUIRE MINIMUM VERSION OF WORDPRESS:                                               
-// ------------------------------------------------------------------------
-// THIS IS USEFUL IF YOU REQUIRE A MINIMUM VERSION OF WORDPRESS TO RUN YOUR
-// PLUGIN. IN THIS PLUGIN THE WP_EDITOR() FUNCTION REQUIRES WORDPRESS 3.3 
-// OR ABOVE. ANYTHING LESS SHOWS A WARNING AND THE PLUGIN IS DEACTIVATED.                    
-// ------------------------------------------------------------------------
-
-function requires_wordpress_version() {
-	global $wp_version;
-	$plugin = plugin_basename( __FILE__ );
-	$plugin_data = get_plugin_data( __FILE__, false );
-
-	if ( version_compare($wp_version, "3.0", "<" ) ) {
-		if( is_plugin_active($plugin) ) {
-			deactivate_plugins( $plugin );
-			wp_die( "'".$plugin_data['Name']."' requires WordPress 3.0 or higher, and has been deactivated! Please upgrade WordPress and try again.<br /><br />Back to <a href='".admin_url()."'>WordPress admin</a>." );
-		}
-	}
-}
-add_action( 'admin_init', 'requires_wordpress_version' );
 
 // ------------------------------------------------------------------------
 // PLUGIN PREFIX:                                                          
@@ -161,7 +140,7 @@ function ographr_render_form() {
 		<!-- Display Plugin Icon, Header, and Description -->
 		<div class="icon32" id="icon-options-general"><br></div>
 		<h2>OGraphr Settings</h2>
-		<p style="font-family:Georgia,serif;font-style:italic;color:grey;">Work in progress by Jan T. Sott</p>
+		<p style="font-family:Georgia,serif;font-style:italic;color:grey;">work in progress by Jan T. Sott</p>
 
 		<!-- Beginning of the Plugin Options Form -->
 		<form method="post" action="options.php">
@@ -174,7 +153,7 @@ function ographr_render_form() {
 				
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
-					<th scope="row"><h3>General Settings</h3></th>
+					<th scope="row"><h3>General</h3></th>
 				</tr>
 				
 				<!-- Textbox Control -->
@@ -204,7 +183,7 @@ function ographr_render_form() {
 						<label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label><br />
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add page </label><br />
+						<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label><br />
 						
 						<!-- Checkbox -->
 						<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label><br />
@@ -222,6 +201,7 @@ function ographr_render_form() {
 						<input type="text" size="57" name="ographr_options[website_description]" value="<?php echo $options['website_description']; ?>" /> (optional)
 					</td>
 				</tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><span style="font-family:monospace;">%tagline%</span> &#8211; your blog's tagline (<em><? echo get_bloginfo('description'); ?></em>)</th></div></td></tr>
 				<tr valign="top">
 					<th scope="row">Meta-tags</th>
 					<td>
@@ -258,7 +238,7 @@ function ographr_render_form() {
 					</td>
 				</tr>
 				
-				<tr><td><th scope="row"><div style="margin-top:-10px;">If for some reason you prefer using your own SoundCloud API key, you can specify it below. You can get one <a href="http://soundcloud.com/you/apps" target="_blank">here</a>.</th></div></td></tr>
+				<tr><td><th scope="row"><div style="margin-top:-10px;">If for some reason you prefer using your own SoundCloud API key, you can specify it above. You can get one <a href="http://soundcloud.com/you/apps" target="_blank">here</a>.</th></div></td></tr>
 
 				<tr><td colspan="2"><div style="margin-top:10px;"></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
@@ -285,6 +265,7 @@ function ographr_render_form() {
 function ographr_validate_options($input) {
 	 // strip html from textboxes
 	$input['website_title'] =  htmlentities($input['website_title']);
+	$input['website_description'] =  htmlentities($input['website_description']);
 	$input['soundcloud_api'] =  htmlentities($input['soundcloud_api']);
 	$input['bandcamp_api'] =  htmlentities($input['bandcamp_api']);
 	return $input;
