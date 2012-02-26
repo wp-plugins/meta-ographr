@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion) and music players (SoundCloud, Mixcloud, Bandcamp) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.2.2
+Version: 0.2.3
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,9 +26,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.2.2");
+    define("OGRAPHR_VERSION", "0.2.3");
 
-	// output all values in comments
+	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 
 // SOUNDCLOUD
@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	
 // VIMEO
 	// default snapshot size (small=100, medium=200, large=640)
-	define("VIMEO_IMAGE_SIZE", "large");
+	define("VIMEO_IMAGE_SIZE", "medium");
 
 //MIXCLOUD
 	// default artwork size (small=25x25, thumbnail=50x50, medium_mobile=80x80, medium=150x150, large=300x300, extra_large=600x600)
@@ -51,7 +51,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
-
 
 class OGraphr_Core {
 
@@ -241,167 +240,181 @@ class OGraphr_Core {
 			if ($website_thumbnail) {
 				$og_thumbnails[] = $website_thumbnail;
 			}
+			
 	
 			// YOUTUBE
-				// Checks for the old standard YouTube embed
-				preg_match_all('#<object[^>]+>.+?https?://www.youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s', $markup, $matches1);
-				
-				// Checks for YouTube iframe, the new standard since at least 2011
-				preg_match_all('#https?://www.youtube.com/embed/([A-Za-z0-9\-_]+)#s', $markup, $matches2);
-				
-				// Dailymotion shortcode (Viper's Video Quicktags)
-				preg_match_all('/\[youtube]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/', $markup, $matches3);
-				
-				$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
+				if($options['enable_youtube']) {
+					// Checks for the old standard YouTube embed
+					preg_match_all('#<object[^>]+>.+?https?://www.youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s', $markup, $matches1);
 
-				// Now if we've found a YouTube ID, let's set the thumbnail URL
-				foreach($matches as $match) {
-					$yt_thumbnail = 'http://img.youtube.com/vi/' . $match . '/0.jpg';
-					if(OGRAPHR_DEBUG == TRUE) {
-						print "<!-- YouTube: $yt_thumbnail (ID:$match) -->\n\r";
-					}
-					if (isset($yt_thumbnail)) {
-					  $og_thumbnails[] = $yt_thumbnail;
+					// Checks for YouTube iframe, the new standard since at least 2011
+					preg_match_all('#https?://www.youtube.com/embed/([A-Za-z0-9\-_]+)#s', $markup, $matches2);
+
+					// Dailymotion shortcode (Viper's Video Quicktags)
+					preg_match_all('/\[youtube.*?]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/', $markup, $matches3);
+
+					$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
+
+					// Now if we've found a YouTube ID, let's set the thumbnail URL
+					foreach($matches as $match) {
+						$yt_thumbnail = 'http://img.youtube.com/vi/' . $match . '/0.jpg';
+						if(OGRAPHR_DEBUG == TRUE) {
+							print "<!-- YouTube: $yt_thumbnail (ID:$match) -->\n\r";
+						}
+						if (isset($yt_thumbnail)) {
+						  $og_thumbnails[] = $yt_thumbnail;
+						}
 					}
 				}
 
 	
 			// VIMEO
-				// Vimeo Flash player ("old embed code")
-				preg_match_all('#<object[^>]+>.+?http://vimeo.com/moogaloop.swf\?clip_id=([A-Za-z0-9\-_]+)&.+?</object>#s', $markup, $matches1);
+				if($options['enable_vimeo']) {
+					// Vimeo Flash player ("old embed code")
+					preg_match_all('#<object[^>]+>.+?http://vimeo.com/moogaloop.swf\?clip_id=([A-Za-z0-9\-_]+)&.+?</object>#s', $markup, $matches1);
 				
-				// Vimeo iFrame player ("new embed code")
-				preg_match_all('#http://player.vimeo.com/video/([0-9]+)#s', $markup, $matches2);
+					// Vimeo iFrame player ("new embed code")
+					preg_match_all('#http://player.vimeo.com/video/([0-9]+)#s', $markup, $matches2);
 				
-				// Vimeo shortcode (Viper's Video Quicktags)
-				preg_match_all('/\[vimeo]https?:\/\/w*.?vimeo.com\/([0-9]+)\[\/vimeo]/', $markup, $matches3);
+					// Vimeo shortcode (Viper's Video Quicktags)
+					preg_match_all('/\[vimeo.*?]https?:\/\/w*.?vimeo.com\/([0-9]+)\[\/vimeo]/', $markup, $matches3);
 				
-				$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
+					$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
 		
-				// Now if we've found a Vimeo ID, let's set the thumbnail URL
-				foreach($matches as $match) {
-					$vm_thumbnail = $this->get_vimeo_thumbnail($match, VIMEO_IMAGE_SIZE);
-					if(OGRAPHR_DEBUG == TRUE) {
-						print "<!-- Vimeo: $vm_thumbnail (ID:$match) -->\n\r";
-					}
-					if (isset($vm_thumbnail)) {
-					  $og_thumbnails[] = $vm_thumbnail;
+					// Now if we've found a Vimeo ID, let's set the thumbnail URL
+					foreach($matches as $match) {
+						$vm_thumbnail = $this->get_vimeo_thumbnail($match, VIMEO_IMAGE_SIZE);
+						if(OGRAPHR_DEBUG == TRUE) {
+							print "<!-- Vimeo: $vm_thumbnail (ID:$match) -->\n\r";
+						}
+						if (isset($vm_thumbnail)) {
+						  $og_thumbnails[] = $vm_thumbnail;
+						}
 					}
 				}
 				
 	
 			// DAILYMOTION
-				// Dailymotion Flash player
-				preg_match_all('#<object[^>]+>.+?http://www.dailymotion.com/swf/video/([A-Za-z0-9-_]+).+?</object>#s', $markup, $matches1);
+				if($options['enable_dailymotion']) {
+					// Dailymotion Flash player
+					preg_match_all('#<object[^>]+>.+?http://www.dailymotion.com/swf/video/([A-Za-z0-9-_]+).+?</object>#s', $markup, $matches1);
 				
-				// Dailymotion iFrame player
-				preg_match_all('#https?://www.dailymotion.com/embed/video/([A-Za-z0-9-_]+)#s', $markup, $matches2);
+					// Dailymotion iFrame player
+					preg_match_all('#https?://www.dailymotion.com/embed/video/([A-Za-z0-9-_]+)#s', $markup, $matches2);
 				
-				// Dailymotion shortcode (Viper's Video Quicktags)
-				preg_match_all('/\[dailymotion]https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)\[\/dailymotion]/', $markup, $matches3);
+					// Dailymotion shortcode (Viper's Video Quicktags)
+					preg_match_all('/\[dailymotion.*?]https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)\[\/dailymotion]/', $markup, $matches3);
 				
-				$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
+					$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
 
-				// Now if we've found a Dailymotion video ID, let's set the thumbnail URL
-				foreach($matches as $match) {
-					$dailymotion_thumbnail = $this->get_dailymotion_thumbnail($match);
-					if(OGRAPHR_DEBUG == TRUE) {
-						print "<!-- Dailymotion: $dailymotion_thumbnail (ID:$match) -->\n\r";
-					}
-					if (isset($dailymotion_thumbnail)) {
-						$dailymotion_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $dailymotion_thumbnail); // remove suffix
-						$og_thumbnails[] = $dailymotion_thumbnail;
+					// Now if we've found a Dailymotion video ID, let's set the thumbnail URL
+					foreach($matches as $match) {
+						$dailymotion_thumbnail = $this->get_dailymotion_thumbnail($match);
+						if(OGRAPHR_DEBUG == TRUE) {
+							print "<!-- Dailymotion: $dailymotion_thumbnail (ID:$match) -->\n\r";
+						}
+						if (isset($dailymotion_thumbnail)) {
+							$dailymotion_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $dailymotion_thumbnail); // remove suffix
+							$og_thumbnails[] = $dailymotion_thumbnail;
+						}
 					}
 				}
 		
 			
 			// SOUNDCLOUD
-				// Standard embed code for tracks (Flash and HTML5 player)
-				preg_match_all('/api.soundcloud.com%2Ftracks%2F([0-9]+)/', $markup, $matches1);
+				if($options['enable_soundcloud']) {
+					// Standard embed code for tracks (Flash and HTML5 player)
+					preg_match_all('/api.soundcloud.com%2Ftracks%2F([0-9]+)/', $markup, $matches1);
 				
-				// Shortcode for tracks (Flash and HTML5 player)
-				preg_match_all('/api.soundcloud.com\/tracks\/([0-9]+)/', $markup, $matches2);
+					// Shortcode for tracks (Flash and HTML5 player)
+					preg_match_all('/api.soundcloud.com\/tracks\/([0-9]+)/', $markup, $matches2);
 				
-				$matches = array_merge($matches1[1], $matches2[1]);
+					$matches = array_merge($matches1[1], $matches2[1]);
 		
-				// Now if we've found a SoundCloud ID, let's set the thumbnail URL
-				foreach($matches as $match) {
-					$sc_thumbnail = $this->get_soundcloud_thumbnail('tracks', $soundcloud_api, $match, SOUNDCLOUD_IMAGE_SIZE);
-					if(OGRAPHR_DEBUG == TRUE) {
-						print "<!-- SoundCloud track: $sc_thumbnail (ID:$match) -->\n\r";
+					// Now if we've found a SoundCloud ID, let's set the thumbnail URL
+					foreach($matches as $match) {
+						$sc_thumbnail = $this->get_soundcloud_thumbnail('tracks', $soundcloud_api, $match, SOUNDCLOUD_IMAGE_SIZE);
+						if(OGRAPHR_DEBUG == TRUE) {
+							print "<!-- SoundCloud track: $sc_thumbnail (ID:$match) -->\n\r";
+						}
+						if (isset($sc_thumbnail)) {
+						  	$sc_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $sc_thumbnail); // remove suffix
+							$og_thumbnails[] = $sc_thumbnail;
+						}
 					}
-					if (isset($sc_thumbnail)) {
-					  	$sc_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $sc_thumbnail); // remove suffix
-						$og_thumbnails[] = $sc_thumbnail;
+		
+					// Standard embed code for playlists (Flash and HTML5 player)
+					preg_match_all('/api.soundcloud.com%2Fplaylists%2F([0-9]+)/', $markup, $matches1);
+				
+					// Shortcode for playlists (Flash and HTML5 player)
+					preg_match_all('/api.soundcloud.com\/playlists\/([0-9]+)/', $markup, $matches2);
+				
+					$matches = array_merge($matches1[1], $matches2[1]);
+		
+					// Now if we've found a SoundCloud ID, let's set the thumbnail URL
+					foreach($matches as $match) {
+						$sc_thumbnail = $this->get_soundcloud_thumbnail('playlists', $soundcloud_api, $match, SOUNDCLOUD_IMAGE_SIZE);
+						if(OGRAPHR_DEBUG == TRUE) {
+							print "<!-- SoundCloud playlist: $sc_thumbnail (ID:$match) -->\n\r";
+						}
+						if (isset($sc_thumbnail)) {
+						  	$sc_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $sc_thumbnail); // remove suffix
+							$og_thumbnails[] = $sc_thumbnail;
+						}
 					}
 				}
-		
-				// Standard embed code for playlists (Flash and HTML5 player)
-				preg_match_all('/api.soundcloud.com%2Fplaylists%2F([0-9]+)/', $markup, $matches1);
 				
-				// Shortcode for playlists (Flash and HTML5 player)
-				preg_match_all('/api.soundcloud.com\/playlists\/([0-9]+)/', $markup, $matches2);
-				
-				$matches = array_merge($matches1[1], $matches2[1]);
-		
-				// Now if we've found a SoundCloud ID, let's set the thumbnail URL
-				foreach($matches as $match) {
-					$sc_thumbnail = $this->get_soundcloud_thumbnail('playlists', $soundcloud_api, $match, SOUNDCLOUD_IMAGE_SIZE);
-					if(OGRAPHR_DEBUG == TRUE) {
-						print "<!-- SoundCloud playlist: $sc_thumbnail (ID:$match) -->\n\r";
-					}
-					if (isset($sc_thumbnail)) {
-					  	$sc_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $sc_thumbnail); // remove suffix
-						$og_thumbnails[] = $sc_thumbnail;
-					}
-				}
 	
 			// MIXCLOUD	
-				// Standard embed code
-				preg_match_all('/mixcloudLoader.swf\?feed=http%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)&/', $markup, $matches);
-		
-				// Now if we've found a Mixcloud ID, let's set the thumbnail URL
-				foreach($matches[1] as $match) {
-					$mixcloud_id = str_replace('%2F', '/', $match);
-					$mixcloud_thumbnail = $this->get_mixcloud_thumbnail($mixcloud_id, MIXCLOUD_IMAGE_SIZE);
-					if(OGRAPHR_DEBUG == TRUE) {
-						print "<!-- MixCloud: $mixcloud_thumbnail -->\n\r";
-					}
-					if (isset($mixcloud_thumbnail)) {
-						$og_thumbnails[] = $mixcloud_thumbnail;
+				if($options['enable_mixcloud']) {
+					// Standard embed code
+					preg_match_all('/mixcloudLoader.swf\?feed=http%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)&/', $markup, $matches);
+					
+					// Standard embed (API v1, undocumented)
+					// preg_match_all('/feed=http:\/\/www.mixcloud.com\/api\/1\/cloudcast\/([A-Za-z0-9\-_\%\/.]+)/', $markup, $mixcloud_ids);
+					
+					// Now if we've found a Mixcloud ID, let's set the thumbnail URL
+					foreach($matches[1] as $match) {
+						$mixcloud_id = str_replace('%2F', '/', $match);
+						$mixcloud_thumbnail = $this->get_mixcloud_thumbnail($mixcloud_id, MIXCLOUD_IMAGE_SIZE);
+						if(OGRAPHR_DEBUG == TRUE) {
+							print "<!-- MixCloud: $mixcloud_thumbnail -->\n\r";
+						}
+						if (isset($mixcloud_thumbnail)) {
+							$og_thumbnails[] = $mixcloud_thumbnail;
+						}
 					}
 				}
-		
-				// Standard embed (API v1, undocumented)
-				// preg_match_all('/feed=http:\/\/www.mixcloud.com\/api\/1\/cloudcast\/([A-Za-z0-9\-_\%\/.]+)/', $markup, $mixcloud_ids);
 					
 	
 			// BANDCAMP
-				// Standard embed code for albums
-				preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//', $markup, $matches);
+				if($options['enable_bandcamp']) {
+					// Standard embed code for albums
+					preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//', $markup, $matches);
 		
-				// Now if we've found a Bandcamp ID, let's set the thumbnail URL
-				foreach($matches[1] as $match) {
-					$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('album', $bandcamp_api, $match , BANDCAMP_IMAGE_SIZE);
-					if(OGRAPHR_DEBUG == TRUE) {
-						print "<!-- Bandcamp album: $bandcamp_thumbnail (ID:$match) -->\n\r";
+					// Now if we've found a Bandcamp ID, let's set the thumbnail URL
+					foreach($matches[1] as $match) {
+						$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('album', $bandcamp_api, $match , BANDCAMP_IMAGE_SIZE);
+						if(OGRAPHR_DEBUG == TRUE) {
+							print "<!-- Bandcamp album: $bandcamp_thumbnail (ID:$match) -->\n\r";
+						}
+						if (isset($bandcamp_thumbnail)) {
+							$og_thumbnails[] = $bandcamp_thumbnail;
+						}
 					}
-					if (isset($bandcamp_thumbnail)) {
-						$og_thumbnails[] = $bandcamp_thumbnail;
-					}
-				}
 
-				// Standard embed code for single tracks
-				preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/track=([0-9]+)\//', $markup, $matches);
+					// Standard embed code for single tracks
+					preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/track=([0-9]+)\//', $markup, $matches);
 		
-				// Now if we've found a Bandcamp ID, let's set the thumbnail URL
-				foreach($matches[1] as $match) {
-					$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('track', $bandcamp_api, $match);
-					if(OGRAPHR_DEBUG == TRUE) {
-						print "<!-- Bandcamp track: $bandcamp_thumbnail (ID:$match) -->\n\r";
-					}
-					if (isset($bandcamp_thumbnail)) {
-						$og_thumbnails[] = $bandcamp_thumbnail;
+					// Now if we've found a Bandcamp ID, let's set the thumbnail URL
+					foreach($matches[1] as $match) {
+						$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('track', $bandcamp_api, $match);
+						if(OGRAPHR_DEBUG == TRUE) {
+							print "<!-- Bandcamp track: $bandcamp_thumbnail (ID:$match) -->\n\r";
+						}
+						if (isset($bandcamp_thumbnail)) {
+							$og_thumbnails[] = $bandcamp_thumbnail;
+						}
 					}
 				}
 		

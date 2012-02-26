@@ -91,7 +91,14 @@ function ographr_restore_defaults() {
 						"add_comment" => "1",
 						"add_title" => "1",
 						"add_excerpt" => "1",
-						"add_permalink" => "1"
+						"add_permalink" => "1",
+						"enable_youtube" => "1",
+						"enable_vimeo" => "1",
+						"enable_dailymotion" => "1",
+						"enable_soundcloud" => "1",
+						"enable_mixcloud" => "1",
+						"enable_bandcamp" => "1",
+						"add_comment" => "1"
 		);
 		
 		update_option('ographr_options', $arr);
@@ -164,7 +171,7 @@ function ographr_render_form() {
 						<input type="text" size="57" name="ographr_options[website_title]" value="<?php if ($options['website_title']) { echo $options['website_title']; } else { echo '%postname%';} ?>" />
 					</td>
 				</tr>
-				<tr><td><th scope="row"><div style="margin-top:-15px;"><span style="font-family:monospace;">%sitename%</span> &#8211; your blog's name (<em><?php echo get_option('blogname'); ?></em>)<br/>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><span style="font-family:monospace;">%sitename%</span> &#8211; your blog's name (<em><? if(get_option('blogname')) { echo get_option('blogname'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
 					<span style="font-family:monospace;">%postname%</span> &#8211; page or post title</th></div></td></tr>
 				
 				<!-- Textbox Control -->
@@ -191,6 +198,30 @@ function ographr_render_form() {
 				
 				<!-- Checkbox Buttons -->
 				<tr valign="top">
+					<th scope="row">Triggers</th>
+					<td>
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> /> YouTube </label><br/>
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_vimeo]" type="checkbox" value="1" <?php if (isset($options['enable_vimeo'])) { checked('1', $options['enable_vimeo']); } ?> /> Vimeo </label><br/>
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_dailymotion]" type="checkbox" value="1" <?php if (isset($options['enable_dailymotion'])) { checked('1', $options['enable_dailymotion']); } ?> /> Dailymotion </label><br/>
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud <? if(!$options['soundcloud_api']) { echo '(requires <a href="#soundcloud_api_key">API key</a>)';} ?></label><br/>
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> /> Mixcloud </label><br/>
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if (isset($options['enable_bandcamp'])) { checked('1', $options['enable_bandcamp']); } ?> /> Bandcamp <? if(!$options['bandcamp_api']) { echo '(requires <a href="#bandcamp_api_key">API key</a>)';} ?></label><br/>
+					</td>
+				</tr>
+				
+				<!-- Checkbox Buttons -->
+				<tr valign="top">
 					<th scope="row">Advertisement</th>
 					<td>
 						<!-- Checkbox -->
@@ -209,7 +240,7 @@ function ographr_render_form() {
 						<input type="text" size="57" name="ographr_options[website_description]" value="<?php echo $options['website_description']; ?>" /> (optional)
 					</td>
 				</tr>
-				<tr><td><th scope="row"><div style="margin-top:-15px;"><span style="font-family:monospace;">%tagline%</span> &#8211; your blog's tagline (<em><? echo get_bloginfo('description'); ?></em>)</th></div></td></tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><span style="font-family:monospace;">%tagline%</span> &#8211; your blog's tagline (<em><? if(get_bloginfo('description')) { echo get_bloginfo('description'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</th></div></td></tr>
 				<tr valign="top">
 					<th scope="row">Meta-tags</th>
 					<td>
@@ -225,7 +256,7 @@ function ographr_render_form() {
 				
 				<!-- Textbox Control -->
 				<tr>
-					<th scope="row">Bandcamp API Key</th>
+					<th scope="row"><a name="bandcamp_api_key">&nbsp;</a>Bandcamp API Key</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /> (<strong>required</strong>)
 					</td>
@@ -240,7 +271,7 @@ function ographr_render_form() {
 				
 				<!-- Textbox Control -->
 				<tr valign="top">
-					<th scope="row">SoundCloud API Key</th>
+					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud API Key</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /> (optional)
 					</td>
@@ -252,7 +283,7 @@ function ographr_render_form() {
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
 					<th scope="row"><!--Database Options--></th>
 					<td>
-						<label><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon plugin saving</label>
+						<label><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>
 						<br />
 					</td>
 				</tr>
