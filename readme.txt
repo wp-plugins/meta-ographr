@@ -39,8 +39,6 @@ Facebook caches previously submitted links for an undisclosed time. If your post
 
 People share links with their friends on social media sites whether you like it or not. This plug-in gives you some control over how your content is presented on platforms such as Facebook and Google+. Displaying cover artwork or video snapshots with your link usually looks nicer and attracts the attention of potential visitors.
 
-Facebook caches previously submitted links for an undisclosed time. If your post has been shared/liked on Facebook before, the cover artwork will not appear until the cache has expired. To make sure the plug-in is active and working, you can always look for the og:image tags in the source of your post.
-
 = Do I need a SoundCloud API key? =
 
 No. By default this plug-in uses its own registered API key, but if you prefer -for whatever reason- to use your own,
