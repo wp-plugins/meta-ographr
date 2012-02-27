@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion) and music players (SoundCloud, Mixcloud, Bandcamp) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.2.3
+Version: 0.2.4
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.2.3");
+    define("OGRAPHR_VERSION", "0.2.4");
 
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
@@ -417,9 +417,16 @@ class OGraphr_Core {
 						}
 					}
 				}
-		
-				// Load data
+	
+				
+				// Let's print all this
+				if(($options['add_comment']) && (OGRAPHR_DEBUG == FALSE)) {
+					print "<!-- OGraphr v" . OGRAPHR_VERSION . " - http://wordpress.org/extend/plugins/meta-ographr/ -->\n\r";
+				}
+			
+				// Add title & description
 				$title = $options['website_title'];
+				$site_name = $options['fb_site_name'];
 				$wp_title = get_the_title();
 				$wp_name = get_bloginfo('name');
 				$title = str_replace("%postname%", $wp_title, $title);
@@ -428,12 +435,6 @@ class OGraphr_Core {
 					$title = $wp_title;
 				}
 				
-				// Let's print all this
-				if(($options['add_comment']) && (OGRAPHR_DEBUG == FALSE)) {
-					print "<!-- OGraphr v" . OGRAPHR_VERSION . " - http://wordpress.org/extend/plugins/meta-ographr/ -->\n\r";
-				}
-			
-				// Add title & description
 				if (($options['website_description']) && (is_front_page())) {
 					// Blog title
 					$title = get_settings('blogname');
@@ -466,6 +467,17 @@ class OGraphr_Core {
 					if($options['add_permalink'] && ($link = get_permalink())) {
 						print "<meta property=\"og:url\" content=\"$link\" />\n\r";
 					}
+				}
+				
+				// Add site name
+				
+				if ($site_name = str_replace("%sitename%", $wp_name, $site_name)) {
+					print "<meta property=\"og:site_name\" content=\"$site_name\" />\n\r";
+				}
+				
+				// Add type
+				if (($type = $options['fb_type']) && ($type != '_none')) {
+					print "<meta property=\"og:type\" content=\"$type\" />\n\r";
 				}
 			
 				// Add thumbnails

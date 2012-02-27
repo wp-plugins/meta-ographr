@@ -17,7 +17,6 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-
 // ------------------------------------------------------------------------
 // PLUGIN PREFIX:                                                          
 // ------------------------------------------------------------------------
@@ -25,8 +24,6 @@
 // WHEN CREATING A NEW PLUGIN, CHANGE THE PREFIX AND USE YOUR TEXT EDITORS 
 // SEARCH/REPLACE FUNCTION TO RENAME THEM ALL QUICKLY.
 // ------------------------------------------------------------------------
-
-// 'ographr_' prefix is derived from [p]plugin [o]ptions [s]tarter [k]it
 
 // ------------------------------------------------------------------------
 // REGISTER HOOKS & CALLBACK FUNCTIONS:
@@ -52,19 +49,6 @@ add_filter( 'plugin_action_links', 'ographr_plugin_action_links', 10, 2 );
 // Delete options table entries ONLY when plugin deactivated AND deleted
 function ographr_delete_plugin_options() {
 	delete_option('ographr_options');
-	
-	$pointone = get_option('MetaOGraphr_soundcloud_api');
-	if (!isset($pointone)) {
-		ographr_delete_old_plugin_options();
-	}
-}
-
-// Delete options from 0.1 of this plugin
-function ographr_delete_old_plugin_options() {
-	delete_option('MetaOGraphr_page_title');
-	delete_option('MetaOGraphr_website_thumbnail');
-	delete_option('MetaOGraphr_soundcloud_api');
-	delete_option('MetaOGraphr_bandcamp_api');
 }
 
 // ------------------------------------------------------------------------------
@@ -98,7 +82,9 @@ function ographr_restore_defaults() {
 						"enable_soundcloud" => "1",
 						"enable_mixcloud" => "1",
 						"enable_bandcamp" => "1",
-						"add_comment" => "1"
+						"add_comment" => "1",
+						"fb_site_name" => "%sitename%",
+						"fb_type" => "_none"
 		);
 		
 		update_option('ographr_options', $arr);
@@ -159,6 +145,7 @@ function ographr_render_form() {
 			<!-- Each Plugin Option Defined on a New Table Row -->
 			<table class="form-table">
 				
+				<!-- //// GENERAL //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
 					<th scope="row"><h3>General</h3></th>
@@ -171,8 +158,8 @@ function ographr_render_form() {
 						<input type="text" size="57" name="ographr_options[website_title]" value="<?php if ($options['website_title']) { echo $options['website_title']; } else { echo '%postname%';} ?>" />
 					</td>
 				</tr>
-				<tr><td><th scope="row"><div style="margin-top:-15px;"><span style="font-family:monospace;">%sitename%</span> &#8211; your blog's name (<em><? if(get_option('blogname')) { echo get_option('blogname'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
-					<span style="font-family:monospace;">%postname%</span> &#8211; page or post title</th></div></td></tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%sitename%</code> &#8211; your blog's name (<em><? if(get_option('blogname')) { echo get_option('blogname'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
+					<code>%postname%</code> &#8211; page or post title</th></div></td></tr>
 				
 				<!-- Textbox Control -->
 				<tr>
@@ -186,13 +173,13 @@ function ographr_render_form() {
 				<tr valign="top">
 					<th scope="row">Meta-tags</th>
 					<td>
-						<label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label><br />
+						<label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label>&nbsp;
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label><br />
+						<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label><br />
+						<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label>
 					</td>
 				</tr>
 				
@@ -201,22 +188,22 @@ function ographr_render_form() {
 					<th scope="row">Triggers</th>
 					<td>
 						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_dailymotion]" type="checkbox" value="1" <?php if (isset($options['enable_dailymotion'])) { checked('1', $options['enable_dailymotion']); } ?> /> Dailymotion </label>&nbsp;
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_vimeo]" type="checkbox" value="1" <?php if (isset($options['enable_vimeo'])) { checked('1', $options['enable_vimeo']); } ?> /> Vimeo </label>&nbsp;
+						
+						<!-- Checkbox -->
 						<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> /> YouTube </label><br/>
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_vimeo]" type="checkbox" value="1" <?php if (isset($options['enable_vimeo'])) { checked('1', $options['enable_vimeo']); } ?> /> Vimeo </label><br/>
+						<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if (isset($options['enable_bandcamp'])) { checked('1', $options['enable_bandcamp']); } ?> /> Bandcamp <? if(!$options['bandcamp_api']) { echo '(requires <a href="#bandcamp_api_key">API key</a>)';} ?></label>&nbsp;
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_dailymotion]" type="checkbox" value="1" <?php if (isset($options['enable_dailymotion'])) { checked('1', $options['enable_dailymotion']); } ?> /> Dailymotion </label><br/>
+						<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> /> Mixcloud </label>&nbsp;
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud <? if(!$options['soundcloud_api']) { echo '(requires <a href="#soundcloud_api_key">API key</a>)';} ?></label><br/>
-						
-						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> /> Mixcloud </label><br/>
-						
-						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if (isset($options['enable_bandcamp'])) { checked('1', $options['enable_bandcamp']); } ?> /> Bandcamp <? if(!$options['bandcamp_api']) { echo '(requires <a href="#bandcamp_api_key">API key</a>)';} ?></label><br/>
+						<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud <? if(!$options['soundcloud_api']) { echo '(requires <a href="#soundcloud_api_key">API key</a>)';} ?></label>
 					</td>
 				</tr>
 				
@@ -229,18 +216,19 @@ function ographr_render_form() {
 					</td>
 				</tr>
 				
+				<!-- //// FRONT PAGE //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
 					<th scope="row"><h3>Front page</h3></th>
 				</tr>
-				
+			
 				<tr>
 					<th scope="row">Custom Description</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[website_description]" value="<?php echo $options['website_description']; ?>" /> (optional)
 					</td>
 				</tr>
-				<tr><td><th scope="row"><div style="margin-top:-15px;"><span style="font-family:monospace;">%tagline%</span> &#8211; your blog's tagline (<em><? if(get_bloginfo('description')) { echo get_bloginfo('description'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</th></div></td></tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%tagline%</code> &#8211; your blog's tagline (<em><? if(get_bloginfo('description')) { echo get_bloginfo('description'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</th></div></td></tr>
 				<tr valign="top">
 					<th scope="row">Meta-tags</th>
 					<td>
@@ -249,11 +237,12 @@ function ographr_render_form() {
 					</td>
 				</tr>
 				
+				<!-- //// BANDCAMP //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
 					<th scope="row"><h3>Bandcamp</h3></th>
 				</tr>
-				
+			
 				<!-- Textbox Control -->
 				<tr>
 					<th scope="row"><a name="bandcamp_api_key">&nbsp;</a>Bandcamp API Key</th>
@@ -262,13 +251,14 @@ function ographr_render_form() {
 					</td>
 				</tr>
 				
-				<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp provides only limited access to their API and in any case you need to provide a valid developer key. You can apply for one <a href="http://bandcamp.com/developer#key_request" target"_blank">here</a>.</th></div></td></tr>
+					<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp provides only limited access to their API and in any case you need to provide a valid developer key. You can apply for one <a href="http://bandcamp.com/developer#key_request" target="_blank">here</a>.</th></div></td></tr>
 				
+				<!-- //// SOUNDCLOUD //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
 					<th scope="row"><h3>SoundCloud</h3></th>
 				</tr>
-				
+			
 				<!-- Textbox Control -->
 				<tr valign="top">
 					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud API Key</th>
@@ -276,8 +266,72 @@ function ographr_render_form() {
 						<input type="text" size="57" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /> (optional)
 					</td>
 				</tr>
-				
+			
 				<tr><td><th scope="row"><div style="margin-top:-10px;">If for some reason you prefer using your own SoundCloud API key, you can specify it above. You can get one <a href="http://soundcloud.com/you/apps" target="_blank">here</a>.</th></div></td></tr>
+
+				<!-- //// FACEBOOK //// -->
+				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
+				<tr valign="top" style="border-top:#dddddd 1px solid;">
+					<th scope="row"><h3>Facebook</h3></th>
+				</tr>
+				
+				<!-- og:site_name -->
+				<tr valign="top">
+					<th scope="row">Human-readable site name</th>
+					<td>
+						<input type="text" size="57" name="ographr_options[fb_site_name]" value="<?php echo $options['fb_site_name']; ?>" /> (optional)
+					</td>
+				</tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%sitename%</code> &#8211; your blog's name (<em><? if(get_option('blogname')) { echo get_option('blogname'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</th></div></td></tr>
+				
+				<!-- Select Drop-Down Control -->
+				<tr>
+					<th scope="row">Object type (<a href="http://developers.facebook.com/docs/opengraphprotocol/#types" target="_blank">?</a>)</th>
+					<td>
+						<select name='ographr_options[fb_type]'>
+							<option value='_none' <?php selected('_none', $options['fb_type']); ?>>(none)</option>
+							<option value='activity' <?php selected('activity', $options['fb_type']); ?>>activity</option>
+							<option value='actor' <?php selected('actor', $options['fb_type']); ?>>actor</option>
+							<option value='album' <?php selected('album', $options['fb_type']); ?>>album</option>
+							<option value='article' <?php selected('article', $options['fb_type']); ?>>article</option>
+							<option value='athlete' <?php selected('athlete', $options['fb_type']); ?>>athlete</option>
+							<option value='author' <?php selected('author', $options['fb_type']); ?>>author</option>
+							<option value='band' <?php selected('band', $options['fb_type']); ?>>band</option>
+							<option value='bar' <?php selected('bar', $options['fb_type']); ?>>bar</option>
+							<option value='blog' <?php selected('blog', $options['fb_type']); ?>>blog</option>
+							<option value='book' <?php selected('book', $options['fb_type']); ?>>book</option>
+							<option value='cafe' <?php selected('cafe', $options['fb_type']); ?>>cafe</option>
+							<option value='cause' <?php selected('cause', $options['fb_type']); ?>>cause</option>
+							<option value='city' <?php selected('city', $options['fb_type']); ?>>city</option>
+							<option value='company' <?php selected('company', $options['fb_type']); ?>>company</option>
+							<option value='country' <?php selected('country', $options['fb_type']); ?>>country</option>
+							<option value='director' <?php selected('director', $options['fb_type']); ?>>director</option>
+							<option value='drink' <?php selected('drink', $options['fb_type']); ?>>drink</option>
+							<option value='food' <?php selected('food', $options['fb_type']); ?>>food</option>
+							<option value='game' <?php selected('game', $options['fb_type']); ?>>game</option>
+							<option value='government' <?php selected('government', $options['fb_type']); ?>>government</option>
+							<option value='hotel' <?php selected('hotel', $options['fb_type']); ?>>hotel</option>
+							<option value='landmark' <?php selected('landmark', $options['fb_type']); ?>>landmark</option>
+							<option value='movie' <?php selected('movie', $options['fb_type']); ?>>movie</option>
+							<option value='musician' <?php selected('musician', $options['fb_type']); ?>>musician</option>
+							<option value='non_profit' <?php selected('non_profit', $options['fb_type']); ?>>non_profit</option>
+							<option value='politician' <?php selected('politician', $options['fb_type']); ?>>politician</option>
+							<option value='product' <?php selected('product', $options['fb_type']); ?>>product</option>
+							<option value='public_figure' <?php selected('public_figure', $options['fb_type']); ?>>public_figure</option>
+							<option value='restaurant' <?php selected('restaurant', $options['fb_type']); ?>>restaurant</option>
+							<option value='school' <?php selected('school', $options['fb_type']); ?>>school</option>
+							<option value='song' <?php selected('song', $options['fb_type']); ?>>song</option>
+							<option value='sport' <?php selected('sport', $options['fb_type']); ?>>sport</option>
+							<option value='sports_league' <?php selected('sports_league', $options['fb_type']); ?>>sports_league</option>
+							<option value='sports_team' <?php selected('sports_team', $options['fb_type']); ?>>sports_team</option>
+							<option value='state_province' <?php selected('state_province', $options['fb_type']); ?>>state_province</option>
+							<option value='tv_show' <?php selected('tv_show', $options['fb_type']); ?>>tv_show</option>
+							<option value='university' <?php selected('university', $options['fb_type']); ?>>university</option>
+							<option value='website' <?php selected('website', $options['fb_type']); ?>>website</option>
+
+						</select>
+						(optional)
+					</td>
 
 				<tr><td colspan="2"><div style="margin-top:10px;"></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">

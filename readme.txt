@@ -4,9 +4,9 @@ Donate link: http://example.com/
 Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.2.3
+Stable tag: 0.2.4
 
-This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion SoundCloud, Mixcloud, Bandcamp player widget and puts them in the meta-tags.
+This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion, SoundCloud, Mixcloud, Bandcamp player widget and puts them in the meta-tags.
 
 == Description ==
 
@@ -65,6 +65,11 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 
 == Changelog ==
 
+= 0.2.4 =
+* added Facebook-specific options
+* removed function deleting 0.1 settings
+* restyled options page
+
 = 0.2.3 =
 * added color indicator when site title is missing
 * added color indicator when tagline is missing
@@ -91,6 +96,7 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 * fixed typo in the 'Add excerpt' label
 
 = 0.2 =
+
 * reworked option page
 
 = 0.1.4 =
@@ -116,6 +122,9 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 * first release
 
 == Upgrade Notice ==
+
+= 0.2.3 =
+* activate triggers after upgrading
 
 = 0.2 =
 Please adjust your settings after upgrading
