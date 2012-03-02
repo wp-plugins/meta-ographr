@@ -158,8 +158,9 @@ function ographr_render_form() {
 						<input type="text" size="57" name="ographr_options[website_title]" value="<?php if ($options['website_title']) { echo $options['website_title']; } else { echo '%postname%';} ?>" />
 					</td>
 				</tr>
-				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%sitename%</code> &#8211; your blog's name (<em><? if(get_option('blogname')) { echo get_option('blogname'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
-					<code>%postname%</code> &#8211; page or post title</th></div></td></tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_name = get_option('blogname')) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
+					<code>%siteurl%</code> &#8211; the URL of your blog (<em><? $wp_url = get_option('home'); $wp_url = (preg_replace('/https?:\/\//', NULL, $wp_url)); echo $wp_url; ?></em>)<br/>
+						<code>%postname%</code> &#8211; page or post title</th></div></td></tr>
 				
 				<!-- Textbox Control -->
 				<tr>
@@ -197,13 +198,13 @@ function ographr_render_form() {
 						<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> /> YouTube </label><br/>
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if (isset($options['enable_bandcamp'])) { checked('1', $options['enable_bandcamp']); } ?> /> Bandcamp <? if(!$options['bandcamp_api']) { echo '(requires <a href="#bandcamp_api_key">API key</a>)';} ?></label>&nbsp;
+						<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if ((isset($options['enable_bandcamp'])) && ($options['bandcamp_api'])) { checked('1', $options['enable_bandcamp']); } ?> /> Bandcamp <? if(!$options['bandcamp_api']) { echo '(requires <a href="#bandcamp_api_key">API key</a>)';} ?></label>&nbsp;
 						
 						<!-- Checkbox -->
 						<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> /> Mixcloud </label>&nbsp;
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud <? if(!$options['soundcloud_api']) { echo '(requires <a href="#soundcloud_api_key">API key</a>)';} ?></label>
+						<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud </label>
 					</td>
 				</tr>
 				
@@ -251,7 +252,7 @@ function ographr_render_form() {
 					</td>
 				</tr>
 				
-					<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp provides only limited access to their API and in any case you need to provide a valid developer key. You can apply for one <a href="http://bandcamp.com/developer#key_request" target="_blank">here</a>.</th></div></td></tr>
+					<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp offers only limited access to their API and in any case you need to provide a valid developer key. You can apply for one <a href="http://bandcamp.com/developer#key_request" target="_blank">here</a>.</th></div></td></tr>
 				
 				<!-- //// SOUNDCLOUD //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
@@ -272,7 +273,7 @@ function ographr_render_form() {
 				<!-- //// FACEBOOK //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
-					<th scope="row"><h3>Facebook</h3></th>
+					<th scope="row"><h3>Facebook (Advanced Users)</h3></th>
 				</tr>
 				
 				<!-- og:site_name -->
@@ -282,7 +283,8 @@ function ographr_render_form() {
 						<input type="text" size="57" name="ographr_options[fb_site_name]" value="<?php echo $options['fb_site_name']; ?>" /> (optional)
 					</td>
 				</tr>
-				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%sitename%</code> &#8211; your blog's name (<em><? if(get_option('blogname')) { echo get_option('blogname'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</th></div></td></tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
+					<code>%siteurl%</code> &#8211; the URL of your blog (<em><? echo $wp_url; ?></em>)<br/></th></div></td></tr>
 				
 				<!-- Select Drop-Down Control -->
 				<tr>
@@ -332,6 +334,24 @@ function ographr_render_form() {
 						</select>
 						(optional)
 					</td>
+					
+					<!-- Textbox Control -->
+					<tr valign="top">
+						<th scope="row">Facebook Admin ID</th>
+						<td>
+							<input type="text" size="57" name="ographr_options[fb_admins]" value="<?php echo $options['fb_admins']; ?>" />  (optional)
+						</td>
+					</tr>
+					<tr><td><th scope="row"><div style="margin-top:-10px;">If you administer a page for your blog on Facebook, you can enter your <a href="http://developers.facebook.com/docs/reference/api/user/" targe="_blank">User ID</a></th></div></td></tr>
+
+					<!-- Textbox Control -->
+					<tr valign="top">
+						<th scope="row">Facebook Application ID</th>
+						<td>
+							<input type="text" size="57" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /> (optional)
+						</td>
+					</tr>
+					<tr><td><th scope="row"><div style="margin-top:-10px;">If your blog uses a Facebook app, you can enter your <a href="https://developers.facebook.com/apps" target="_blank">Application ID</a></th></div></td></tr>
 
 				<tr><td colspan="2"><div style="margin-top:10px;"></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">

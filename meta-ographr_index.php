@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion) and music players (SoundCloud, Mixcloud, Bandcamp) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.2.4
+Version: 0.2.5
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.2.4");
+    define("OGRAPHR_VERSION", "0.2.5");
 
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
@@ -193,34 +193,36 @@ class OGraphr_Core {
 		// Get this plugins' settings
 		$options = get_option('ographr_options');
 	
-		if (($enable_on_front = $options['enable_on_front']) && (is_front_page()) || (is_single() || is_page())) {
+		
 		//if (is_single() || is_page()) {
 	
-			// Get the post ID if none is provided
-			if($post_id==null OR $post_id=='') $post_id = get_the_ID();
+		// Get the post ID if none is provided
+		if($post_id==null OR $post_id=='') $post_id = get_the_ID();
 
-			// Gets the post's content
-			$post_array = get_post($post_id); 
-			$markup = $post_array->post_content;
-			$markup = apply_filters('the_content',$markup);
-			$og_thumbnails[] = null;
+		// Gets the post's content
+		$post_array = get_post($post_id); 
+		$markup = $post_array->post_content;
+		$markup = apply_filters('the_content',$markup);
+		$og_thumbnails[] = null;
+
+		// Get default website thumbnail
+		$web_thumb = $options['website_thumbnail'];
+		if ($web_thumb) {
+			$og_thumbnails[] = $web_thumb;
+		}
 	
-			// Get default website thumbnail
-			$web_thumb = $options['website_thumbnail'];
-			if ($web_thumb) {
-				$og_thumbnails[] = $web_thumb;
-			}
-			
-			// Get API keys
-			$soundcloud_api = $options['soundcloud_api'];
-			$bandcamp_api = $options['bandcamp_api'];
-		
-			// debugging?
-			if(OGRAPHR_DEBUG == TRUE) {
-				print "\n\r<!-- OGRAPHR v" . OGRAPHR_VERSION ." DEBUGGER -->\n\r";
-				print "<!-- SoundCloud API key: $soundcloud_api -->\n\r";
-				print "<!-- Bandcamp API key: $bandcamp_api -->\n\r";
-			}
+		// Get API keys
+		$soundcloud_api = $options['soundcloud_api'];
+		$bandcamp_api = $options['bandcamp_api'];
+
+		// debugging?
+		if(OGRAPHR_DEBUG == TRUE) {
+			print "\n\r<!-- OGRAPHR v" . OGRAPHR_VERSION ." DEBUGGER -->\n\r";
+			print "<!-- SoundCloud API key: $soundcloud_api -->\n\r";
+			print "<!-- Bandcamp API key: $bandcamp_api -->\n\r";
+		}
+	
+		if (($enable_on_front = $options['enable_on_front']) || is_single() || (is_page())) {
 		
 			// Get images in post
 			preg_match_all('/<img.+?src=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
@@ -417,11 +419,11 @@ class OGraphr_Core {
 						}
 					}
 				}
-	
+	}
 				
 				// Let's print all this
 				if(($options['add_comment']) && (OGRAPHR_DEBUG == FALSE)) {
-					print "<!-- OGraphr v" . OGRAPHR_VERSION . " - http://wordpress.org/extend/plugins/meta-ographr/ -->\n\r";
+					print "<!-- OGraphr v" . OGRAPHR_VERSION . " - http://p.ly/ographr -->\n\r";
 				}
 			
 				// Add title & description
@@ -429,11 +431,16 @@ class OGraphr_Core {
 				$site_name = $options['fb_site_name'];
 				$wp_title = get_the_title();
 				$wp_name = get_bloginfo('name');
+				$wp_url = get_option('home');
+				$wp_url = preg_replace('/https?:\/\//', NULL, $wp_url);
 				$title = str_replace("%postname%", $wp_title, $title);
 				$title = str_replace("%sitename%", $wp_name, $title);
+				$title = str_replace("%siteurl%", $wp_url, $title);
 				if (!$title) {
 					$title = $wp_title;
 				}
+				$site_name = str_replace("%sitename%", $wp_name, $site_name);
+				$site_name = str_replace("%siteurl%", $wp_url, $site_name);
 				
 				if (($options['website_description']) && (is_front_page())) {
 					// Blog title
@@ -470,8 +477,7 @@ class OGraphr_Core {
 				}
 				
 				// Add site name
-				
-				if ($site_name = str_replace("%sitename%", $wp_name, $site_name)) {
+				if ($site_name) {
 					print "<meta property=\"og:site_name\" content=\"$site_name\" />\n\r";
 				}
 				
@@ -487,8 +493,17 @@ class OGraphr_Core {
 						print "<meta property=\"og:image\" content=\"$og_thumbnail\" />\n\r";
 					}
 				}
+				
+				// Add Facebook ID
+				if ($fb_admins = $options['fb_admins']) {
+					print "<meta property=\"fb:admins\" content=\"$fb_admins\" />\n\r";
+				}
+
+				// Add Facebook Application ID
+				if ($fb_app_id = $options['fb_app_id']) {
+					print "<meta property=\"fb:app_id\" content=\"$fb_app_id\" />\n\r";
+				}
 			}
-	}
 };
 
 add_action('wp_head', 'OGraphr_Core_Init');
