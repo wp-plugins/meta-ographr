@@ -1,10 +1,9 @@
 === OGraphr ===
 Contributors: yathosho
-Donate link: http://example.com/
 Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.2.5
+Stable tag: 0.2.6
 
 This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion, SoundCloud, Mixcloud, Bandcamp player widget and puts them in the meta-tags.
 
@@ -62,6 +61,10 @@ artwork has been assigned to its individual tracks. Support for this is planned 
 
 
 == Changelog ==
+
+= 0.2.6 =
+* added validating function for facebook options
+* modified options page
 
 = 0.2.5 =
 * added more advanced Facebook-specific options

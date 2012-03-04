@@ -134,7 +134,7 @@ function ographr_render_form() {
 		<!-- Display Plugin Icon, Header, and Description -->
 		<div class="icon32" id="icon-options-general"><br></div>
 		<h2>OGraphr Settings</h2>
-		<p style="font-family:Georgia,serif;font-style:italic;color:grey;">work in progress by Jan T. Sott</p>
+		<p style="font-family:Georgia,serif;font-style:italic;color:grey;">version <? echo OGRAPHR_VERSION ?> by <a href="https://whyeye.org" target="_blank" style="color:grey;">Jan T. Sott</a></p>
 
 		<!-- Beginning of the Plugin Options Form -->
 		<form method="post" action="options.php">
@@ -234,7 +234,7 @@ function ographr_render_form() {
 					<th scope="row">Meta-tags</th>
 					<td>
 
-						<label><input name="ographr_options[enable_on_front]" type="checkbox" value="1" <?php if (isset($options['enable_on_front'])) { checked('1', $options['enable_on_front']); } ?> /> Enable on front page </label><br />
+						<label><input name="ographr_options[enable_on_front]" type="checkbox" value="1" <?php if (isset($options['enable_on_front'])) { checked('1', $options['enable_on_front']); } ?> /> Enable triggers on front page </label><br />
 					</td>
 				</tr>
 				
@@ -378,9 +378,13 @@ function ographr_render_form() {
 function ographr_validate_options($input) {
 	 // strip html from textboxes
 	$input['website_title'] =  htmlentities($input['website_title']);
+	$input['website_thumbnail'] =  htmlentities($input['website_thumbnail']);
 	$input['website_description'] =  htmlentities($input['website_description']);
 	$input['soundcloud_api'] =  htmlentities($input['soundcloud_api']);
 	$input['bandcamp_api'] =  htmlentities($input['bandcamp_api']);
+	$input['fb_site_name'] =  htmlentities($input['fb_site_name']);
+	$input['fb_admins'] =  htmlentities($input['fb_admins']);
+	$input['fb_app_id'] =  htmlentities($input['fb_app_id']);
 	return $input;
 }
 
