@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: OGraphr
-Plugin URI: http://whyeye.org
+Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion) and music players (SoundCloud, Mixcloud, Bandcamp) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.2.6
+Version: 0.2.7
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.2.6");
+    define("OGRAPHR_VERSION", "0.2.7");
 
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
@@ -48,6 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //BANDCAMP
 	// default artwork size (small_art_url=100x100, large_art_url=350x350)
 	define("BANDCAMP_IMAGE_SIZE", "large_art_url");
+	// alternative method to get a track's cover art from parent album (not fully tested yet)
+	define ("ALT_BANDCAMP_DETECTION", FALSE);
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -184,6 +186,47 @@ class OGraphr_Core {
 			return $output;
 		}
 	}
+	
+	// Get Bandcamp Parent Thumbnail
+	function get_bandcamp_parent_thumbnail($type, $api_key, $id, $image_size = 'large_art_url') {
+		if (!function_exists('curl_init')) {
+			return null;
+		} else {
+			//global $options;
+			$ch = curl_init();
+			$videoinfo_url = "http://api.bandcamp.com/api/track/1/info?key=$api_key&track_id=$id";
+			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
+			curl_setopt($ch, CURLOPT_HEADER, 0);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
+			$output = curl_exec($ch);
+			$output = json_decode($output);
+			$output = $output->album_id;
+			if (curl_error($ch) != null) {
+				$output = ''; //new WP_Error('bandcamp_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
+			}
+			curl_close($ch);
+			
+			// once more for the album
+			$ch = curl_init();
+			$videoinfo_url = "http://api.bandcamp.com/api/album/2/info?key=$api_key&album_id=$output";
+			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
+			curl_setopt($ch, CURLOPT_HEADER, 0);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
+			$output = curl_exec($ch);
+			$output = json_decode($output);
+			$output = $output->$image_size;
+			if (curl_error($ch) != null) {
+				$output = ''; //new WP_Error('bandcamp_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
+			}
+			curl_close($ch);
+			
+			return $output;
+		}
+	}
 
 	//
 	// The Main Event
@@ -203,18 +246,18 @@ class OGraphr_Core {
 		$post_array = get_post($post_id); 
 		$markup = $post_array->post_content;
 		$markup = apply_filters('the_content',$markup);
-		$og_thumbnails[] = null;
 
 		// Get default website thumbnail
 		$web_thumb = $options['website_thumbnail'];
-		if ($web_thumb) {
+		if (($web_thumb) && (!$options['not_always'])) {
 			$og_thumbnails[] = $web_thumb;
 		}
+
 	
 		// Get API keys
 		$soundcloud_api = $options['soundcloud_api'];
 		$bandcamp_api = $options['bandcamp_api'];
-
+		
 		// debugging?
 		if(OGRAPHR_DEBUG == TRUE) {
 			print "\n\r<!-- OGRAPHR v" . OGRAPHR_VERSION ." DEBUGGER -->\n\r";
@@ -410,7 +453,11 @@ class OGraphr_Core {
 		
 					// Now if we've found a Bandcamp ID, let's set the thumbnail URL
 					foreach($matches[1] as $match) {
-						$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('track', $bandcamp_api, $match);
+						if (ALT_BANDCAMP_DETECTION == TRUE) {
+							$bandcamp_thumbnail = $this->get_bandcamp_parent_thumbnail('track', $bandcamp_api, $match);
+						} else {
+							$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('track', $bandcamp_api, $match);
+						}
 						if(OGRAPHR_DEBUG == TRUE) {
 							print "<!-- Bandcamp track: $bandcamp_thumbnail (ID:$match) -->\n\r";
 						}
@@ -423,7 +470,7 @@ class OGraphr_Core {
 				
 				// Let's print all this
 				if(($options['add_comment']) && (OGRAPHR_DEBUG == FALSE)) {
-					print "<!-- OGraphr v" . OGRAPHR_VERSION . " - http://p.ly/ographr -->\n\r";
+					print "<!-- OGraphr v" . OGRAPHR_VERSION . " - http://ographr.whyeye.org -->\n\r";
 				}
 			
 				// Add title & description
@@ -487,10 +534,18 @@ class OGraphr_Core {
 				}
 			
 				// Add thumbnails
-				$og_thumbnails = array_unique($og_thumbnails);
-				foreach ($og_thumbnails as $og_thumbnail) {
-					if ($og_thumbnail) {
-						print "<meta property=\"og:image\" content=\"$og_thumbnail\" />\n\r";
+				if ($og_thumbnails) { //avoid error message when array is empty
+					$og_thumbnails = array_unique($og_thumbnails);
+					$total_img = count($og_thumbnails);
+				}
+								
+				if (($total_img == 0) && ($web_thumb)) {
+					print "<meta property=\"og:image\" content=\"$web_thumb\" />\n\r";
+				} else {				
+					foreach ($og_thumbnails as $og_thumbnail) {
+						if ($og_thumbnail) {
+							print "<meta property=\"og:image\" content=\"$og_thumbnail\" />\n\r";
+						}
 					}
 				}
 				
@@ -503,6 +558,8 @@ class OGraphr_Core {
 				if ($fb_app_id = $options['fb_app_id']) {
 					print "<meta property=\"fb:app_id\" content=\"$fb_app_id\" />\n\r";
 				}
+				
+				
 			}
 };
 

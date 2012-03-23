@@ -72,6 +72,7 @@ function ographr_restore_defaults() {
 						"soundcloud_api" => SOUNDCLOUD_API_KEY,
 						"enable_on_front" => "0",
 						"website_description" => "",
+						"not_always" => "0",
 						"add_comment" => "1",
 						"add_title" => "1",
 						"add_excerpt" => "1",
@@ -166,7 +167,8 @@ function ographr_render_form() {
 				<tr>
 					<th scope="row">Thumbnail</th>
 					<td>
-						<input type="text" size="57" name="ographr_options[website_thumbnail]" value="<?php echo $options['website_thumbnail']; ?>" /> (optional)
+						<input type="text" size="57" name="ographr_options[website_thumbnail]" value="<?php echo $options['website_thumbnail']; ?>" /> (optional)<br/>
+						<label><input name="ographr_options[not_always]" type="checkbox" value="1" <?php if (isset($options['not_always'])) { checked('1', $options['not_always']); } ?> /> Only add when post contains no images </label>&nbsp;
 					</td>
 				</tr>
 				
