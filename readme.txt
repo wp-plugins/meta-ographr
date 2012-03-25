@@ -57,8 +57,8 @@ their platform. In order to get an API key, you have to apply via email.
 
 == Changelog ==
 
-= 0.2.7 =
-* akternative bandcamp detection set to default
+= 0.2.8 =
+* alternative bandcamp detection set to default
 * fixed bug when no website thumbnail is specified
 
 = 0.2.7 =
