@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion) and music players (SoundCloud, Mixcloud, Bandcamp) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.2.7
+Version: 0.2.8
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.2.7");
+    define("OGRAPHR_VERSION", "0.2.8");
 
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	// default artwork size (small_art_url=100x100, large_art_url=350x350)
 	define("BANDCAMP_IMAGE_SIZE", "large_art_url");
 	// alternative method to get a track's cover art from parent album (not fully tested yet)
-	define ("ALT_BANDCAMP_DETECTION", FALSE);
+	define ("ALT_BANDCAMP_DETECTION", TRUE);
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -541,7 +541,7 @@ class OGraphr_Core {
 								
 				if (($total_img == 0) && ($web_thumb)) {
 					print "<meta property=\"og:image\" content=\"$web_thumb\" />\n\r";
-				} else {				
+				} else if ($og_thumbnails) { // investige?
 					foreach ($og_thumbnails as $og_thumbnail) {
 						if ($og_thumbnail) {
 							print "<meta property=\"og:image\" content=\"$og_thumbnail\" />\n\r";
