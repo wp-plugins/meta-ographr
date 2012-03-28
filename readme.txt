@@ -5,7 +5,7 @@ Requires at least: 3.0
 Tested up to: 3.3.1
 Stable tag: 0.3
 
-This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion, Hulu, Blip.tv, SoundCloud, Mixcloud, Bandcamp, Official.fm player widget and puts them in the meta-tags.
+This retrieves the artwork of embedded media widgets (e.g. Vimeo, Blip.tv, Hulu, SoundCloud, Mixcloud, Bandcamp) and creates a set of OpenGraph meta-tags that social media sites as Facebook can use to style the link to your content.
 
 == Description ==
 
