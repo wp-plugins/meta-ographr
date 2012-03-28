@@ -1,11 +1,11 @@
 === OGraphr ===
 Contributors: yathosho
-Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion
+Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion, blip.tv, hulu, official.fm
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.2.8
+Stable tag: 0.3
 
-This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion, SoundCloud, Mixcloud, Bandcamp player widget and puts them in the meta-tags.
+This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion, Hulu, Blip.tv, SoundCloud, Mixcloud, Bandcamp, Official.fm player widget and puts them in the meta-tags.
 
 == Description ==
 
@@ -16,9 +16,12 @@ Currently, these widgets are supported:
 *  SoundCloud (HTML5 and Flash), single tracks and albums
 *  Mixcloud (APIv2 players)
 *  Bandcamp, single tracks and albums - requires valid Bandcamp API key!
+*  Official.fm
 *  Vimeo (embed and iframe players)
 *  YouTube (embed and iframe players)
 *  DailyMotion
+*  Hulu
+*  Blip.tv
 
 OpenGraph tags will be used by social-media sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you will hopeful find this plug-in useful.
 
@@ -56,6 +59,17 @@ their platform. In order to get an API key, you have to apply via email.
 
 
 == Changelog ==
+
+=0.3=
+* added support for Blip.tv and Hulu
+* added support for Official.fm (not yet enabled, their API is broken)
+* added %screenshot% placeholder for website thumbnail
+* added settings link in plugins overview
+* fixed detection for featured image
+* improved debugger output
+* improved regexp to support https throughout
+* grouped API keys in options page
+* removed option to use old bandcamp detection
 
 = 0.2.8 =
 * alternative bandcamp detection set to default

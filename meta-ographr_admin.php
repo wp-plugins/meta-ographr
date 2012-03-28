@@ -80,8 +80,11 @@ function ographr_restore_defaults() {
 						"enable_youtube" => "1",
 						"enable_vimeo" => "1",
 						"enable_dailymotion" => "1",
+						"enable_bliptv" => "1",
+						"enable_hulu" => "1",
 						"enable_soundcloud" => "1",
 						"enable_mixcloud" => "1",
+						"enable_official" => "0",
 						"enable_bandcamp" => "1",
 						"add_comment" => "1",
 						"fb_site_name" => "%sitename%",
@@ -168,9 +171,18 @@ function ographr_render_form() {
 					<th scope="row">Thumbnail</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[website_thumbnail]" value="<?php echo $options['website_thumbnail']; ?>" /> (optional)<br/>
-						<label><input name="ographr_options[not_always]" type="checkbox" value="1" <?php if (isset($options['not_always'])) { checked('1', $options['not_always']); } ?> /> Only add when post contains no images </label>&nbsp;
+						<code>%screenshot%</code> &#8211; your theme's default screenshot
 					</td>
 				</tr>
+				
+				<!-- Textbox Control -->
+				<tr>
+					<th scope="row">&nbsp;</th>
+					<td>
+						<label><input name="ographr_options[not_always]" type="checkbox" value="1" <?php if (isset($options['not_always'])) { checked('1', $options['not_always']); } ?> /> Only add thumbnail when post contains no images </label>
+					</td>
+				</tr>
+
 				
 				<!-- Checkbox Buttons -->
 				<tr valign="top">
@@ -182,7 +194,10 @@ function ographr_render_form() {
 						<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label>
+						<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label>&nbsp;
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); } ?> /> Add post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label>
 					</td>
 				</tr>
 				
@@ -191,7 +206,13 @@ function ographr_render_form() {
 					<th scope="row">Triggers</th>
 					<td>
 						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_bliptv]" type="checkbox" value="1" <?php if (isset($options['enable_bliptv'])) { checked('1', $options['enable_bliptv']); } ?> /> Blip.tv </label>&nbsp;
+						
+						<!-- Checkbox -->
 						<label><input name="ographr_options[enable_dailymotion]" type="checkbox" value="1" <?php if (isset($options['enable_dailymotion'])) { checked('1', $options['enable_dailymotion']); } ?> /> Dailymotion </label>&nbsp;
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_hulu]" type="checkbox" value="1" <?php if (isset($options['enable_hulu'])) { checked('1', $options['enable_hulu']); } ?> /> Hulu </label>&nbsp;
 						
 						<!-- Checkbox -->
 						<label><input name="ographr_options[enable_vimeo]" type="checkbox" value="1" <?php if (isset($options['enable_vimeo'])) { checked('1', $options['enable_vimeo']); } ?> /> Vimeo </label>&nbsp;
@@ -204,6 +225,9 @@ function ographr_render_form() {
 						
 						<!-- Checkbox -->
 						<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> /> Mixcloud </label>&nbsp;
+						
+						<!-- Checkbox -->
+						<label><input name="ographr_options[enable_official]" type="checkbox" value="1" <?php if (isset($options['enable_official'])) { checked('1', $options['enable_official']); } ?> disabled="disabled" /> Official.fm </label>&nbsp;
 						
 						<!-- Checkbox -->
 						<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud </label>
@@ -240,37 +264,39 @@ function ographr_render_form() {
 					</td>
 				</tr>
 				
-				<!-- //// BANDCAMP //// -->
+				<!-- //// API Keys //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
-					<th scope="row"><h3>Bandcamp</h3></th>
+					<th scope="row"><h3>API Keys</h3></th>
 				</tr>
 			
+				<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp offers only limited access to their API and in any case you need to provide a valid developer key to make use of this feature. You can <a href="http://bandcamp.com/developer#key_request" target="_blank">apply</a> for a key by email.</th></div></td></tr>
+				
+				<tr><td><th scope="row"><div style="margin-top:-15px;">For all other services, you can use the provided API keys. However, if you have reason to use your own ones, click to apply for <a href="http://soundcloud.com/you/apps" target="_blank">SoundCloud</a> or <a href="http://official.fm/developers/manage#register" target="_blank">Official.fm</a> developer keys.</th></div></td></tr>
+				
 				<!-- Textbox Control -->
 				<tr>
-					<th scope="row"><a name="bandcamp_api_key">&nbsp;</a>Bandcamp API Key</th>
+					<th scope="row"><a name="bandcamp_api_key">&nbsp;</a>Bandcamp</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /> (<strong>required</strong>)
 					</td>
 				</tr>
 				
-					<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp offers only limited access to their API and in any case you need to provide a valid developer key. You can apply for one <a href="http://bandcamp.com/developer#key_request" target="_blank">here</a>.</th></div></td></tr>
-				
-				<!-- //// SOUNDCLOUD //// -->
-				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
-				<tr valign="top" style="border-top:#dddddd 1px solid;">
-					<th scope="row"><h3>SoundCloud</h3></th>
-				</tr>
-			
 				<!-- Textbox Control -->
 				<tr valign="top">
-					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud API Key</th>
+					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /> (optional)
 					</td>
 				</tr>
-			
-				<tr><td><th scope="row"><div style="margin-top:-10px;">If for some reason you prefer using your own SoundCloud API key, you can specify it above. You can get one <a href="http://soundcloud.com/you/apps" target="_blank">here</a>.</th></div></td></tr>
+									
+				<!-- Textbox Control -->
+				<tr valign="top">
+					<th scope="row"><a name="official_api_key">&nbsp;</a>Official.fm</th>
+					<td>
+						<input type="text" size="57" name="ographr_options[official_api]" value="<?php if ($options['official_api']) { echo $options['official_api']; } else { echo OFFICIAL_API_KEY; } ?>" /> (optional)
+					</td>
+				</tr>
 
 				<!-- //// FACEBOOK //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
@@ -384,20 +410,10 @@ function ographr_validate_options($input) {
 	$input['website_description'] =  htmlentities($input['website_description']);
 	$input['soundcloud_api'] =  htmlentities($input['soundcloud_api']);
 	$input['bandcamp_api'] =  htmlentities($input['bandcamp_api']);
+	$input['official_api'] =  htmlentities($input['official_api']);
 	$input['fb_site_name'] =  htmlentities($input['fb_site_name']);
 	$input['fb_admins'] =  htmlentities($input['fb_admins']);
 	$input['fb_app_id'] =  htmlentities($input['fb_app_id']);
 	return $input;
 }
 
-// Display a Settings link on the main Plugins page
-function ographr_plugin_action_links( $links, $file ) {
-
-	if ( $file == plugin_basename( __FILE__ ) ) {
-		$ographr_links = '<a href="'.get_admin_url().'options-general.php?page=plugin-options-starter-kit/plugin-options-starter-kit.php">'.__('Settings').'</a>';
-		// make the 'Settings' link appear first
-		array_unshift( $links, $ographr_links );
-	}
-
-	return $links;
-}
