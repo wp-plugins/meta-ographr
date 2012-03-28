@@ -60,7 +60,7 @@ their platform. In order to get an API key, you have to apply via email.
 
 == Changelog ==
 
-=0.3=
+= 0.3 =
 * added support for Blip.tv and Hulu
 * added support for Official.fm (not yet enabled, their API is broken)
 * added %screenshot% placeholder for website thumbnail
