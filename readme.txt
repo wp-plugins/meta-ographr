@@ -3,9 +3,9 @@ Contributors: yathosho
 Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion, blip.tv, hulu, official.fm
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.3
+Stable tag: 0.3.1
 
-This retrieves the artwork of embedded Vimeo, YouTube, Dailymotion, Hulu, Blip.tv, SoundCloud, Mixcloud, Bandcamp, Official.fm player widget and puts them in the meta-tags.
+This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
 == Description ==
 
@@ -60,7 +60,11 @@ their platform. In order to get an API key, you have to apply via email.
 
 == Changelog ==
 
-=0.3=
+= 0.3.1 =
+* added option to limit User Agent access to Facebook (careful with that axe, Eugene)
+* modified options page
+
+= 0.3 =
 * added support for Blip.tv and Hulu
 * added support for Official.fm (not yet enabled, their API is broken)
 * added %screenshot% placeholder for website thumbnail
@@ -68,7 +72,6 @@ their platform. In order to get an API key, you have to apply via email.
 * fixed detection for featured image
 * improved debugger output
 * improved regexp to support https throughout
-* grouped API keys in options page
 * removed option to use old bandcamp detection
 
 = 0.2.8 =

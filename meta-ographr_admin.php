@@ -86,6 +86,7 @@ function ographr_restore_defaults() {
 						"enable_mixcloud" => "1",
 						"enable_official" => "0",
 						"enable_bandcamp" => "1",
+						"facebook_ua" => "0",
 						"add_comment" => "1",
 						"fb_site_name" => "%sitename%",
 						"fb_type" => "_none"
@@ -164,7 +165,7 @@ function ographr_render_form() {
 				</tr>
 				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_name = get_option('blogname')) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
 					<code>%siteurl%</code> &#8211; the URL of your blog (<em><? $wp_url = get_option('home'); $wp_url = (preg_replace('/https?:\/\//', NULL, $wp_url)); echo $wp_url; ?></em>)<br/>
-						<code>%postname%</code> &#8211; page or post title</th></div></td></tr>
+						<code>%postname%</code> &#8211; page or post title</div></td></tr>
 				
 				<!-- Textbox Control -->
 				<tr>
@@ -236,6 +237,15 @@ function ographr_render_form() {
 				
 				<!-- Checkbox Buttons -->
 				<tr valign="top">
+					<th scope="row">User Agent</th>
+					<td>
+						<!-- Checkbox -->
+						<label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Only show on Facebook </label>
+					</td>
+				</tr>
+				
+				<!-- Checkbox Buttons -->
+				<tr valign="top">
 					<th scope="row">Advertisement</th>
 					<td>
 						<!-- Checkbox -->
@@ -270,13 +280,11 @@ function ographr_render_form() {
 					<th scope="row"><h3>API Keys</h3></th>
 				</tr>
 			
-				<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp offers only limited access to their API and in any case you need to provide a valid developer key to make use of this feature. You can <a href="http://bandcamp.com/developer#key_request" target="_blank">apply</a> for a key by email.</th></div></td></tr>
-				
-				<tr><td><th scope="row"><div style="margin-top:-15px;">For all other services, you can use the provided API keys. However, if you have reason to use your own ones, click to apply for <a href="http://soundcloud.com/you/apps" target="_blank">SoundCloud</a> or <a href="http://official.fm/developers/manage#register" target="_blank">Official.fm</a> developer keys.</th></div></td></tr>
+				<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp offers only limited access to their API and in any case you need to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. All other services can be used with the provided API keys.</th></div></td></tr>
 				
 				<!-- Textbox Control -->
 				<tr>
-					<th scope="row"><a name="bandcamp_api_key">&nbsp;</a>Bandcamp</th>
+					<th scope="row"><a name="bandcamp_api_key">&nbsp;</a>Bandcamp (<a href="http://bandcamp.com/developer#key_request" target="_blank">?</a>)</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /> (<strong>required</strong>)
 					</td>
@@ -284,7 +292,7 @@ function ographr_render_form() {
 				
 				<!-- Textbox Control -->
 				<tr valign="top">
-					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud</th>
+					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud (<a href="http://soundcloud.com/you/apps" target="_blank">?</a>)</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /> (optional)
 					</td>
@@ -292,7 +300,7 @@ function ographr_render_form() {
 									
 				<!-- Textbox Control -->
 				<tr valign="top">
-					<th scope="row"><a name="official_api_key">&nbsp;</a>Official.fm</th>
+					<th scope="row"><a name="official_api_key">&nbsp;</a>Official.fm (<a href="http://official.fm/developers/manage#register" target="_blank">?</a>)</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[official_api]" value="<?php if ($options['official_api']) { echo $options['official_api']; } else { echo OFFICIAL_API_KEY; } ?>" /> (optional)
 					</td>
