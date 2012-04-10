@@ -3,7 +3,7 @@ Contributors: yathosho
 Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion, blip.tv, hulu, official.fm
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.3.1
+Stable tag: 0.3.2
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -14,8 +14,8 @@ This plugin adds several OpenGraph meta-tags to the header of your theme. These 
 Currently, these widgets are supported:
 
 *  SoundCloud (HTML5 and Flash), single tracks and albums
-*  Mixcloud (APIv2 players)
-*  Bandcamp, single tracks and albums - requires valid Bandcamp API key!
+*  Mixcloud
+*  Bandcamp, single tracks and albums (requires valid API key!)
 *  Official.fm
 *  Vimeo (embed and iframe players)
 *  YouTube (embed and iframe players)
@@ -60,13 +60,20 @@ their platform. In order to get an API key, you have to apply via email.
 
 == Changelog ==
 
+= 0.3.2 =
+* added options to limit User Agent access to Google+ and LinkedIn
+* added option to control emoticon filtering
+* added Gravatar filtering
+* improved emoticon detection
+* modified option page dialogs
+
 = 0.3.1 =
-* added option to limit User Agent access to Facebook (careful with that axe, Eugene)
+* added option to limit User Agent access to Facebook (careful with that axe, Eugene!)
 * modified options page
 
 = 0.3 =
 * added support for Blip.tv and Hulu
-* added support for Official.fm (not yet enabled, their API is broken)
+* added support for Official.fm (not yet enabled, API is broken)
 * added %screenshot% placeholder for website thumbnail
 * added settings link in plugins overview
 * fixed detection for featured image

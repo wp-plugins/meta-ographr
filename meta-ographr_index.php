@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.3.1
+Version: 0.3.2
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.3.1");
+    define("OGRAPHR_VERSION", "0.3.2");
 
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
@@ -298,7 +298,9 @@ class OGraphr_Core {
 		
 		$user_agent = $_SERVER['HTTP_USER_AGENT'];
 		if(((preg_match('/facebookexternalhit/i',$user_agent)) && ($facebook_ua = $options['facebook_ua']))
-		|| (!$facebook_ua = $options['facebook_ua'])
+		|| ((!$facebook_ua = $options['facebook_ua']) && (!$gplus_ua = $options['gplus_ua']) && (!$linkedin_ua = $options['linkedin_ua']))
+		|| ((preg_match('/Mozilla\/5/i',$user_agent)) && ($gplus_ua = $options['gplus_ua']))
+		|| ((preg_match('/LinkedInBot/i',$user_agent)) && ($linkedin_ua = $options['linkedin_ua']))
 		|| (OGRAPHR_DEBUG == TRUE)) {
 			// Get the post ID if none is provided
 			if($post_id==null OR $post_id=='') $post_id = get_the_ID();
@@ -328,9 +330,19 @@ class OGraphr_Core {
 			// debugging?
 			if(OGRAPHR_DEBUG == TRUE) {
 				print "\n\r<!-- OGRAPHR v" . OGRAPHR_VERSION ." DEBUGGER -->\n\r";
-				print "<!-- Facebook UA Limit: ";
-				if ($facebook_ua) { print "active"; } else { print "inactive"; }
-				print " -->\n\r";
+				
+				if ($options['filter_smilies']) { print "<!-- Emoticons are filtered -->\n\r"; }
+				if ($options['filter_gravatar']) { print "<!-- Avatars are filtered -->\n\r"; }
+				
+				if (($facebook_ua) || ($gplus_ua) || ($official_api)) {
+					if ($user_agent) { print "<!-- User Agent: $user_agent -->\n\r"; }
+					if ($facebook_ua) { print "<!-- Limited to Facebook User Agent -->\n\r"; }
+					if ($gplus_ua) { print "<!-- Limited to Google+ User Agent -->\n\r"; }
+					if ($linkedin_ua) { print "<!-- Limited to LinkedIn User Agent -->\n\r"; }
+				}
+				 
+
+				
 				if ($soundcloud_api) { print "<!-- SoundCloud API key: $soundcloud_api -->\n\r"; }
 				if ($bandcamp_api) { print "<!-- Bandcamp API key: $bandcamp_api -->\n\r"; }
 				if ($official_api) { print "<!-- Official.fm API key: $official_api -->\n\r"; }
@@ -344,11 +356,28 @@ class OGraphr_Core {
 				  	if(OGRAPHR_DEBUG == TRUE) {
 						print "<!-- Image tag: $match -->\n\r";
 					}
+					
+					$no_smilies = FALSE;
+					$no_gravatar = FALSE;
+					
 					// filter Wordpress smilies
-					preg_match('/\/images\/smilies\/icon_.+/', $match, $filter);
-					if (!$filter[0]) {
+					preg_match('/\/wp-includes\/images\/smilies\/icon_.+/', $match, $filter);
+					if ((!$options['filter_smilies']) || (!$filter[0])) {
+						//$og_thumbnails[] = $match;
+						$no_smilies = TRUE;
+					}
+					
+					// filter Gravatar
+					preg_match('/https?:\/\/w*.?gravatar.com\/avatar\/.*/', $match, $filter);
+					if ((!$options['filter_gravatar']) || (!$filter[0])) {
+						//$og_thumbnails[] = $match;
+						$no_gravatar = TRUE;
+					}
+					
+					if (($no_gravatar) && ($no_smilies)) {
 						$og_thumbnails[] = $match;
 					}
+					
 				}
 	
 				// Get featured image
@@ -701,13 +730,9 @@ class OGraphr_Core {
 					if ($fb_app_id = $options['fb_app_id']) {
 						print "<meta property=\"fb:app_id\" content=\"$fb_app_id\" />\n\r";
 					}
-				
-					/*
-					$description = $_SERVER['HTTP_USER_AGENT'];
-					if(preg_match('/facebookexternalhit/i',$description)) {
-						print "<meta property=\"og:description\" content=\"facebook\" />\n\r";
-					}
-					*/
+					
+					//print "<meta property=\"og:description\" content=\"$user_agent\" />\n\r";
+
 				}
 			}
 };

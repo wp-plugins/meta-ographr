@@ -86,7 +86,11 @@ function ographr_restore_defaults() {
 						"enable_mixcloud" => "1",
 						"enable_official" => "0",
 						"enable_bandcamp" => "1",
+						"filter_smilies" => "1",
+						"filter_gravatar" => "1",
 						"facebook_ua" => "0",
+						"gplus_ua" => "0",
+						"linkedin_ua" => "0",
 						"add_comment" => "1",
 						"fb_site_name" => "%sitename%",
 						"fb_type" => "_none"
@@ -139,7 +143,7 @@ function ographr_render_form() {
 		<!-- Display Plugin Icon, Header, and Description -->
 		<div class="icon32" id="icon-options-general"><br></div>
 		<h2>OGraphr Settings</h2>
-		<p style="font-family:Georgia,serif;font-style:italic;color:grey;">version <? echo OGRAPHR_VERSION ?> by <a href="https://whyeye.org" target="_blank" style="color:grey;">Jan T. Sott</a></p>
+		<p style="font-family:Georgia,serif;font-style:italic;color:grey;"><a href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank" style="color:grey;">OGraphr <? echo OGRAPHR_VERSION ?></a> by Jan T. Sott</p>
 
 		<!-- Beginning of the Plugin Options Form -->
 		<form method="post" action="options.php">
@@ -151,8 +155,16 @@ function ographr_render_form() {
 			<table class="form-table">
 				
 				<!-- //// GENERAL //// -->
-				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
-				<tr valign="top" style="border-top:#dddddd 1px solid;">
+				<!-- Checkbox Buttons -->
+				<tr valign="top" style="border-bottom:#dddddd 1px solid;">
+					<th scope="row">&nbsp;</th>
+					<td>
+						<!-- Checkbox -->
+						<label><input name="ographr_options[advanced_opt]" type="hidden" value="1" <?php if (isset($options['advanced_opt'])) { checked('1', $options['advanced_opt']); } ?> disabled="disabled" /> <!--Show advanced options--> </label>
+					</td>
+				</tr>
+				
+				<tr valign="top">
 					<th scope="row"><h3>General</h3></th>
 				</tr>
 				
@@ -222,7 +234,7 @@ function ographr_render_form() {
 						<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> /> YouTube </label><br/>
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if ((isset($options['enable_bandcamp'])) && ($options['bandcamp_api'])) { checked('1', $options['enable_bandcamp']); } ?> /> Bandcamp <? if(!$options['bandcamp_api']) { echo '(requires <a href="#bandcamp_api_key">API key</a>)';} ?></label>&nbsp;
+						<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if ((isset($options['enable_bandcamp'])) && ($options['bandcamp_api'])) { checked('1', $options['enable_bandcamp']); } ?> /> Bandcamp </label>&nbsp;
 						
 						<!-- Checkbox -->
 						<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> /> Mixcloud </label>&nbsp;
@@ -231,16 +243,32 @@ function ographr_render_form() {
 						<label><input name="ographr_options[enable_official]" type="checkbox" value="1" <?php if (isset($options['enable_official'])) { checked('1', $options['enable_official']); } ?> disabled="disabled" /> Official.fm </label>&nbsp;
 						
 						<!-- Checkbox -->
-						<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud </label>
+						<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud </label><br/>
+						<span style="color:red;font-size:x-small;"><? if(!$options['bandcamp_api']) { echo 'Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a>';} ?></span>
 					</td>
 				</tr>
 				
 				<!-- Checkbox Buttons -->
 				<tr valign="top">
-					<th scope="row">User Agent</th>
+					<th scope="row">Filters</th>
 					<td>
 						<!-- Checkbox -->
-						<label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Only show on Facebook </label>
+						<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
+						<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label>
+					</td>
+				</tr>
+	
+				<!-- Checkbox Buttons -->
+				<tr valign="top">
+					<th scope="row">User Agent Access</th>
+					<td>
+						<!-- Checkbox -->
+						<label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Facebook </label>&nbsp;
+						<!-- Checkbox -->
+						<label><input name="ographr_options[gplus_ua]" type="checkbox" value="1" <?php if (isset($options['gplus_ua'])) { checked('1', $options['gplus_ua']); } ?> /> Google+ </label>&nbsp;
+							<!-- Checkbox -->
+							<label><input name="ographr_options[linkedin_ua]" type="checkbox" value="1" <?php if (isset($options['linkedin_ua'])) { checked('1', $options['linkedin_ua']); } ?> /> LinkedIn </label><br/>
+							<small>Google+ does currently not use a unique <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank">user-agent</a>, hence the detection is imprecise</small>
 					</td>
 				</tr>
 				
@@ -292,17 +320,17 @@ function ographr_render_form() {
 				
 				<!-- Textbox Control -->
 				<tr valign="top">
-					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud (<a href="http://soundcloud.com/you/apps" target="_blank">?</a>)</th>
-					<td>
-						<input type="text" size="57" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /> (optional)
-					</td>
-				</tr>
-									
-				<!-- Textbox Control -->
-				<tr valign="top">
 					<th scope="row"><a name="official_api_key">&nbsp;</a>Official.fm (<a href="http://official.fm/developers/manage#register" target="_blank">?</a>)</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[official_api]" value="<?php if ($options['official_api']) { echo $options['official_api']; } else { echo OFFICIAL_API_KEY; } ?>" /> (optional)
+					</td>
+				</tr>
+				
+				<!-- Textbox Control -->
+				<tr valign="top">
+					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud (<a href="http://soundcloud.com/you/apps" target="_blank">?</a>)</th>
+					<td>
+						<input type="text" size="57" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /> (optional)
 					</td>
 				</tr>
 
@@ -368,26 +396,27 @@ function ographr_render_form() {
 							<option value='website' <?php selected('website', $options['fb_type']); ?>>website</option>
 
 						</select>
-						(optional)
+						(optional)<br/>
+						<small>Pages of type <em>article</em> do not have publishing rights, and will not show up on user's profiles</small>
 					</td>
 					
 					<!-- Textbox Control -->
 					<tr valign="top">
 						<th scope="row">Facebook Admin ID</th>
 						<td>
-							<input type="text" size="57" name="ographr_options[fb_admins]" value="<?php echo $options['fb_admins']; ?>" />  (optional)
+							<input type="text" size="57" name="ographr_options[fb_admins]" value="<?php echo $options['fb_admins']; ?>" />  (optional)<br/>
+							<small>If you administer a page for your blog on Facebook, you can enter your <a href="http://developers.facebook.com/docs/reference/api/user/" targe="_blank">User ID</a></small>
 						</td>
 					</tr>
-					<tr><td><th scope="row"><div style="margin-top:-10px;">If you administer a page for your blog on Facebook, you can enter your <a href="http://developers.facebook.com/docs/reference/api/user/" targe="_blank">User ID</a></th></div></td></tr>
 
 					<!-- Textbox Control -->
 					<tr valign="top">
 						<th scope="row">Facebook Application ID</th>
 						<td>
-							<input type="text" size="57" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /> (optional)
+							<input type="text" size="57" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /> (optional)<br/>
+							<small>If your blog uses a Facebook app, you can enter your <a href="https://developers.facebook.com/apps" target="_blank">Application ID</a></small>
 						</td>
 					</tr>
-					<tr><td><th scope="row"><div style="margin-top:-10px;">If your blog uses a Facebook app, you can enter your <a href="https://developers.facebook.com/apps" target="_blank">Application ID</a></th></div></td></tr>
 
 				<tr><td colspan="2"><div style="margin-top:10px;"></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
