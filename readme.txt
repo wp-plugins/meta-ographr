@@ -60,6 +60,9 @@ their platform. In order to get an API key, you have to apply via email.
 
 == Changelog ==
 
+= 0.3.3 =
+* added option to show/hide advanced features
+
 = 0.3.2 =
 * added options to limit User Agent access to Google+ and LinkedIn
 * added option to control emoticon filtering

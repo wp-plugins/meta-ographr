@@ -37,6 +37,7 @@
 register_uninstall_hook(__FILE__, 'ographr_delete_plugin_options');
 add_action('admin_init', 'ographr_init' );
 add_action('admin_menu', 'ographr_add_options_page');
+add_action('admin_footer', 'ographr_javascript');
 add_filter( 'plugin_action_links', 'ographr_plugin_action_links', 10, 2 );
 
 // --------------------------------------------------------------------------------------
@@ -66,7 +67,8 @@ function ographr_restore_defaults() {
 	$tmp = get_option('ographr_options');
     if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
 		delete_option('ographr_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
-		$arr = array(	"website_title" => "%postname%",
+		$arr = array(	"advanced_opt" => "0",
+						"website_title" => "%postname%",
 						"website_thumbnail" => "",
 						"bandcamp_api" => "",
 						"soundcloud_api" => SOUNDCLOUD_API_KEY,
@@ -143,7 +145,7 @@ function ographr_render_form() {
 		<!-- Display Plugin Icon, Header, and Description -->
 		<div class="icon32" id="icon-options-general"><br></div>
 		<h2>OGraphr Settings</h2>
-		<p style="font-family:Georgia,serif;font-style:italic;color:grey;"><a href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank" style="color:grey;">OGraphr <? echo OGRAPHR_VERSION ?></a> by Jan T. Sott</p>
+		<p style="font-family:Georgia,serif;font-style:italic;color:grey;"><? echo OGRAPHR_VERSION ?> by Jan T. Sott</p>
 
 		<!-- Beginning of the Plugin Options Form -->
 		<form method="post" action="options.php">
@@ -160,7 +162,7 @@ function ographr_render_form() {
 					<th scope="row">&nbsp;</th>
 					<td>
 						<!-- Checkbox -->
-						<label><input name="ographr_options[advanced_opt]" type="hidden" value="1" <?php if (isset($options['advanced_opt'])) { checked('1', $options['advanced_opt']); } ?> disabled="disabled" /> <!--Show advanced options--> </label>
+						<label><input name="ographr_options[advanced_opt]" type="checkbox" value="1" id="show_advanced" <?php if (isset($options['advanced_opt'])) { checked('1', $options['advanced_opt']); }  ?> /> Show advanced options </label>
 					</td>
 				</tr>
 				
@@ -189,7 +191,7 @@ function ographr_render_form() {
 				</tr>
 				
 				<!-- Textbox Control -->
-				<tr>
+				<tr id="advanced_opt">
 					<th scope="row">&nbsp;</th>
 					<td>
 						<label><input name="ographr_options[not_always]" type="checkbox" value="1" <?php if (isset($options['not_always'])) { checked('1', $options['not_always']); } ?> /> Only add thumbnail when post contains no images </label>
@@ -215,7 +217,7 @@ function ographr_render_form() {
 				</tr>
 				
 				<!-- Checkbox Buttons -->
-				<tr valign="top">
+				<tr valign="top" id="advanced_opt">
 					<th scope="row">Triggers</th>
 					<td>
 						<!-- Checkbox -->
@@ -249,7 +251,7 @@ function ographr_render_form() {
 				</tr>
 				
 				<!-- Checkbox Buttons -->
-				<tr valign="top">
+				<tr valign="top" id="advanced_opt">
 					<th scope="row">Filters</th>
 					<td>
 						<!-- Checkbox -->
@@ -259,8 +261,8 @@ function ographr_render_form() {
 				</tr>
 	
 				<!-- Checkbox Buttons -->
-				<tr valign="top">
-					<th scope="row">User Agent Access</th>
+				<tr valign="top" id="advanced_opt">
+					<th scope="row">Limit Access</th>
 					<td>
 						<!-- Checkbox -->
 						<label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Facebook </label>&nbsp;
@@ -268,12 +270,12 @@ function ographr_render_form() {
 						<label><input name="ographr_options[gplus_ua]" type="checkbox" value="1" <?php if (isset($options['gplus_ua'])) { checked('1', $options['gplus_ua']); } ?> /> Google+ </label>&nbsp;
 							<!-- Checkbox -->
 							<label><input name="ographr_options[linkedin_ua]" type="checkbox" value="1" <?php if (isset($options['linkedin_ua'])) { checked('1', $options['linkedin_ua']); } ?> /> LinkedIn </label><br/>
-							<small>Google+ does currently not use a unique <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank">user-agent</a>, hence the detection is imprecise</small>
+							<small>Google+ does currently not use a unique <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank">user-agent</a>, hence the detection is unreliable</small>
 					</td>
 				</tr>
 				
 				<!-- Checkbox Buttons -->
-				<tr valign="top">
+				<tr valign="top" id="advanced_opt">
 					<th scope="row">Advertisement</th>
 					<td>
 						<!-- Checkbox -->
@@ -284,7 +286,7 @@ function ographr_render_form() {
 				<!-- //// FRONT PAGE //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
 				<tr valign="top" style="border-top:#dddddd 1px solid;">
-					<th scope="row"><h3>Front page</h3></th>
+					<th scope="row"><h3>Front Page</h3></th>
 				</tr>
 			
 				<tr>
@@ -294,7 +296,7 @@ function ographr_render_form() {
 					</td>
 				</tr>
 				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%tagline%</code> &#8211; your blog's tagline (<em><? if(get_bloginfo('description')) { echo get_bloginfo('description'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</th></div></td></tr>
-				<tr valign="top">
+				<tr valign="top" id="advanced_opt">
 					<th scope="row">Meta-tags</th>
 					<td>
 
@@ -304,14 +306,14 @@ function ographr_render_form() {
 				
 				<!-- //// API Keys //// -->
 				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
-				<tr valign="top" style="border-top:#dddddd 1px solid;">
+				<tr valign="top" style="border-top:#dddddd 1px solid;" id="advanced_opt">
 					<th scope="row"><h3>API Keys</h3></th>
 				</tr>
 			
-				<tr><td><th scope="row"><div style="margin-top:-15px;">Bandcamp offers only limited access to their API and in any case you need to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. All other services can be used with the provided API keys.</th></div></td></tr>
+				<tr id="advanced_opt"><td><th scope="row"><div style="margin-top:-15px;">Bandcamp offers only limited access to their API and in any case you need to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. All other services can be used with the provided API keys.</th></div></td></tr>
 				
 				<!-- Textbox Control -->
-				<tr>
+				<tr id="advanced_opt">
 					<th scope="row"><a name="bandcamp_api_key">&nbsp;</a>Bandcamp (<a href="http://bandcamp.com/developer#key_request" target="_blank">?</a>)</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /> (<strong>required</strong>)
@@ -319,7 +321,7 @@ function ographr_render_form() {
 				</tr>
 				
 				<!-- Textbox Control -->
-				<tr valign="top">
+				<tr valign="top" id="advanced_opt">
 					<th scope="row"><a name="official_api_key">&nbsp;</a>Official.fm (<a href="http://official.fm/developers/manage#register" target="_blank">?</a>)</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[official_api]" value="<?php if ($options['official_api']) { echo $options['official_api']; } else { echo OFFICIAL_API_KEY; } ?>" /> (optional)
@@ -327,7 +329,7 @@ function ographr_render_form() {
 				</tr>
 				
 				<!-- Textbox Control -->
-				<tr valign="top">
+				<tr valign="top" id="advanced_opt">
 					<th scope="row"><a name="soundcloud_api_key">&nbsp;</a>SoundCloud (<a href="http://soundcloud.com/you/apps" target="_blank">?</a>)</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /> (optional)
@@ -335,23 +337,23 @@ function ographr_render_form() {
 				</tr>
 
 				<!-- //// FACEBOOK //// -->
-				<tr><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
-				<tr valign="top" style="border-top:#dddddd 1px solid;">
-					<th scope="row"><h3>Facebook (Advanced Users)</h3></th>
+				<tr id="advanced_opt"><td colspan="2"><div style="margin-top:10px;"><th scope="row"></th></div></td></tr>
+				<tr valign="top" style="border-top:#dddddd 1px solid;" id="advanced_opt">
+					<th scope="row"><h3>Facebook</h3></th>
 				</tr>
 				
 				<!-- og:site_name -->
-				<tr valign="top">
+				<tr valign="top" id="advanced_opt">
 					<th scope="row">Human-readable site name</th>
 					<td>
 						<input type="text" size="57" name="ographr_options[fb_site_name]" value="<?php echo $options['fb_site_name']; ?>" /> (optional)
 					</td>
 				</tr>
-				<tr><td><th scope="row"><div style="margin-top:-15px;"><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
+				<tr><td><th scope="row"><div style="margin-top:-15px;" id="advanced_opt"><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
 					<code>%siteurl%</code> &#8211; the URL of your blog (<em><? echo $wp_url; ?></em>)<br/></th></div></td></tr>
 				
 				<!-- Select Drop-Down Control -->
-				<tr>
+				<tr id="advanced_opt">
 					<th scope="row">Object type (<a href="http://developers.facebook.com/docs/opengraphprotocol/#types" target="_blank">?</a>)</th>
 					<td>
 						<select name='ographr_options[fb_type]'>
@@ -401,7 +403,7 @@ function ographr_render_form() {
 					</td>
 					
 					<!-- Textbox Control -->
-					<tr valign="top">
+					<tr valign="top" id="advanced_opt">
 						<th scope="row">Facebook Admin ID</th>
 						<td>
 							<input type="text" size="57" name="ographr_options[fb_admins]" value="<?php echo $options['fb_admins']; ?>" />  (optional)<br/>
@@ -410,7 +412,7 @@ function ographr_render_form() {
 					</tr>
 
 					<!-- Textbox Control -->
-					<tr valign="top">
+					<tr valign="top" id="advanced_opt">
 						<th scope="row">Facebook Application ID</th>
 						<td>
 							<input type="text" size="57" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /> (optional)<br/>
@@ -418,11 +420,11 @@ function ographr_render_form() {
 						</td>
 					</tr>
 
-				<tr><td colspan="2"><div style="margin-top:10px;"></div></td></tr>
-				<tr valign="top" style="border-top:#dddddd 1px solid;">
+				<tr  id="advanced_opt"><td colspan="2"><div style="margin-top:10px;"></div></td></tr>
+				<tr valign="top" style="border-top:#dddddd 1px solid;" >
 					<th scope="row"><!--Database Options--></th>
 					<td>
-						<label><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>
+						<label id="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" id="advanced_opt" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>
 						<br />
 					</td>
 				</tr>
@@ -454,3 +456,16 @@ function ographr_validate_options($input) {
 	return $input;
 }
 
+function ographr_javascript() {
+	print '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>';
+	print '<script type="text/javascript">';
+	print '$(document).ready(function() {';
+	print "		if (! $('#show_advanced').attr('checked') ) {";
+	print "			$('div.nothing,#advanced_opt').hide();";
+	print "		}";
+	print "		$('#show_advanced').click(function(){";
+	print "			$('div.nothing,#advanced_opt').fadeToggle('slow');";
+	print '		});';
+	print '});';
+    print '</script>';
+}

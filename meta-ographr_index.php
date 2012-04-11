@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell and Matthias Gutjahr!
-Version: 0.3.2
+Version: 0.3.3
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.3.2");
+    define("OGRAPHR_VERSION", "0.3.3");
 
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
