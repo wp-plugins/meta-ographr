@@ -3,7 +3,7 @@ Contributors: yathosho
 Tags: opengraph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion, blip.tv, hulu, official.fm
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.3.3
+Stable tag: 0.3.4
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -59,6 +59,10 @@ their platform. In order to get an API key, you have to apply via email.
 
 
 == Changelog ==
+
+= 0.3.4 =
+* fixed bug in YouTube image URL
+* modified option page dialog
 
 = 0.3.3 =
 * added option to show/hide advanced features

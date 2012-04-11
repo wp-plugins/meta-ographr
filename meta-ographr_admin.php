@@ -270,7 +270,7 @@ function ographr_render_form() {
 						<label><input name="ographr_options[gplus_ua]" type="checkbox" value="1" <?php if (isset($options['gplus_ua'])) { checked('1', $options['gplus_ua']); } ?> /> Google+ </label>&nbsp;
 							<!-- Checkbox -->
 							<label><input name="ographr_options[linkedin_ua]" type="checkbox" value="1" <?php if (isset($options['linkedin_ua'])) { checked('1', $options['linkedin_ua']); } ?> /> LinkedIn </label><br/>
-							<small>Google+ does currently not use a unique <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank">user-agent</a>, hence the detection is unreliable</small>
+							<small>Google+ is currently not using a unique <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank">user-agent</a>, instead shares one with versions of Firefox</small>
 					</td>
 				</tr>
 				
