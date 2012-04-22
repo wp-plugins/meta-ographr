@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
-Version: 0.4.3
+Version: 0.4.4
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.4.3");
+    define("OGRAPHR_VERSION", "0.4.4");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -50,6 +50,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	// no need to change this unless you want to use your own Official.fm API key (-> http://official.fm/developers/manage#register)
 	define("OFFICIAL_API_KEY", "yv4Aj7p3y5bYIhy3kd6X");
 
+// PLAY.FM
+	// no need to change this unless you want to use your own Play.fm API key (-> http://www.play.fm/api/account)
+	//define("PLAYFM_API_KEY", "e5821e991f3b7bc982c3:109a0ca3bc");
+	
 // SOUNDCLOUD
 	// no need to change this unless you want to use your own SoundCloud API key (-> http://soundcloud.com/you/apps)
 	define("SOUNDCLOUD_API_KEY", "15fd95172fa116c0837c4af8e45aa702");
@@ -70,8 +74,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	// default snapshot size (small=100, medium=200, large=640)
 	define("JUSTINTV_IMAGE_SIZE", "image_url_large");
 
-
-
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
 
@@ -86,6 +88,52 @@ class OGraphr_Core {
 	  	}
 	}
 
+	// Get JSON Thumbnail
+	function get_json_thumbnail($service, $json_url, $json_query) {
+		if (!function_exists('curl_init')) {
+			return null;
+		} else {
+			// print "<!-- $service Query URL: $json_url -->\n\r";
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $json_url);
+			curl_setopt($ch, CURLOPT_HEADER, 0);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
+			$output = curl_exec($ch);
+			$output = json_decode($output);
+			
+			// special treatment
+			if ($service == "Justin.tv") {
+				$output = $output[0];
+			} else if ($service == "Flickr") {
+				$ispublic = $output->photo->visibility->ispublic;
+				if ($ispublic == 1) {
+					$id = $output->photo->id;
+					$server = $output->photo->server;
+					$secret = $output->photo->secret;
+					$farm = $output->photo->farm;
+					$output = "http://farm" . $farm . ".staticflickr.com/" . $server . "/" . $id . "_" . $secret . "_" . FLICKR_IMAGE_SIZE . ".jpg";
+					return $output;		
+				} else {
+					return;
+				}
+			}
+			
+			$json_keys = explode('->', $json_query);
+			foreach($json_keys as $json_key) {
+				$output = $output->$json_key;
+			}			
+			
+			if (curl_error($ch) != null) {
+				return;
+			}
+			curl_close($ch); // Moved here to allow curl_error() operation above. Was previously below curl_exec() call.
+			return $output;
+		}
+	}
+	
 	// Get Vimeo Thumbnail
 	function get_vimeo_thumbnail($id, $image_size = 'large') {
 		if (!function_exists('curl_init')) {
@@ -101,33 +149,9 @@ class OGraphr_Core {
 			$output = unserialize(curl_exec($ch));
 			$output = $output[0]['thumbnail_' . $image_size];
 			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('vimeo_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
+				return;
 			}
 			curl_close($ch);
-			return $output;
-		}
-	}
-
-	// Get DailyMotion Thumbnail
-	function get_dailymotion_thumbnail($id) {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			$ch = curl_init();
-			$videoinfo_url = "https://api.dailymotion.com/video/$id?fields=thumbnail_url";
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->thumbnail_url;
-				if (curl_error($ch) != null) {
-					$output = ''; //new WP_Error('dailymotion_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-				}
-			curl_close($ch); // Moved here to allow curl_error() operation above. Was previously below curl_exec() call.
 			return $output;
 		}
 	}
@@ -145,183 +169,23 @@ class OGraphr_Core {
 		}
 	}
 	
-	// Get Hulu Thumbnail
-	function get_hulu_thumbnail($id) {
-		if (!function_exists('curl_init')) {
-			return null;
+	/*
+	// Get Play.fm Thumbnail
+	function get_playfm_thumbnail($id, $api_key = PLAYFM_API_KEY) {
+		$videoinfo_url = "http://blip.tv/players/episode/$id?skin=rss";
+		$xml = simplexml_load_file( $videoinfo_url );
+		if ( $xml == false ) {
+			return new WP_Error( 'bliptv_info_retrieval', __( 'Error retrieving video information from the URL <a href="' . $videoinfo_url . '">' . $videoinfo_url . '</a>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve.' ) );
 		} else {
-			$videoinfo_url = "http://www.hulu.com/api/oembed.json?url=http://www.hulu.com/embed/$id";
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->thumbnail_url;
-			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('mixcloud_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-			}
-			curl_close($ch);
+			$result = $xml->xpath( "/rss/channel/item/media:thumbnail/@url" );
+			$output = (string) $result[0]['url'];
 			return $output;
 		}
 	}
-	
-	// Get Flickr Thumbnail
-	function get_flickr_thumbnail($id, $api_key = FLICKR_API_KEY, $image_size = FLICKR_IMAGE_SIZE) {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			//http://www.flickr.com/services/rest/?method=flickr.photos.getInfo&&photo_id=2345938910&format=json&api_key=2250a1cc92a662d9ea156b4e04ca7a88
-			$videoinfo_url = "http://www.flickr.com/services/rest/?method=flickr.photos.getInfo&photo_id=$id&format=json&api_key=$api_key&nojsoncallback=1";
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 1000);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$server = $output->photo->server;
-			$secret = $output->photo->secret;
-			$farm = $output->photo->farm;
-			if (($server) && ($secret) && ($farm)) {
-				$output = "http://farm" . $farm . ".staticflickr.com/" . $server . "/" . $id . "_" . $secret . "_$image_size.jpg";		
-			} else {
-				$output = ''; // no permissions?
-			}		
-			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('mixcloud_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-			}
-			curl_close($ch);
-			return $output;
-		}
-	}
-	
-	// Get UStream Thumbnail
-	function get_ustream_thumbnail($id, $api_key = USTREAM_API_KEY, $image_size = USTREAM_IMAGE_SIZE) {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			$videoinfo_url = "http://api.ustream.tv/json/channel/$id/getInfo?key=$api_key";
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->results->imageUrl->$image_size;
-			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('mixcloud_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-			}
-			curl_close($ch);
-			return $output;
-		}
-	}
-	
-	// Get Justin.tv Thumbnail
-	function get_justintv_thumbnail($id, $image_size = JUSTINTV_IMAGE_SIZE) {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			$videoinfo_url = "http://api.justin.tv/api/stream/list.json?channel=$id";
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output[0]->channel->$image_size;
-			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('mixcloud_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-			}
-			curl_close($ch);
-			return $output;
-		}
-	}
-
-	// Get SoundCloud Thumbnail
-	function get_soundcloud_thumbnail($type, $id, $api_key = SOUNDCLOUD_API_KEY, $image_size = SOUNDCLOUD_IMAGE_SIZE) {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			$ch = curl_init();
-			$videoinfo_url = "http://api.soundcloud.com/$type/$id.json?client_id=$api_key";
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->artwork_url;
-			$output = str_replace('-large.', '-' . $image_size . '.', $output); // replace 100x100 default image
-			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('soundcloud_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-			}
-			curl_close($ch);
-			return $output;
-		}
-	}
-
-	// Get Mixcloud Thumbnail
-	function get_mixcloud_thumbnail($id, $image_size = MIXCLOUD_IMAGE_SIZE) {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			$videoinfo_url = "http://api.mixcloud.com/$id";
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->pictures->$image_size;
-			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('mixcloud_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-			}
-			curl_close($ch);
-			return $output;
-		}
-	}
-
-	// Get Bandcamp Thumbnail
-	function get_bandcamp_thumbnail($type, $id, $api_key = BANDCAMP_API_KEY, $image_size = 'large_art_url') {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			//global $options;
-			$ch = curl_init();
-			if ($type == 'album') {
-				$videoinfo_url = "http://api.bandcamp.com/api/album/2/info?key=$api_key&album_id=$id";
-			} else if ($type == 'track') {
-				$videoinfo_url = "http://api.bandcamp.com/api/track/1/info?key=$api_key&track_id=$id";
-			}
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->$image_size;
-			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('bandcamp_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-			}
-			curl_close($ch);
-			return $output;
-		}
-	}
+	*/
 	
 	// Get Bandcamp Parent Thumbnail
-	function get_bandcamp_parent_thumbnail($type, $id, $api_key = BANDCAMP_API_KEY, $image_size = 'large_art_url') {
+	function get_bandcamp_parent_thumbnail($id, $api_key = BANDCAMP_API_KEY, $image_size = 'large_art_url') {
 		if (!function_exists('curl_init')) {
 			return null;
 		} else {
@@ -337,11 +201,11 @@ class OGraphr_Core {
 			$output = json_decode($output);
 			$output = $output->album_id;
 			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('bandcamp_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
+				return;
 			}
 			curl_close($ch);
 			
-			// once more for the album
+			// once more time for the album
 			$ch = curl_init();
 			$videoinfo_url = "http://api.bandcamp.com/api/album/2/info?key=$api_key&album_id=$output";
 			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
@@ -353,33 +217,10 @@ class OGraphr_Core {
 			$output = json_decode($output);
 			$output = $output->$image_size;
 			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('bandcamp_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
+				return;
 			}
 			curl_close($ch);
 			
-			return $output;
-		}
-	}
-	
-	// Get Official Thumbnail
-	function get_official_thumbnail($id, $api_key = OFFICIAL_API_KEY) {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			$videoinfo_url = "http://official.fm/services/oembed.json?url=http://official.fm/tracks/$id&size=large&key=$api_key";
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->thumbnail_url;
-			if (curl_error($ch) != null) {
-				$output = ''; //new WP_Error('mixcloud_info_retrieval', __("Error retrieving video information from the URL <a href=\"" . $videoinfo_url . "\">" . $videoinfo_url . "</a>: <code>" . curl_error($ch) . "</code>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve."));
-			}
-			curl_close($ch);
 			return $output;
 		}
 	}
@@ -422,11 +263,18 @@ class OGraphr_Core {
 			}
 	
 			// Get API keys
-			$soundcloud_api = $options['soundcloud_api'];
 			$bandcamp_api = $options['bandcamp_api'];
 			$flickr_api = $options['flickr_api'];
 			$official_api = $options['official_api'];
+			//$playfm_api = $options['playfm_api'];
+			$soundcloud_api = $options['soundcloud_api'];
 			$ustream_api = $options['ustream_api'];
+			
+			// otherwise use default API keys
+			if (!$flickr_api) { $flickr_api = FLICKR_API_KEY; }
+			if (!$official_api) { $official_api = OFFICIAL_API_KEY; }
+			if (!$soundcloud_api) { $soundcloud_api = SOUNDCLOUD_API_KEY; }
+			if (!$ustream_api) { $ustream_api = USTREAM_API_KEY; }
 		
 			// debugging?
 			if(OGRAPHR_DEBUG == TRUE) {
@@ -451,7 +299,9 @@ class OGraphr_Core {
 				
 				if ($soundcloud_api) { print "<!-- SoundCloud API key: $soundcloud_api -->\n\r"; }
 				if ($bandcamp_api) { print "<!-- Bandcamp API key: $bandcamp_api -->\n\r"; }
+				if ($flickr_api) { print "<!-- Flickr API key: $flickr_api -->\n\r"; }
 				if ($official_api) { print "<!-- Official.fm API key: $official_api -->\n\r"; }
+				//if ($playfm_api) { print "<!-- Play.fm API key: $playfm_api -->\n\r"; }
 				if ($ustream_api) { print "<!-- Ustream API key: $ustream_api -->\n\r"; }
 			}
 	
@@ -548,12 +398,12 @@ class OGraphr_Core {
 
 						// Now if we've found a YouTube ID, let's set the thumbnail URL
 						foreach($matches as $match) {
-							$yt_thumbnail = 'http://img.youtube.com/vi/' . $match . '/0.jpg'; // no https connection
+							$youtube_thumbnail = 'http://img.youtube.com/vi/' . $match . '/0.jpg'; // no https connection
 							if(OGRAPHR_DEBUG == TRUE) {
-								print "<!-- YouTube: $yt_thumbnail (ID:$match) -->\n\r";
+								print "<!-- YouTube: $youtube_thumbnail (ID:$match) -->\n\r";
 							}
-							if (isset($yt_thumbnail)) {
-							  $og_thumbnails[] = $yt_thumbnail;
+							if (isset($youtube_thumbnail)) {
+							  $og_thumbnails[] = $youtube_thumbnail;
 							}
 						}
 					}
@@ -575,12 +425,12 @@ class OGraphr_Core {
 		
 						// Now if we've found a Vimeo ID, let's set the thumbnail URL
 						foreach($matches as $match) {
-							$vm_thumbnail = $this->get_vimeo_thumbnail($match, VIMEO_IMAGE_SIZE);
+							$vimeo_thumbnail = $this->get_vimeo_thumbnail($match, VIMEO_IMAGE_SIZE);
 							if(OGRAPHR_DEBUG == TRUE) {
-								print "<!-- Vimeo: $vm_thumbnail (ID:$match) -->\n\r";
+								print "<!-- Vimeo: $vimeo_thumbnail (ID:$match) -->\n\r";
 							}
-							if (isset($vm_thumbnail)) {
-							  $og_thumbnails[] = $vm_thumbnail;
+							if (isset($vimeo_thumbnail)) {
+							  $og_thumbnails[] = $vimeo_thumbnail;
 							}
 						}
 					}
@@ -602,7 +452,10 @@ class OGraphr_Core {
 
 						// Now if we've found a Dailymotion video ID, let's set the thumbnail URL
 						foreach($matches as $match) {
-							$dailymotion_thumbnail = $this->get_dailymotion_thumbnail($match);
+							$service = "Dailymotion";
+							$json_url = "https://api.dailymotion.com/video/$match?fields=thumbnail_url";
+							$json_query = "thumbnail_url";
+							$dailymotion_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 							if(OGRAPHR_DEBUG == TRUE) {
 								print "<!-- Dailymotion: $dailymotion_thumbnail (ID:$match) -->\n\r";
 							}
@@ -645,7 +498,11 @@ class OGraphr_Core {
 				
 					// Now if we've found a Flickr embed URL, let's set the thumbnail URL
 					foreach($matches as $match) {
-						$flickr_thumbnail = $this->get_flickr_thumbnail($match);
+						//$flickr_thumbnail = $this->get_flickr_thumbnail($match);
+						$service = "Flickr";
+						$json_url = "http://www.flickr.com/services/rest/?method=flickr.photos.getInfo&photo_id=$match&format=json&api_key=$flickr_api&nojsoncallback=1";
+						$json_query = NULL;
+						$flickr_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 						if(OGRAPHR_DEBUG == TRUE) {
 							print "<!-- Flickr: $flickr_thumbnail (ID:$match) -->\n\r";
 						}
@@ -665,7 +522,11 @@ class OGraphr_Core {
 
 					// Now if we've found a Blip.tv embed URL, let's set the thumbnail URL
 					foreach($matches as $match) {
-						$hulu_thumbnail = $this->get_hulu_thumbnail($match);
+						//$hulu_thumbnail = $this->get_hulu_thumbnail($match);
+						$service = "Hulu";
+						$json_url = "http://www.hulu.com/api/oembed.json?url=http://www.hulu.com/embed/$match";
+						$json_query = "thumbnail_url";
+						$hulu_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 						if(OGRAPHR_DEBUG == TRUE) {
 							print "<!-- Hulu: $hulu_thumbnail (ID:$match) -->\n\r";
 						}
@@ -684,7 +545,11 @@ class OGraphr_Core {
 					
 					// Now if we've found a Ustream embed URL, let's set the thumbnail URL
 					foreach($matches as $match) {
-						$ustream_thumbnail = $this->get_ustream_thumbnail($match, $ustream_api);
+						//$ustream_thumbnail = $this->get_ustream_thumbnail($match, $ustream_api);						
+						$service = "Ustream";
+						$json_url = "http://api.ustream.tv/json/channel/$match/getInfo?key=$ustream_api";
+						$json_query = "results->imageUrl->" . USTREAM_IMAGE_SIZE;
+						$ustream_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);						
 						if(OGRAPHR_DEBUG == TRUE) {
 							print "<!-- Ustream: $ustream_thumbnail (ID:$match) -->\n\r";
 						}
@@ -704,7 +569,11 @@ class OGraphr_Core {
 					
 					// Now if we've found a Justin.tv embed URL, let's set the thumbnail URL
 					foreach($matches as $match) {
-						$justintv_thumbnail = $this->get_justintv_thumbnail($match);
+						//$justintv_thumbnail = $this->get_justintv_thumbnail($match);
+						$service = "Justin.tv";
+						$json_url = "http://api.justin.tv/api/stream/list.json?channel=$match";
+						$json_query = "channel->" . JUSTINTV_IMAGE_SIZE;
+						$justintv_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 						if(OGRAPHR_DEBUG == TRUE) {
 							print "<!-- Justin.tv: $justintv_thumbnail (ID:$match) -->\n\r";
 						}
@@ -728,13 +597,19 @@ class OGraphr_Core {
 		
 						// Now if we've found a SoundCloud ID, let's set the thumbnail URL
 						foreach($matches as $match) {
-							$sc_thumbnail = $this->get_soundcloud_thumbnail('tracks', $match, $soundcloud_api, SOUNDCLOUD_IMAGE_SIZE);
+							//$soundcloud_thumbnail = $this->get_soundcloud_thumbnail('tracks', $match, $soundcloud_api, SOUNDCLOUD_IMAGE_SIZE);
+							$service = "SoundCloud";
+							$json_url = "http://api.soundcloud.com/tracks/$match.json?client_id=$soundcloud_api";
+							$json_query = "artwork_url";
+							$soundcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+							$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
+						
 							if(OGRAPHR_DEBUG == TRUE) {
-								print "<!-- SoundCloud track: $sc_thumbnail (ID:$match) -->\n\r";
+								print "<!-- SoundCloud track: $soundcloud_thumbnail (ID:$match) -->\n\r";
 							}
-							if (isset($sc_thumbnail)) {
-							  	$sc_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $sc_thumbnail); // remove suffix
-								$og_thumbnails[] = $sc_thumbnail;
+							if (isset($soundcloud_thumbnail)) {
+							  	$soundcloud_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $soundcloud_thumbnail); // remove suffix
+								$og_thumbnails[] = $soundcloud_thumbnail;
 							}
 						}
 		
@@ -749,13 +624,18 @@ class OGraphr_Core {
 		
 						// Now if we've found a SoundCloud ID, let's set the thumbnail URL
 						foreach($matches as $match) {
-							$sc_thumbnail = $this->get_soundcloud_thumbnail('playlists', $match, $soundcloud_api, SOUNDCLOUD_IMAGE_SIZE);
+							//$soundcloud_thumbnail = $this->get_soundcloud_thumbnail('playlists', $match, $soundcloud_api, SOUNDCLOUD_IMAGE_SIZE);
+							$service = "SoundCloud";
+							$json_url = "http://api.soundcloud.com/playlists/$match.json?client_id=$soundcloud_api";
+							$json_query = "artwork_url";
+							$soundcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+							$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
 							if(OGRAPHR_DEBUG == TRUE) {
-								print "<!-- SoundCloud playlist: $sc_thumbnail (ID:$match) -->\n\r";
+								print "<!-- SoundCloud playlist: $soundcloud_thumbnail (ID:$match) -->\n\r";
 							}
-							if (isset($sc_thumbnail)) {
-							  	$sc_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $sc_thumbnail); // remove suffix
-								$og_thumbnails[] = $sc_thumbnail;
+							if (isset($soundcloud_thumbnail)) {
+							  	$soundcloud_thumbnail = preg_replace('/\?([A-Za-z0-9]+)/', '', $soundcloud_thumbnail); // remove suffix
+								$og_thumbnails[] = $soundcloud_thumbnail;
 							}
 						}
 					}
@@ -773,7 +653,11 @@ class OGraphr_Core {
 						// Now if we've found a Mixcloud ID, let's set the thumbnail URL
 						foreach($matches as $match) {
 							$mixcloud_id = str_replace('%2F', '/', $match);
-							$mixcloud_thumbnail = $this->get_mixcloud_thumbnail($mixcloud_id, MIXCLOUD_IMAGE_SIZE);
+							//$mixcloud_thumbnail = $this->get_mixcloud_thumbnail($mixcloud_id, MIXCLOUD_IMAGE_SIZE);
+							$service = "Mixcloud";
+							$json_url = "http://api.mixcloud.com/$match";
+							$json_query = "pictures->" . MIXCLOUD_IMAGE_SIZE;
+							$mixcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 							if(OGRAPHR_DEBUG == TRUE) {
 								print "<!-- MixCloud: $mixcloud_thumbnail -->\n\r";
 							}
@@ -792,7 +676,11 @@ class OGraphr_Core {
 		
 						// Now if we've found a Bandcamp ID, let's set the thumbnail URL
 						foreach($matches as $match) {
-							$bandcamp_thumbnail = $this->get_bandcamp_thumbnail('album', $match, $bandcamp_api, BANDCAMP_IMAGE_SIZE);
+							//$bandcamp_thumbnail = $this->get_bandcamp_thumbnail($match, $bandcamp_api, BANDCAMP_IMAGE_SIZE);
+							$service = "Bandcamp";
+							$json_url = "http://api.bandcamp.com/api/album/2/info?key=$bandcamp_api&album_id=$match";
+							$json_query = BANDCAMP_IMAGE_SIZE;
+							$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 							if(OGRAPHR_DEBUG == TRUE) {
 								print "<!-- Bandcamp album: $bandcamp_thumbnail (ID:$match) -->\n\r";
 							}
@@ -807,7 +695,7 @@ class OGraphr_Core {
 					
 						// Now if we've found a Bandcamp ID, let's set the thumbnail URL
 						foreach($matches as $match) {
-							$bandcamp_thumbnail = $this->get_bandcamp_parent_thumbnail('track', $match, $bandcamp_api);
+							$bandcamp_thumbnail = $this->get_bandcamp_parent_thumbnail($match, $bandcamp_api);
 							if(OGRAPHR_DEBUG == TRUE) {
 								print "<!-- Bandcamp track: $bandcamp_thumbnail (ID:$match) -->\n\r";
 							}
@@ -820,13 +708,17 @@ class OGraphr_Core {
 					// OFFICIAL.TV
 						if($options['enable_official']) {
 
-							// Official.tv iFrame
+							// Official.fm iFrame
 							preg_match_all( '/official.fm\/tracks\/([A-Za-z0-9]+)\?/', $markup, $matches );
 							$matches = array_unique($matches[1]);
 
 							// Now if we've found a Official.fm embed URL, let's set the thumbnail URL
 							foreach($matches as $match) {
-								$official_thumbnail = $this->get_official_thumbnail($match, $official_api);
+								//$official_thumbnail = $this->get_official_thumbnail($match, $official_api);
+								$service = "Official.fm";
+								$json_url = "http://official.fm/services/oembed.json?url=http://official.fm/tracks/$match&size=large&key=$official_api";
+								$json_query = "thumbnail_url";
+								$official_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 								if(OGRAPHR_DEBUG == TRUE) {
 									print "<!-- Official.fm: $official_thumbnail (ID:$match) -->\n\r";
 								}
@@ -835,6 +727,30 @@ class OGraphr_Core {
 								}
 							}
 						}
+						
+						// PLAY.FM
+						/*
+							if($options['enable_playfm']) {
+
+								// Play.fm embed
+							//	preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)&/', $markup, $matches);
+							//playfmWidget.swf?url=http%3A%2F%2Fwww.play.fm%2Frecordings%2Fflash%2F01%2Frecording%2F([0-9]+)
+								preg_match_all( '/playfmWidget.swf\?url=http%3A%2F%2Fwww.play.fm%2Frecordings%2Fflash%2F01%2Frecording%2F([0-9]+)/', $markup, $matches );
+								$matches = array_unique($matches[1]);
+
+								// Now if we've found a Play.fm embed URL, let's set the thumbnail URL
+								foreach($matches as $match) {
+									$playfm_thumbnail = $this->get_playfm_thumbnail($match, $playfm_api);
+									if(OGRAPHR_DEBUG == TRUE) {
+										print "<!-- Play.fm: $playfm_thumbnail (ID:$match) -->\n\r";
+									}
+									if (isset($playfm_thumbnail)) {
+										$og_thumbnails[] = $playfm_thumbnail;
+									}
+								}
+							}
+							*/
+							
 		}
 				
 					// Let's print all this
@@ -946,7 +862,8 @@ function OGraphr_Core_Init() {
 function ographr_plugin_action_links( $links, $file ) {
 
 	if ( $file == plugin_basename( __FILE__ ) ) {
-		$ographr_links = '<a href="'.get_admin_url().'options-general.php?page=meta-ographr/meta-ographr_admin.php">'.__('Settings').'</a>';
+		$ographr_links = '<a href="'.get_admin_url().'options-general.php?page=meta-ographr/meta-ographr_admin.php">' .__('Settings').'</a>';
+		
 		// make the 'Settings' link appear first
 		array_unshift( $links, $ographr_links );
 	}

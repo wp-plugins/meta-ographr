@@ -160,7 +160,7 @@ function ographr_render_form() {
 			<table id="outer"><tbody><tr><td class="left">
 					<!-- *********************** BEGIN: Main Content ******************* -->
 					<form name="ographr-admin" method="post" action="http://wp.whyeye.org/wp-admin/options-general.php?page=meta-ographr.php">
-					<?php wp_nonce_field('ographr_save_options','ographr_form'); ?>
+					<?php wp_nonce_field('ographr_save_options','ographr_admin_options_form'); ?>
 					<fieldset class="options">
 
 
@@ -231,8 +231,11 @@ function ographr_render_form() {
 							<label><input name="ographr_options[enable_hulu]" type="checkbox" value="1" <?php if (isset($options['enable_hulu'])) { checked('1', $options['enable_hulu']); } ?> /> Hulu </label>&nbsp;
 							
 							<label><input name="ographr_options[enable_justintv]" type="checkbox" value="1" <?php if (isset($options['enable_justintv'])) { checked('1', $options['enable_justintv']); } ?> /> Justin.tv </label>&nbsp;
+							
 							<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> /> Mixcloud </label><br/>
+							
 							<label><input name="ographr_options[enable_official]" type="checkbox" value="1" <?php if (isset($options['enable_official'])) { checked('1', $options['enable_official']); } ?> disabled="disabled" /> Official.fm </label>&nbsp;
+							
 							<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud </label>&nbsp;
 							
 							<label><input name="ographr_options[enable_ustream]" type="checkbox" value="1" <?php if (isset($options['enable_ustream'])) { checked('1', $options['enable_ustream']); } ?> /> Ustream </label>&nbsp;

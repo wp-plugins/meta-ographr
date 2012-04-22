@@ -1,9 +1,9 @@
 === OGraphr ===
 Contributors: yathosho
-Tags: opengraph, open-graph, metatag, metatags, facebook, google+, thumbnail, thumbnails, preview, previews, image, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion, blip.tv, hulu, official.fm, ustream, html5 video, jwplayer, flickr, justin.tv
+Tags: opengraph, open-graph, metatags, facebook, google+, thumbnails, previews, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion, blip.tv, hulu, official.fm, ustream, html5 video, jwplayer, flickr, justin.tv
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.4.3
+Stable tag: 0.4.4
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -65,9 +65,14 @@ their platform. In order to get an API key, you have to apply via email.
 
 == Changelog ==
 
+= 0.4.4 =
+* unified function to query JSON files, removed old functions
+* added permission check for Flickr videos
+* improved API key handling
+
 = 0.4.3 =
 * added support for Flickr videos
-* added support  Justin.tv
+* added support Justin.tv
 
 = 0.4.2 =
 * added support for Ustream
@@ -76,6 +81,7 @@ their platform. In order to get an API key, you have to apply via email.
 * improved API key handling
 
 = 0.4.1 =
+* added nonce to options page form
 * fixed possible update problem
 
 = 0.4 =
