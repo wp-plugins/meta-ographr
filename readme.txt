@@ -1,9 +1,9 @@
 === OGraphr ===
 Contributors: yathosho
-Tags: opengraph, open-graph, metatags, facebook, google+, thumbnails, previews, images, soundcloud, mixcloud, bandcamp, vimeo, youtube, dailymotion, blip.tv, hulu, official.fm, ustream, html5 video, jwplayer, flickr, justin.tv
+Tags: opengraph,open-graph,metatags,facebook,google+,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,official.fm,ustream,viddler,html5 video,jwplayer,flickr,justin.tv
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.4.4
+Stable tag: 0.4.5
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -13,18 +13,19 @@ This plugin adds several OpenGraph meta-tags to the header of your theme. These 
 
 Currently, these widgets are supported:
 
-*  SoundCloud (HTML5 and Flash), single tracks and albums
-*  Mixcloud
-*  Bandcamp, single tracks and albums (requires valid API key!)
-*  Official.fm
-*  Vimeo (embed and iframe players)
-*  YouTube (embed and iframe players)
-*  Flickr videos
-*  DailyMotion
-*  Hulu
+*  Bandcamp
 *  Blip.tv
-*  Ustream
+*  DailyMotion
+*  Flickr videos
+*  Hulu
 *  Justin.tv
+*  SoundCloud
+*  Mixcloud
+*  Official.fm
+*  Ustream
+*  Viddler
+*  Vimeo
+*  YouTube
 *  JWPlayer
 *  Standard HTML5 video-tags
 
@@ -56,6 +57,10 @@ you can easily do so.
 Bandcamp is rather restrictive with access to their API, usually only allowing access to owners of material hosted on
 their platform. In order to get an API key, you have to apply via email.
 
+= Why do you only support legacy Viddler widgets? =
+
+This plugin supports all kinds of Viddler widgets. All new Viddler embed codes support HTML5-compliant poster images, hence there's no need for a dedicated detection. Old embed codes rely on Viddler's API and need a valid developer key.
+
 == Screenshots ==
 
 1. a link with a Mixcloud widget added as Facebook status update
@@ -64,6 +69,14 @@ their platform. In order to get an API key, you have to apply via email.
 
 
 == Changelog ==
+
+= 0.4.5 =
+* added support for legacy Viddler widgets
+* enabled Official.fm (waiting for the API to work)
+* changed Blip.tv detection from XML to JSON
+* modified debugger output
+* modified option page dialogs
+* ordered code segements alphabetically
 
 = 0.4.4 =
 * unified function to query JSON files, removed old functions
@@ -93,7 +106,7 @@ their platform. In order to get an API key, you have to apply via email.
 
 = 0.3.4 =
 * fixed bug in YouTube image URL
-* modified option page dialog
+* modified option page dialogs
 
 = 0.3.3 =
 * added option to show/hide advanced features

@@ -40,7 +40,6 @@ add_action('admin_menu', 'ographr_add_options_page');
 add_action('admin_head', 'ographr_stylesheet');
 add_action('admin_footer', 'ographr_javascript');
 add_filter( 'plugin_action_links', 'ographr_plugin_action_links', 10, 2 );
-
 // --------------------------------------------------------------------------------------
 // CALLBACK FUNCTION FOR: register_uninstall_hook(__FILE__, 'ographr_delete_plugin_options')
 // --------------------------------------------------------------------------------------
@@ -81,6 +80,7 @@ function ographr_restore_defaults() {
 						"add_excerpt" => "1",
 						"add_permalink" => "1",
 						"enable_youtube" => "1",
+						"enable_viddler" => "1",
 						"enable_vimeo" => "1",
 						"enable_dailymotion" => "1",
 						"enable_bliptv" => "1",
@@ -117,7 +117,6 @@ function ographr_restore_defaults() {
 // Init plugin options to white list our options
 function ographr_init(){
 	register_setting( 'ographr_plugin_options', 'ographr_options', 'ographr_validate_options' );
-	
 }
 
 // ------------------------------------------------------------------------------
@@ -180,9 +179,8 @@ function ographr_render_form() {
 						
 						<tr valign="center"> 
 							<th align="left" scope="row"><label>&nbsp;</label></th> 
-							<td><small><code>%postname%</code> &#8211; page or post title<br/><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_name = get_option('blogname')) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
+							<td colspan="2"><small><code>%postname%</code> &#8211; page or post title<br/><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_name = get_option('blogname')) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
 								<code>%siteurl%</code> &#8211; the URL of your blog (<em><? $wp_url = get_option('home'); $wp_url = (preg_replace('/https?:\/\//', NULL, $wp_url)); echo $wp_url; ?></em>)</small></td> 
-							<td>&nbsp;</td>
 						</tr>
 						
 						<!-- THUMBNAIL -->
@@ -194,14 +192,22 @@ function ographr_render_form() {
 						
 						<tr valign="center"> 
 							<th align="left" scope="row"><label>&nbsp;</label></th> 
-							<td><small><code>%screenshot%</code> &#8211; your theme's default screenshot</small></td> 
-							<td>&nbsp;</td>
+							<td colspan="2"><small><code>%screenshot%</code> &#8211; your theme's default screenshot
+							<?php
+							$theme_path = get_bloginfo('template_url');
+							$result = OGraphr_Core::remote_exists($theme_path . '/screenshot.png');
+							if ($result) {
+								echo '(<a href="' . $theme_path . '/screenshot.png" target="_blank">preview</a>)';
+							} else {
+								echo "(<span style=\"color:red;\">none</span>)";
+							}
+								 ?>
+							</small></td> 
 						</tr>
 						
 						<tr valign="center" id="advanced_opt"> 
 							<th align="left" scope="row"><label>&nbsp;</label></th> 
-							<td><label><input name="ographr_options[not_always]" type="checkbox" value="1" <?php if (isset($options['not_always'])) { checked('1', $options['not_always']); } ?> /> Only add thumbnail when post contains no images </label></td> 
-							<td>&nbsp;</td>
+							<td colspan="2"><label><input name="ographr_options[not_always]" type="checkbox" value="1" <?php if (isset($options['not_always'])) { checked('1', $options['not_always']); } ?> /> Only add thumbnail when post contains no images </label></td> 
 						</tr>
 						
 						<!-- META TAGS -->
@@ -220,39 +226,44 @@ function ographr_render_form() {
 						<!-- TRIGGERS -->
 						<tr valign="top" id="advanced_opt"> 
 							<th align="left" scope="row"><label>Triggers:</label></th> 
-							<td>
-							<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if ((isset($options['enable_bandcamp'])) && ($options['bandcamp_api'])) { checked('1', $options['enable_bandcamp']); } ?> /> Bandcamp </label>&nbsp;
+							<td colspan="2">
+							<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if ((isset($options['enable_bandcamp'])) && ($options['bandcamp_api'])) { checked('1', $options['enable_bandcamp']); } ?> />&nbsp;Bandcamp</label>&nbsp;
 							
-							<label><input name="ographr_options[enable_bliptv]" type="checkbox" value="1" <?php if (isset($options['enable_bliptv'])) { checked('1', $options['enable_bliptv']); } ?> /> Blip.tv </label>&nbsp;
+							<label><input name="ographr_options[enable_bliptv]" type="checkbox" value="1" <?php if (isset($options['enable_bliptv'])) { checked('1', $options['enable_bliptv']); } ?> />&nbsp;Blip.tv</label>&nbsp;
 
-							<label><input name="ographr_options[enable_dailymotion]" type="checkbox" value="1" <?php if (isset($options['enable_dailymotion'])) { checked('1', $options['enable_dailymotion']); } ?> /> Dailymotion </label>&nbsp;
-							<label><input name="ographr_options[enable_flickr]" type="checkbox" value="1" <?php if (isset($options['enable_flickr'])) { checked('1', $options['enable_flickr']); } ?> /> Flickr </label>&nbsp;
+							<label><input name="ographr_options[enable_dailymotion]" type="checkbox" value="1" <?php if (isset($options['enable_dailymotion'])) { checked('1', $options['enable_dailymotion']); } ?> />&nbsp;Dailymotion</label>&nbsp;
+							<label><input name="ographr_options[enable_flickr]" type="checkbox" value="1" <?php if (isset($options['enable_flickr'])) { checked('1', $options['enable_flickr']); } ?> />&nbsp;Flickr</label>&nbsp;
 
-							<label><input name="ographr_options[enable_hulu]" type="checkbox" value="1" <?php if (isset($options['enable_hulu'])) { checked('1', $options['enable_hulu']); } ?> /> Hulu </label>&nbsp;
+							<label><input name="ographr_options[enable_hulu]" type="checkbox" value="1" <?php if (isset($options['enable_hulu'])) { checked('1', $options['enable_hulu']); } ?> />&nbsp;Hulu</label>&nbsp;
 							
-							<label><input name="ographr_options[enable_justintv]" type="checkbox" value="1" <?php if (isset($options['enable_justintv'])) { checked('1', $options['enable_justintv']); } ?> /> Justin.tv </label>&nbsp;
+							<label><input name="ographr_options[enable_justintv]" type="checkbox" value="1" <?php if (isset($options['enable_justintv'])) { checked('1', $options['enable_justintv']); } ?> />&nbsp;Justin.tv</label>&nbsp;
 							
-							<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> /> Mixcloud </label><br/>
+							<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> />&nbsp;Mixcloud</label>&nbsp;
 							
-							<label><input name="ographr_options[enable_official]" type="checkbox" value="1" <?php if (isset($options['enable_official'])) { checked('1', $options['enable_official']); } ?> disabled="disabled" /> Official.fm </label>&nbsp;
+							<label><input name="ographr_options[enable_official]" type="checkbox" value="1" <?php if (isset($options['enable_official'])) { checked('1', $options['enable_official']); } ?> />&nbsp;Official.fm</label>&nbsp;
 							
-							<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> /> SoundCloud </label>&nbsp;
+							<!-- PLAY.FM
+							<label><input name="ographr_options[enable_playfm]" type="checkbox" value="1" <?php if ((isset($options['enable_playfm'])) && ($options['enable_playfm'])) { checked('1', $options['enable_playfm']); } ?> />&nbsp;Play.fm</label>&nbsp;
+							-->
 							
-							<label><input name="ographr_options[enable_ustream]" type="checkbox" value="1" <?php if (isset($options['enable_ustream'])) { checked('1', $options['enable_ustream']); } ?> /> Ustream </label>&nbsp;
+							<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> />&nbsp;SoundCloud</label>&nbsp;
+							
+							<label><input name="ographr_options[enable_ustream]" type="checkbox" value="1" <?php if (isset($options['enable_ustream'])) { checked('1', $options['enable_ustream']); } ?> />&nbsp;Ustream</label>&nbsp;
+							
+							<label><input name="ographr_options[enable_viddler]" type="checkbox" value="1" <?php if ((isset($options['enable_viddler'])) && ($options['viddler_api'])) { checked('1', $options['enable_viddler']); } ?> />&nbsp;Viddler</label>&nbsp;
 
-							<label><input name="ographr_options[enable_vimeo]" type="checkbox" value="1" <?php if (isset($options['enable_vimeo'])) { checked('1', $options['enable_vimeo']); } ?> /> Vimeo </label>&nbsp;
+							<label><input name="ographr_options[enable_vimeo]" type="checkbox" value="1" <?php if (isset($options['enable_vimeo'])) { checked('1', $options['enable_vimeo']); } ?> />&nbsp;Vimeo</label>&nbsp;
 
-							<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> /> YouTube </label><br/>
-
-							<? if(!$options['bandcamp_api']) { echo '<span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?></td> 
-							<td>&nbsp;</td>
+							<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> />&nbsp;YouTube</label>
+							
+							<? if((!$options['bandcamp_api']) && ($options['enable_bandcamp'])) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
+							<? if((!$options['viddler_api']) && ($options['enable_viddler'])) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 						</tr>
 						
 						<!-- ADVERTISEMENT -->
 						<tr valign="center" id="advanced_opt"> 
 							<th align="left" scope="row"><label>Advertisement:</label></th> 
-							<td><label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source (<em>OGraphr v<? echo OGRAPHR_VERSION ?></em>)</label></td>
-							<td>&nbsp;</td>
+							<td colspan="2"><label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source (<em>OGraphr v<? echo OGRAPHR_VERSION ?></em>)</label></td>
 						</tr>
 						
 						</tbody></table></dd>
@@ -274,14 +285,12 @@ function ographr_render_form() {
 							
 							<tr valign="center"> 
 								<th align="left" scope="row"><label>&nbsp;</label></th> 
-								<td><small><code>%tagline%</code> &#8211; your blog's tagline (<em><? if(get_bloginfo('description')) { echo get_bloginfo('description'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</small></td> 
-								<td>&nbsp;</td>
+								<td colspan="2"><small><code>%tagline%</code> &#8211; your blog's tagline (<em><? if(get_bloginfo('description')) { echo get_bloginfo('description'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</small></td> 
 							</tr>
 							
 							<tr valign="center" id="advanced_opt"> 
 								<th align="left" scope="row"><label>Meta-tags:</label></th> 
-								<td><label><input name="ographr_options[enable_on_front]" type="checkbox" value="1" <?php if (isset($options['enable_on_front'])) { checked('1', $options['enable_on_front']); } ?> /> Enable triggers on front page </label></td> 
-								<td>&nbsp;</td>
+								<td colspan="2"><label><input name="ographr_options[enable_on_front]" type="checkbox" value="1" <?php if (isset($options['enable_on_front'])) { checked('1', $options['enable_on_front']); } ?> /> Enable triggers on front page </label></td> 
 							</tr>
 							
 							</tbody></table></dd>			
@@ -300,34 +309,30 @@ function ographr_render_form() {
 							<!-- FILTERS -->
 							<tr valign="center"> 
 								<th align="left" width="140px" scope="row"><label>Filters:</label></th> 
-								<td><label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
+								<td colspan="2"><label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
 								<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label></td> 
-								<td>&nbsp;</td>
 							</tr>
 							
 							<!-- CUSTOM URLS -->
 							<tr valign="top"> 
 								<th align="left" width="140px" scope="row"><label>Custom URLs:</label></th> 
-								<td><textarea name="ographr_options[filter_custom_urls]" cols="76%" rows="4" ><?php echo $options['filter_custom_urls']; ?></textarea><br/>
+								<td colspan="2"><textarea name="ographr_options[filter_custom_urls]" cols="76%" rows="4" ><?php echo $options['filter_custom_urls']; ?></textarea><br/>
 									<small><strong>BETA:</strong> You can enter filenames and URLs (e.g. <em><? echo 'http://' . $wp_url . '/wp-content'; ?></em>) to the filter-list above</small></td> 
-								<td>&nbsp;</td>
 							</tr>
 							
 							<!-- LIMIT ACCESS -->
 							<tr valign="center"> 
 								<th align="left" width="140px" scope="row"><label>User Agents:</label></th> 
-								<td><label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Facebook </label>&nbsp;
+								<td colspan="2"><label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Facebook </label>&nbsp;
 									<!-- Checkbox -->
 									<label><input name="ographr_options[gplus_ua]" type="checkbox" value="1" <?php if (isset($options['gplus_ua'])) { checked('1', $options['gplus_ua']); } ?> /> Google+ </label>&nbsp;
 										<!-- Checkbox -->
 										<label><input name="ographr_options[linkedin_ua]" type="checkbox" value="1" <?php if (isset($options['linkedin_ua'])) { checked('1', $options['linkedin_ua']); } ?> /> LinkedIn </label></td>
-								<td>&nbsp;</td>
 							</tr>
 							
 							<tr valign="top"> 
 								<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-								<td><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites. Google+ currently does not use a unique <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank" >user-agent</a>!</small></td> 
-								<td>&nbsp;</td>
+								<td colspan="2"><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites. Google+ currently does not use a unique <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank" >user-agent</a>!</small></td>
 							</tr>
 						
 						</tbody></table>			
@@ -341,7 +346,8 @@ function ographr_render_form() {
 						<dd>
 						<p>
 							Bandcamp offers only limited access to their API and in any case you need to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. All other services can be used with the provided API keys.
-						</p>	
+						</p>
+						<p>To support legacy Viddler widgets you will need to provide a valid <a href="http://developers.viddler.com/">API key</a>. All new  embed codes have HTML5-compliant poster images and will work without one.</p>
 						<table width="100%" cellspacing="2" cellpadding="5"> 
 						<tbody>
 
@@ -349,7 +355,7 @@ function ographr_render_form() {
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label><a name="bandcamp_api_key" id="bandcamp_api_key"></a>Bandcamp:</label></th> 
 						<td width="30px"><input type="text" size="75" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /></td> 
-						<td><small><strong>(required)</strong></small></td>
+						<td><small>(required)</small></td>
 						</tr>
 						
 						<!-- FLICKR -->	
@@ -366,6 +372,12 @@ function ographr_render_form() {
 						<td><small>(optional)</small></td>
 						</tr>
 						
+						<!-- PLAY.FM 	
+						<tr valign="center"> 
+						<th align="left" width="140px" scope="row"><label>Play.fm:</label></th> 
+						<td width="30px"><input type="text" size="75" name="ographr_options[playfm_api]" value="<?php if ($options['playfm_api']) { echo $options['playfm_api']; } else { echo PLAYFM_API_KEY; } ?>" /></td>
+						-->
+						
 						<!-- SOUNDCLOUD -->	
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label>SoundCloud:</label></th> 
@@ -379,6 +391,13 @@ function ographr_render_form() {
 						<td width="30px"><input type="text" size="75" name="ographr_options[ustream_api]" value="<?php if ($options['ustream_api']) { echo $options['ustream_api']; } else { echo USTREAM_API_KEY; } ?>" /></td> 
 						<td><small>(optional)</small></td>
 						</tr>
+						
+						<!-- VIDDLER  -->
+						<tr valign="center"> 
+						<th align="left" width="140px" scope="row"><label><a name="viddler_api_key" id="viddler_api_key"></a>Viddler:</label></th> 
+						<td width="30px"><input type="text" size="75" name="ographr_options[viddler_api]" value="<?php echo $options['viddler_api']; ?>" /></td> 
+						<td><small>(required)</small></td>
+						</tr>	
 						
 						</tbody></table>			
 					</dd>
@@ -401,9 +420,8 @@ function ographr_render_form() {
 						
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-						<td width="30px"><small><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
+						<td colspan="2"><small><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
 							<code>%siteurl%</code> &#8211; the URL of your blog (<em><? echo $wp_url; ?></em>)</small></td> 
-						<td>&nbsp;</td>
 						</tr>
 						
 						<!-- OFFICIAL.FM -->	
@@ -465,23 +483,21 @@ function ographr_render_form() {
 						
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-						<td width="30px"><small>If you administer a page for your blog on Facebook, you can enter your <a href="http://developers.facebook.com/docs/reference/api/user/" target="_blank">User ID</a> above</small></td> 
-						<td>&nbsp;</td>
+						<td colspan="2"><small>If you administer a page for your blog on Facebook, you can enter your <a href="http://developers.facebook.com/docs/reference/api/user/" target="_blank">User ID</a> above</small></td> 
 						</tr>
 						
 						<!-- FACEBOOK APP -->	
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label>Application ID:</label></th> 
-						<td width="30px"><input type="text" size="75" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /></td> 
+						<td><input type="text" size="75" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /></td> 
 						<td><small>(optional)</small></td>
 						</tr>
 						
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-						<td width="30px"><small>If your blog uses a Facebook app, you can enter your <a href="https://developers.facebook.com/apps" target="_blank">Application ID</a> above</small></td> 
-						<td>&nbsp;</td>
-						</tr>
-						
+						<td colspan="2"><small>If your blog uses a Facebook app, you can enter your <a href="https://developers.facebook.com/apps" target="_blank">Application ID</a> above</small></td> 
+
+						</tr>						
 						
 						</tbody></table>			
 					</dd>
@@ -558,6 +574,7 @@ function ographr_validate_options($input) {
 	return $input;
 }
 
+//add JQuery to footer
 function ographr_javascript() {
 	?>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
@@ -574,6 +591,7 @@ function ographr_javascript() {
 	<?php
 }
 
+//add CSS to header
 function ographr_stylesheet() {
 	?>
 	<style type="text/css">
@@ -610,5 +628,4 @@ function ographr_stylesheet() {
 	.yiinfo { font-size:85%; line-height: 115%; }
 	</style>
 	<?php
-	
 }
