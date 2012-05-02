@@ -1,9 +1,9 @@
 === OGraphr ===
 Contributors: yathosho
-Tags: opengraph,open-graph,metatags,facebook,google+,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,official.fm,ustream,viddler,html5 video,jwplayer,flickr,justin.tv
+Tags: opengraph,open-graph,metatags,facebook,google+,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,official.fm,ustream,viddler,html5 video,jwplayer,flickr,justin.tv.8tracks
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.4.5
+Stable tag: 0.5
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -13,6 +13,7 @@ This plugin adds several OpenGraph meta-tags to the header of your theme. These 
 
 Currently, these widgets are supported:
 
+*  8tracks
 *  Bandcamp
 *  Blip.tv
 *  DailyMotion
@@ -47,19 +48,14 @@ Facebook caches previously submitted links for an undisclosed time. If your post
 
 People share links with their friends on social media sites whether you like it or not. This plug-in gives you some control over how your content is presented on platforms such as Facebook and Google+. Displaying cover artwork or video snapshots with your link usually looks nicer and attracts the attention of potential visitors.
 
-= Do I need a SoundCloud API key? =
-
-No. By default this plug-in uses its own registered API key, but if you prefer -for whatever reason- to use your own,
-you can easily do so.
-
 = Why do I need a Bandcamp API key? =
 
 Bandcamp is rather restrictive with access to their API, usually only allowing access to owners of material hosted on
 their platform. In order to get an API key, you have to apply via email.
 
-= Why do you only support legacy Viddler widgets? =
+= Why do I need a Viddler API key? =
 
-This plugin supports all kinds of Viddler widgets. All new Viddler embed codes support HTML5-compliant poster images, hence there's no need for a dedicated detection. Old embed codes rely on Viddler's API and need a valid developer key.
+You probably don't. All new Viddler players use HTML5-compliant poster images and these can be detected without making an API call. It's only old "Legacy" players rely on Viddler's API and you need a valid developer key to access it.
 
 == Screenshots ==
 
@@ -69,6 +65,19 @@ This plugin supports all kinds of Viddler widgets. All new Viddler embed codes s
 
 
 == Changelog ==
+
+= 0.5 =
+* added option to save thumbnail URLs as post-meta ("on-post")
+* added support for 8tracks
+* added option to disable plugin on front page
+* added timer to debugger output
+* added admin notice when running debug mode
+* added admin notice for new settings
+* replaced file exist function
+* enabled file exist function for on-post mode
+* fixed CSS on option page
+* fixed bug in Viddler image retrieval
+* increased cURL timeout
 
 = 0.4.5 =
 * added support for legacy Viddler widgets
@@ -211,6 +220,9 @@ This plugin supports all kinds of Viddler widgets. All new Viddler embed codes s
 * first release
 
 == Upgrade Notice ==
+
+= 0.5 =
+* review your settings!
 
 = 0.2.3 =
 * activate triggers after upgrading

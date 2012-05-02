@@ -67,31 +67,32 @@ function ographr_restore_defaults() {
 	$tmp = get_option('ographr_options');
     if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
 		delete_option('ographr_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
-		$arr = array(	"advanced_opt" => "0",
+		$arr = array(	"exec_mode" => "1",
+						"advanced_opt" => "0",
 						"website_title" => "%postname%",
 						"website_thumbnail" => "",
-						"bandcamp_api" => "",
-						"soundcloud_api" => SOUNDCLOUD_API_KEY,
-						"enable_on_front" => "0",
+						"enable_plugin_on_front" => "1",
+						"enable_triggers_on_front" => "0",
 						"website_description" => "",
 						"not_always" => "0",
 						"add_comment" => "1",
 						"add_title" => "1",
 						"add_excerpt" => "1",
 						"add_permalink" => "1",
-						"enable_youtube" => "1",
-						"enable_viddler" => "1",
-						"enable_vimeo" => "1",
-						"enable_dailymotion" => "1",
+						"enable_eight_tracks" => "1",
+						"enable_bandcamp" => "1",
 						"enable_bliptv" => "1",
+						"enable_dailymotion" => "1",
 						"enable_flickr" => "1",
 						"enable_hulu" => "1",
 						"enable_justintv" => "1",
-						"enable_ustream" => "1",
-						"enable_soundcloud" => "1",
 						"enable_mixcloud" => "1",
-						"enable_official" => "0",
-						"enable_bandcamp" => "1",
+						"enable_official" => "1",
+						"enable_soundcloud" => "1",
+						"enable_ustream" => "1",
+						"enable_viddler" => "1",
+						"enable_vimeo" => "1",
+						"enable_youtube" => "1",
 						"filter_smilies" => "1",
 						"filter_gravatar" => "1",
 						"facebook_ua" => "0",
@@ -162,19 +163,33 @@ function ographr_render_form() {
 					<?php wp_nonce_field('ographr_save_options','ographr_admin_options_form'); ?>
 					<fieldset class="options">
 
-
-
 					<dl>
 						<dt><h3>General</h3></dt>
 						<dd>
 						<table width="100%" cellspacing="2" cellpadding="5"> 
 						<tbody>
 						
+						<!-- IMAGE RETRIEVAL -->	
+						<tr valign="top" id="advanced_opt"> 
+							<th align="left" scope="row"><label>Image Retrieval:</label></th> 
+							<td colspan="2">
+								<label><input name="ographr_options[exec_mode]" type="radio" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?> />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
+								
+								<label><input name="ographr_options[exec_mode]" type="radio" value="2" <?php if (isset($options['exec_mode'])) { checked('2', $options['exec_mode']); } ?> />&nbsp;Everytime your site is visited (slow, more accurate)&nbsp;</label>
+							</td> 
+						</tr>
+						
+						<tr valign="center" id="advanced_opt"> 
+						<th align="left" width="140px" scope="row">&nbsp;</th> 
+						<td colspan="2"><small>Retrieving images <em>on-post</em> increases the load time of your page significantly, but on the downside the results might be outdated at some point. Should you choose to retrieve images <em>on-view</em>, it is recommended to <a href="#user_agents">restrict access</a> to increase load times for human readers.</small></td> 
+						<td>&nbsp;</td>
+						</tr>
+						
 						<!-- LINK TITLE -->	
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label>Link Title:</label></th> 
 						<td width="30px"><input type="text" size="75" name="ographr_options[website_title]" value="<?php if ($options['website_title']) { echo $options['website_title']; } else { echo '%postname%';} ?>" /></td> 
-						<td></td>
+						<td>&nbsp;</td>
 						</tr>
 						
 						<tr valign="center"> 
@@ -197,9 +212,9 @@ function ographr_render_form() {
 							$theme_path = get_bloginfo('template_url');
 							$result = OGraphr_Core::remote_exists($theme_path . '/screenshot.png');
 							if ($result) {
-								echo '(<a href="' . $theme_path . '/screenshot.png" target="_blank">preview</a>)';
+								print '(<a href="' . $theme_path . '/screenshot.png" target="_blank">preview</a>)';
 							} else {
-								echo "(<span style=\"color:red;\">none</span>)";
+								print "(<span style=\"color:red;\">none</span>)";
 							}
 								 ?>
 							</small></td> 
@@ -213,20 +228,22 @@ function ographr_render_form() {
 						<!-- META TAGS -->
 						<tr valign="center"> 
 							<th align="left" scope="row"><label>Meta-tags:</label></th> 
-							<td><label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label>&nbsp;
+							<td colspan="2"><label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label>&nbsp;
 
 							<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
 
 							<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label>&nbsp;
 
-							<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); } ?> /> Add post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label></td> 
-							<td></td>
+							<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); } ?> /> Add post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label></td>
 						</tr>
 						
 						<!-- TRIGGERS -->
 						<tr valign="top" id="advanced_opt"> 
 							<th align="left" scope="row"><label>Triggers:</label></th> 
-							<td colspan="2">
+							<td colspan="2">								
+								<label><input name="ographr_options[enable_eight_tracks]" type="checkbox" value="1" <?php if ((isset($options['enable_eight_tracks'])) && ($options['enable_eight_tracks'])) { checked('1', $options['enable_eight_tracks']); } ?> />&nbsp;8tracks</label>&nbsp;
+							
+							
 							<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if ((isset($options['enable_bandcamp'])) && ($options['bandcamp_api'])) { checked('1', $options['enable_bandcamp']); } ?> />&nbsp;Bandcamp</label>&nbsp;
 							
 							<label><input name="ographr_options[enable_bliptv]" type="checkbox" value="1" <?php if (isset($options['enable_bliptv'])) { checked('1', $options['enable_bliptv']); } ?> />&nbsp;Blip.tv</label>&nbsp;
@@ -275,6 +292,15 @@ function ographr_render_form() {
 						<dd>
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
+							
+							<tr valign="center" id="advanced_opt"> 
+								<th align="left" scope="row"><label>Functionality:</label></th> 
+								<td colspan="2">
+								<label><input name="ographr_options[enable_plugin_on_front]" type="checkbox" id="enable_plugin" value="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?> /> Enable plugin </label>&nbsp;
+								
+								<label><input name="ographr_options[enable_triggers_on_front]" type="checkbox" id="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!$options['enable_plugin_on_front']) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
+								</td> 
+							</tr>
 
 							<!-- CUSTOM DESCRIPTION -->	
 							<tr valign="center"> 
@@ -286,11 +312,6 @@ function ographr_render_form() {
 							<tr valign="center"> 
 								<th align="left" scope="row"><label>&nbsp;</label></th> 
 								<td colspan="2"><small><code>%tagline%</code> &#8211; your blog's tagline (<em><? if(get_bloginfo('description')) { echo get_bloginfo('description'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</small></td> 
-							</tr>
-							
-							<tr valign="center" id="advanced_opt"> 
-								<th align="left" scope="row"><label>Meta-tags:</label></th> 
-								<td colspan="2"><label><input name="ographr_options[enable_on_front]" type="checkbox" value="1" <?php if (isset($options['enable_on_front'])) { checked('1', $options['enable_on_front']); } ?> /> Enable triggers on front page </label></td> 
 							</tr>
 							
 							</tbody></table></dd>			
@@ -322,7 +343,7 @@ function ographr_render_form() {
 							
 							<!-- LIMIT ACCESS -->
 							<tr valign="center"> 
-								<th align="left" width="140px" scope="row"><label>User Agents:</label></th> 
+								<th align="left" width="140px" scope="row"><a name="user_agents" id="user_agents"></a><label>User Agents:</label></th> 
 								<td colspan="2"><label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Facebook </label>&nbsp;
 									<!-- Checkbox -->
 									<label><input name="ographr_options[gplus_ua]" type="checkbox" value="1" <?php if (isset($options['gplus_ua'])) { checked('1', $options['gplus_ua']); } ?> /> Google+ </label>&nbsp;
@@ -341,34 +362,41 @@ function ographr_render_form() {
 					</dl>
 					
 					<!-- A P I   K E Y S -->
-					<dl id="advanced_opt">
+					<dl>
 						<dt><h3>API Keys</h3></dt>
 						<dd>
 						<p>
-							Bandcamp offers only limited access to their API and in any case you need to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. All other services can be used with the provided API keys.
+							Bandcamp offers only limited access to their API and in any case you have to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. To support <em>legacy</em> Viddler widgets you will have to provide a valid <a href="http://developers.viddler.com/">API key</a>, whereas new embed codes use HTML5-compliant poster images and will work without one.
 						</p>
-						<p>To support legacy Viddler widgets you will need to provide a valid <a href="http://developers.viddler.com/">API key</a>. All new  embed codes have HTML5-compliant poster images and will work without one.</p>
+						<p id="advanced_opt">All other services will work without providing an API key. However, if you prefer using your own ones, you can enter them below.</p>
 						<table width="100%" cellspacing="2" cellpadding="5"> 
 						<tbody>
+							
+						<!-- 8TRACKS -->	
+						<tr valign="center" id="advanced_opt"> 
+						<th align="left" width="140px" scope="row"><label><a name="etracks_api_key" id="etracks_api_key"></a>8tracks:</label></th> 
+						<td width="30px"><input type="text" size="75" name="ographr_options[etracks_api]" value="<?php if ($options['etracks_api']) { echo $options['etracks_api']; } ?>" /></td> 
+						<td><small>(optional)</small></td>
+						</tr>
 
 						<!-- BANDCAMP -->	
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label><a name="bandcamp_api_key" id="bandcamp_api_key"></a>Bandcamp:</label></th> 
 						<td width="30px"><input type="text" size="75" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /></td> 
-						<td><small>(required)</small></td>
+						<td><small>(<strong>required</strong>)</small></td>
 						</tr>
 						
 						<!-- FLICKR -->	
-						<tr valign="center"> 
+						<tr valign="center" id="advanced_opt"> 
 						<th align="left" width="140px" scope="row"><label>Flickr:</label></th> 
-						<td width="30px"><input type="text" size="75" name="ographr_options[flickr_api]" value="<?php if ($options['flickr_api']) { echo $options['flickr_api']; } else { echo FLICKR_API_KEY; } ?>" /></td> 
+						<td width="30px"><input type="text" size="75" name="ographr_options[flickr_api]" value="<?php if ($options['flickr_api']) { echo $options['flickr_api']; } ?>" /></td> 
 						<td><small>(optional)</small></td>
 						</tr>
 						
 						<!-- OFFICIAL.FM -->	
-						<tr valign="center"> 
+						<tr valign="center" id="advanced_opt"> 
 						<th align="left" width="140px" scope="row"><label>Official.fm:</label></th> 
-						<td width="30px"><input type="text" size="75" name="ographr_options[official_api]" value="<?php if ($options['official_api']) { echo $options['official_api']; } else { echo OFFICIAL_API_KEY; } ?>" /></td> 
+						<td width="30px"><input type="text" size="75" name="ographr_options[official_api]" value="<?php if ($options['official_api']) { echo $options['official_api']; } ?>" /></td> 
 						<td><small>(optional)</small></td>
 						</tr>
 						
@@ -379,16 +407,16 @@ function ographr_render_form() {
 						-->
 						
 						<!-- SOUNDCLOUD -->	
-						<tr valign="center"> 
+						<tr valign="center" id="advanced_opt"> 
 						<th align="left" width="140px" scope="row"><label>SoundCloud:</label></th> 
-						<td width="30px"><input type="text" size="75" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } else { echo SOUNDCLOUD_API_KEY; } ?>" /></td> 
+						<td width="30px"><input type="text" size="75" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } ?>" /></td> 
 						<td><small>(optional)</small></td>
 						</tr>
 						
 						<!-- USTREAM -->	
-						<tr valign="center"> 
+						<tr valign="center" id="advanced_opt"> 
 						<th align="left" width="140px" scope="row"><label>Ustream:</label></th> 
-						<td width="30px"><input type="text" size="75" name="ographr_options[ustream_api]" value="<?php if ($options['ustream_api']) { echo $options['ustream_api']; } else { echo USTREAM_API_KEY; } ?>" /></td> 
+						<td width="30px"><input type="text" size="75" name="ographr_options[ustream_api]" value="<?php if ($options['ustream_api']) { echo $options['ustream_api']; } ?>" /></td> 
 						<td><small>(optional)</small></td>
 						</tr>
 						
@@ -396,7 +424,7 @@ function ographr_render_form() {
 						<tr valign="center"> 
 						<th align="left" width="140px" scope="row"><label><a name="viddler_api_key" id="viddler_api_key"></a>Viddler:</label></th> 
 						<td width="30px"><input type="text" size="75" name="ographr_options[viddler_api]" value="<?php echo $options['viddler_api']; ?>" /></td> 
-						<td><small>(required)</small></td>
+						<td><small>(<strong>required</strong>)</small></td>
 						</tr>	
 						
 						</tbody></table>			
@@ -586,7 +614,17 @@ function ographr_javascript() {
 			$('#show_advanced').click(function(){
 				$('div.nothing,#advanced_opt').fadeToggle('slow');
 			});
+			
+			$("#enable_plugin").click(enable_cb);
 	});
+	
+	function enable_cb() {
+	  if (this.checked) {
+	    $("input#enable_triggers").removeAttr("disabled");
+	  } else {
+	    $("input#enable_triggers").attr("disabled", true);
+	  }
+	}
     </script>
 	<?php
 }
@@ -595,37 +633,159 @@ function ographr_javascript() {
 function ographr_stylesheet() {
 	?>
 	<style type="text/css">
-	table#outer { width: 100%; border: 0 none; padding:0; margin:0;  }
-	table#outer fieldset { border: 0 none; padding:0; margin:0; }
-	table#outer td.left, table#outer td.right { vertical-align:top; }
-	table#outer td.left {  padding: 0 8px 0 0; }
-	table#outer td.right { padding: 0 0 0 8px; width: 210px; }
-	td.right ul, td.right ul li { list-style: none; padding:0; margin:0; }
-	td.right a { text-decoration:none; background-position:0px 60%; background-repeat:no-repeat; padding: 4px 0px 4px 22px; border: 0 none; display:block;}
-	td.right a.lhome { background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABinRfyAAAADFBMVEUAAADeACH///8AAABwQ/WkAAAABHRSTlP///8AQCqp9AAAAAFiS0dEAxEMTPIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAJdnBBZwAAABAAAAAQAFzGrcMAAABHSURBVAjXY2BgYOBnEA0NDWYQCA0NYTgKIo6lpaUAiWVLGI4tS50CFVuWBuSGLQOylk5bAhH7GBrqwvCHgUGE4f///2DiAAAcwB84mfGumgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxMi0wNC0xM1QxNDoyOToyMiswMjowMJVTIygAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTItMDQtMTNUMTQ6Mjk6MjIrMDI6MDDkDpuUAAAAAElFTkSuQmCC); }
-	td.right a.lpaypal { background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAFfKj/FAAAAB3RJTUUH1wYQEhELxx+pjgAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAnUExURZwMDOfv787W3tbe55y1xgAxY/f39////73O1oSctXOUrZSlva29zmehiRYAAAABdFJOUwBA5thmAAAAdElEQVR42m1O0RLAIAgyG1Gr///eYbXrbjceFAkxM4GzwAyse5qgqEcB5gyhB+kESwi8cYfgnu2DMEcfFDDNwCakR06T4uq5cK0n9xOQPXByE3JEpYG2hKYgHdnxZgUeglxjCV1vihx4N1BluM6JC+8v//EAp9gC4zRZsZgAAAAASUVORK5CYII=) }
-	td.right a.lamazon { background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAFfKj/FAAAAB3RJTUUH1wYQESUI53q1mgAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAABgUExURerBhcOLOqB1OX1gOE5DNjc1NYKBgfGnPNqZO4hnOEM8NWZSN86SO1pKNnFZN7eDOuWgPJRuOVBOTpuamo+NjURCQubm5v///9rZ2WloaKinp11bW3Z0dPPy8srKyrSzs09bnaIAAACiSURBVHjaTY3ZFoMgDAUDchuruFIN1qX//5eNYJc85EyG5EIBBNACEibsimi5UaUURJtI5wm+KwgSJflVkOFscBUTM1vgrmacThfomGVLO9MhIYFsF8wyx6Jnl88HUxEay+wYmlM6oNKcNYrIC58iHMcIyQlZRNmf/2LRQUX8bYwh3PCYWmOGrueargdXGO5d6UGm5FSmBqzXEzK2cN9PcXsD9XsKTHawijcAAAAASUVORK5CYII=) }
-	td.right a.lwp { background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACWklEQVR42n1TyWoaUBR11UU+oJ/QQqHL0C/qwkU2bl2EYEiixeCQSRIFN4EEEodYDYRYUUwgQwuNrVoTcNiIaOtEnT2955LQkrR9cOG9e8857w7vGQyPltVqfbm8vGxfWVm5Ehvf2xV9jBn+twRostls3wOBQOLu7u5juVz+QeOePsaIeUKcn59/JoHYxsZGvlarFdLpNHw+H8QHi8WC7e1tXFxcoNFofCOGWHL+vNkhoE/NZrNN8NLS0l8tGo1C1k9iWdID+TVT6/V62ePjY0QiEayuriIcDuuetre3B6kfw+GQAhgMBmVyRPSV3i7g04dgoVCAy+VSgel0qr79/X3Y7XaUyiU9t5pNxk81CxHIVSqVK97OJU2D0+mEw+HA7e2t+o6OjvR8eBjQ883nG5Aj3C8UGIxGo8bW1habBNljZ2cHa2triMVimoVMAe+koT6vTwVkIpCSOZGmCvDg9XpxdnamhFQqBbfbrZ3neTweY319XUup1+vweDzo9/sU6FCgwHRCoRB2d3cxmUxQrVb1xmw2i0QioSLBYFCFT05OIKP8XYI0ws2GZDIZ+P1+lEolJRwcHGjti4uLEAeKxSJJEDzi8bg2kQN4GGO90+nkObJkMqkCrVZLp2EymSAxTCdT5HM5sFftdjtHDrn6FpiFPI7rbrfboYjMmSAICAsLC7i8vNQszs/PIY+tQ6ze/vgpb25ufuVTlgbpCDkNGrPiYkwwmSdP+fFnkoZ+kJqvhdOgcU/fvz7TjNhzsRdib2ZnZ98ajcb3ZrO5Mjc3Bxr39DFGzD2WnJlfboSSy4YB5JcAAAAASUVORK5CYII=) }
-	td.right a.ltwitter { background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB20lEQVR4nKWTPWhTURzFf+/mJXl5uby+JFaTfiwawWArQYmDU0GHTtKgc9VBEfxqVeokKuokVARDYxEpLh0KunQQFBR0EIu0RdpBKqh0EIy2tc9Y4/twKA3pCxRKzvi/95x77jn8Fc/zaASiIfZmBMSFoS7RVzy+oYA4X8jWXegrmmJgZBJpvszv29W5oYAmjVExMDIp+oerL0WNpivEklniKca/WqfF5Uc9tRylNsSjY+8+PPm00MFKGcq/XuG5J0KxrTMVo1lHDcKKhbr03bIXS+3u3VOLdQ7ymdZxogYkkhBPdonYtulKxNAJhiGggiaxZUxqTfGCuPTwaZ0DIJ0bnZ54v4yJY4PjgBpcJa/h31/4swzWEu61HsXfwtzZzuYXq8QQhLT1ZICASu+e9vmZM4feVr8gzt03186PdbTc7t0u5/FcUBR/6Ejh2ldzLfcyW2QeQAXQInpB9D8Yw/Om0KJmZmf6J064DdVn0HUYPJCa2mHqRcCqZvB5wbqRG3p++Ee5kiUUBhkD3VhnXwY8+3o2MXdxb+tJ4I2/RgncHJz40j08W2r7+NuTqEFQBFLFPpiMlG7tT83uTkTvAM9qTflb6AaOAOmamQW8Bh4D3/yZ+AU2jYa38T+I6JdNPFroagAAAABJRU5ErkJggg==) }
-	td.right ul li { padding:0; margin:0; }
-	table#outer td dl { padding:0; margin: 10px 0 20px 0; background-color: white; border: 1px solid #dfdfdf; }
-	table#outer td dl { -moz-border-radius: 5px; -khtml-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px; }
-	table#outer dl h3, table#outer td.right dl h4 { font-size: 10pt; font-weight: bold; margin:0; padding: 4px 10px 4px 10px; background-color: ##F1F1F1; background-image:-ms-linear-gradient(top,#f9f9f9,#ececec);background-image:-moz-linear-gradient(top,#f9f9f9,#ececec);background-image:-o-linear-gradient(top,#f9f9f9,#ececec);background-image:-webkit-gradient(linear,left top,left bottom,from(#f9f9f9),to(#ececec));background-image:-webkit-linear-gradient(top,#f9f9f9,#ececec);background-image:linear-gradient(top,#f9f9f9,#ececec);; text-shadow: 
-	white 0 1px 0;}
-	table#outer td.left dl h4 { font-size: 10pt; font-weight: bold; margin:0; padding: 4px 0 4px 0;  }
-	dd { background-color: #f8f8f8; }
-	table#outer td.left dd { margin:0; padding: 10px 20px 10px 20px;}
-	table#outer td.right dd { margin:0; padding: 5px 10px 5px 10px; }
-	table#outer .info { color: #555; font-size: .85em; }
-	table#outer p { padding:5px 0 5px 0; margin:0;}
-	input.yi_warning:hover { background: #ce0000; color: #fff; }
-	table#outer .yifooter {text-align: center; font-size: .85em;}
-	table#outer .yifooter a, table#outer .yifooter a:link { text-decoration:none; }
-	table#outer td small { color: #555; font-size: .85em; }
-	table#outer hr { border: none 0; border-top: 1px solid #BBBBBB; height: 1px; }
-	table#outer ul { list-style:none; }
-	table#outer ul.mybullet { list-style-type:disc; padding-left: 20px; }
-	.yiinfo { font-size:85%; line-height: 115%; }
+	table#outer {
+		width: 100%;
+		border: 0 none;
+		padding:0;
+		margin:0; 
+	}
+	table#outer fieldset {
+		border: 0 none;
+		padding:0;
+		margin:0;
+	}
+	table#outer td.left, table#outer td.right {
+		vertical-align:top;
+	}
+	table#outer td.left {
+		padding: 0 8px 0 0;
+	}
+	table#outer td.right {
+		padding: 0 0 0 8px;
+		width: 210px;
+	}
+	td.right ul, td.right ul li {
+		list-style: none;
+		padding:0;
+		margin:0;
+		}
+	td.right a {
+		text-decoration:none;
+		background-position:0px 60%;
+		background-repeat:no-repeat;
+		padding: 4px 0px 4px 22px;
+		border: 0 none;
+		display:block;}
+	td.right a.lhome {
+		background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABinRfyAAAADFBMVEUAAADeACH///8AAABwQ/WkAAAABHRSTlP///8AQCqp9AAAAAFiS0dEAxEMTPIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAJdnBBZwAAABAAAAAQAFzGrcMAAABHSURBVAjXY2BgYOBnEA0NDWYQCA0NYTgKIo6lpaUAiWVLGI4tS50CFVuWBuSGLQOylk5bAhH7GBrqwvCHgUGE4f///2DiAAAcwB84mfGumgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxMi0wNC0xM1QxNDoyOToyMiswMjowMJVTIygAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTItMDQtMTNUMTQ6Mjk6MjIrMDI6MDDkDpuUAAAAAElFTkSuQmCC);
+	}
+	td.right a.lpaypal {
+		background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAFfKj/FAAAAB3RJTUUH1wYQEhELxx+pjgAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAnUExURZwMDOfv787W3tbe55y1xgAxY/f39////73O1oSctXOUrZSlva29zmehiRYAAAABdFJOUwBA5thmAAAAdElEQVR42m1O0RLAIAgyG1Gr///eYbXrbjceFAkxM4GzwAyse5qgqEcB5gyhB+kESwi8cYfgnu2DMEcfFDDNwCakR06T4uq5cK0n9xOQPXByE3JEpYG2hKYgHdnxZgUeglxjCV1vihx4N1BluM6JC+8v//EAp9gC4zRZsZgAAAAASUVORK5CYII=)
+	}
+	td.right a.lamazon {
+		background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAFfKj/FAAAAB3RJTUUH1wYQESUI53q1mgAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAABgUExURerBhcOLOqB1OX1gOE5DNjc1NYKBgfGnPNqZO4hnOEM8NWZSN86SO1pKNnFZN7eDOuWgPJRuOVBOTpuamo+NjURCQubm5v///9rZ2WloaKinp11bW3Z0dPPy8srKyrSzs09bnaIAAACiSURBVHjaTY3ZFoMgDAUDchuruFIN1qX//5eNYJc85EyG5EIBBNACEibsimi5UaUURJtI5wm+KwgSJflVkOFscBUTM1vgrmacThfomGVLO9MhIYFsF8wyx6Jnl88HUxEay+wYmlM6oNKcNYrIC58iHMcIyQlZRNmf/2LRQUX8bYwh3PCYWmOGrueargdXGO5d6UGm5FSmBqzXEzK2cN9PcXsD9XsKTHawijcAAAAASUVORK5CYII=)
+	}
+	td.right a.lwp {
+		background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACWklEQVR42n1TyWoaUBR11UU+oJ/QQqHL0C/qwkU2bl2EYEiixeCQSRIFN4EEEodYDYRYUUwgQwuNrVoTcNiIaOtEnT2955LQkrR9cOG9e8857w7vGQyPltVqfbm8vGxfWVm5Ehvf2xV9jBn+twRostls3wOBQOLu7u5juVz+QeOePsaIeUKcn59/JoHYxsZGvlarFdLpNHw+H8QHi8WC7e1tXFxcoNFofCOGWHL+vNkhoE/NZrNN8NLS0l8tGo1C1k9iWdID+TVT6/V62ePjY0QiEayuriIcDuuetre3B6kfw+GQAhgMBmVyRPSV3i7g04dgoVCAy+VSgel0qr79/X3Y7XaUyiU9t5pNxk81CxHIVSqVK97OJU2D0+mEw+HA7e2t+o6OjvR8eBjQ883nG5Aj3C8UGIxGo8bW1habBNljZ2cHa2triMVimoVMAe+koT6vTwVkIpCSOZGmCvDg9XpxdnamhFQqBbfbrZ3neTweY319XUup1+vweDzo9/sU6FCgwHRCoRB2d3cxmUxQrVb1xmw2i0QioSLBYFCFT05OIKP8XYI0ws2GZDIZ+P1+lEolJRwcHGjti4uLEAeKxSJJEDzi8bg2kQN4GGO90+nkObJkMqkCrVZLp2EymSAxTCdT5HM5sFftdjtHDrn6FpiFPI7rbrfboYjMmSAICAsLC7i8vNQszs/PIY+tQ6ze/vgpb25ufuVTlgbpCDkNGrPiYkwwmSdP+fFnkoZ+kJqvhdOgcU/fvz7TjNhzsRdib2ZnZ98ajcb3ZrO5Mjc3Bxr39DFGzD2WnJlfboSSy4YB5JcAAAAASUVORK5CYII=)
+	}
+	td.right a.ltwitter {
+		background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB20lEQVR4nKWTPWhTURzFf+/mJXl5uby+JFaTfiwawWArQYmDU0GHTtKgc9VBEfxqVeokKuokVARDYxEpLh0KunQQFBR0EIu0RdpBKqh0EIy2tc9Y4/twKA3pCxRKzvi/95x77jn8Fc/zaASiIfZmBMSFoS7RVzy+oYA4X8jWXegrmmJgZBJpvszv29W5oYAmjVExMDIp+oerL0WNpivEklniKca/WqfF5Uc9tRylNsSjY+8+PPm00MFKGcq/XuG5J0KxrTMVo1lHDcKKhbr03bIXS+3u3VOLdQ7ymdZxogYkkhBPdonYtulKxNAJhiGggiaxZUxqTfGCuPTwaZ0DIJ0bnZ54v4yJY4PjgBpcJa/h31/4swzWEu61HsXfwtzZzuYXq8QQhLT1ZICASu+e9vmZM4feVr8gzt03186PdbTc7t0u5/FcUBR/6Ejh2ldzLfcyW2QeQAXQInpB9D8Yw/Om0KJmZmf6J064DdVn0HUYPJCa2mHqRcCqZvB5wbqRG3p++Ee5kiUUBhkD3VhnXwY8+3o2MXdxb+tJ4I2/RgncHJz40j08W2r7+NuTqEFQBFLFPpiMlG7tT83uTkTvAM9qTflb6AaOAOmamQW8Bh4D3/yZ+AU2jYa38T+I6JdNPFroagAAAABJRU5ErkJggg==)
+	}
+	td.right ul li {
+		padding:0;
+		margin:0;
+	}
+	table#outer td dl {
+		padding:0;
+		margin: 10px 0 20px 0;
+		background-color: white;
+		border: 1px solid #dfdfdf;
+	}
+	table#outer td dl {
+		-moz-border-radius: 5px;
+		-khtml-border-radius: 5px;
+		-webkit-border-radius: 5px;
+		border-radius: 5px;
+	}
+	table h3, table h4 {
+		-moz-border-radius-topleft: 5px;
+		-moz-border-radius-topright: 5px;
+		-khtml-border-top-left-radius: 5px;
+		-khtml-border-top-right-radius: 5px;
+		-webkit-border-top-left-radius: 5px;
+		-webkit-border-top-right-radius: 5px;
+		border-top-left-radius: 5px;
+		border-top-right-radius: 5px;
+	}
+	table td dl dd{
+		-moz-border-radius-bottomleft: 5px;
+		-moz-border-radius-bottomright: 5px;
+		-khtml-border-bottom-left-radius: 5px;
+		-khtml-border-bottom-right-radius: 5px;
+		-webkit-border-bottom-left-radius: 5px;
+		-webkit-border-bottom-right-radius: 5px;
+		border-bottom-left-radius: 5px;
+		border-bottom-right-radius: 5px;
+	}
+	table#outer dl h3, table#outer td.right dl h4 {
+		font-size: 10pt;
+		font-weight: bold;
+		margin:0;
+		padding: 4px 10px 4px 10px;
+		background-color: ##F1F1F1;
+		background-image:-ms-linear-gradient(top,#f9f9f9,#ececec);
+		background-image:-moz-linear-gradient(top,#f9f9f9,#ececec);
+		background-image:-o-linear-gradient(top,#f9f9f9,#ececec);
+		background-image:-webkit-gradient(linear,left top,left bottom,from(#f9f9f9),to(#ececec));
+		background-image:-webkit-linear-gradient(top,#f9f9f9,#ececec);
+		background-image:linear-gradient(top,#f9f9f9,#ececec);
+		text-shadow: white 0 1px 0;
+	}
+	table#outer td.left dl h4 {
+		font-size: 10pt;
+		font-weight: bold;
+		margin:0;
+		padding: 4px 0 4px 0;
+	}
+	dd {
+		background-color: #f8f8f8;
+	}
+	table#outer td.left dd {
+		margin:0;
+		padding: 10px 20px 10px 20px;
+	}
+	table#outer td.right dd {
+		margin:0;
+		padding: 5px 10px 5px 10px;
+	}
+	table#outer .info {
+		color: #555;
+		font-size: .85em;
+	}
+	table#outer p {
+		padding:5px 0 5px 0;
+		margin:0;
+	}
+	input.yi_warning:hover {
+		background: #ce0000;
+		color: #fff;
+	}
+	table#outer .yifooter {
+		text-align: center;
+		font-size: .85em;
+	}
+	table#outer .yifooter a, table#outer .yifooter a:link {
+		text-decoration:none;
+	}
+	table#outer td small {
+		color: #555; font-size: .85em;
+	}
+	table#outer hr {
+		border: none 0;
+		border-top: 1px solid #BBBBBB;
+		height: 1px;
+	}
+	table#outer ul {
+		list-style:none;
+	}
+	table#outer ul.mybullet {
+		list-style-type:disc;
+		padding-left: 20px;
+	}
+	.yiinfo {
+		font-size:85%;
+		line-height: 115%;
+		}
 	</style>
 	<?php
 }
