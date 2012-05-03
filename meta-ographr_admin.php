@@ -181,7 +181,7 @@ function ographr_render_form() {
 						
 						<tr valign="center" id="advanced_opt"> 
 						<th align="left" width="140px" scope="row">&nbsp;</th> 
-						<td colspan="2"><small>Retrieving images <em>on-post</em> increases the load time of your page significantly, but on the downside the results might be outdated at some point. Should you choose to retrieve images <em>on-view</em>, it is recommended to <a href="#user_agents">restrict access</a> to increase load times for human readers.</small></td> 
+						<td colspan="2"><small>Retrieving images <em>on-post</em> decreased the loadtime of your page significantly, but on the downside the results might be outdated at some point. Should you choose to retrieve images <em>on-view</em>, it is recommended to <a href="#user_agents">restrict access</a> to decrease load times for human readers.</small></td> 
 						<td>&nbsp;</td>
 						</tr>
 						
@@ -547,11 +547,16 @@ function ographr_render_form() {
 					<!-- *********************** BEGIN: Sidebar ************************ -->		
 
 					<dl>
-						<dt><h4>Plugin</h4></dt>
+						<dt><h4>Navigator</h4></dt>
 						<dd>
 						<ul>
-							<li><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">OGraphr Website</a></li>
-							<li><a class="lhome" href="http://whyeye.org" target="_blank">Author's Website</a></li>
+							<li><strong><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">Website</a></strong></li>
+							<li><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/faq/" title="Frequently Asked Questions" target="_blank">FAQ</a></li>
+							<li><a class="lwp" href="http://wordpress.org/tags/meta-ographr?forum_id=10" target="_blank">Need help?</a></li>
+							<li id="advanced_opt"><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/changelog/" target="_blank">Changes</a></li>
+							<li id="advanced_opt"><a class="lwp" href="http://plugins.svn.wordpress.org/meta-ographr/" target="_blank">SVN</a></li>
+							
+							<li><a class="lhome" href="http://whyeye.org" target="_blank">whyEye.org</a></li>
 							<li>&nbsp;</li>
 							<li><a href="https://twitter.com/whyeye_org" class="twitter-follow-button" data-show-count="false" data-show-screen-name="false">Follow @whyeye_org</a>
 							<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script></li>
@@ -561,12 +566,12 @@ function ographr_render_form() {
 					</dl>
 
 					<dl>
-						<dt><h4>Do you like this plugin?</h4></dt>
+						<dt><h4>Humble Mumble</h4></dt>
 						<dd>
-						<p style="font-size:8pt;">If you want to support this plugin, why not buy me a coffee or something else?</p>
+						<p style="font-size:8pt;">If you want to support this plugin, why not buy me a coffee?</p>
 						<ul>
-							<li><a class="lpaypal" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FVPU9H7CMUU6U" target="_blank">Donate via PayPal</a></li>
-							<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/ref=cm_sw_r_tw_ws_F5.Hpb18F73RS" target="_blank">My Amazon Wish List</a></li>
+							<li><strong><a class="lpaypal" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FVPU9H7CMUU6U" target="_blank">Buy coffee!</a></strong></li>
+							<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/ref=cm_sw_r_tw_ws_F5.Hpb18F73RS" target="_blank">Wishful thinking</a></li>
 						</ul>			
 						</dd>
 

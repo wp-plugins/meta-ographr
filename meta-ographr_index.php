@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.5
+Version: 0.5.1
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.5");
+    define("OGRAPHR_VERSION", "0.5.1");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -85,6 +85,11 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 	define("JUSTINTV_IMAGE_SIZE", "image_url_large");
 	
 $core = new OGraphr_Core();
+
+add_action('wp_head', 'ographr_core_init');
+add_action('save_post', 'ographr_save_postmeta');
+add_action('admin_notices', 'ographr_admin_notice');
+//add_action('admin_bar_menu', 'ographr_admin_bar', 150); // ('admin_bar_menu', array(&$this,'admin_bar_menu'), 150);
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -346,7 +351,7 @@ class OGraphr_Core {
 		
 				// Did we retrieve those images before?
 				if ($options['exec_mode'] == 1) {
-					$meta_values = get_post_meta($post_id, ographr_urls, true);
+					$meta_values = get_post_meta($post_id, 'ographr_urls', true);
 					$meta_values = unserialize($meta_values);
 				}
 
@@ -387,7 +392,7 @@ class OGraphr_Core {
 				if(OGRAPHR_DEBUG == TRUE) {	
 					$e_time = microtime();
 					$time = $e_time - $s_time;
-					print "\t Executed in " . abs($time) . " seconds\n";
+					print "\t Processed in " . abs($time) . " seconds\n";
 					print "-->\n";
 				}
 				
@@ -1261,13 +1266,16 @@ class OGraphr_Core {
 		return $youtube_thumbnails;
 	} //end find_youtube_widgets
 	
+	
 };
 
-add_action('wp_head', 'OGraphr_Core_Init');
-function OGraphr_Core_Init() {
+
+// initialize
+function ographr_core_init() {
 	global $core;
 	$core->ographr_main_dish();
 }
+
 
 // Display a Settings link on the OGraphr Plugins page
 function ographr_plugin_action_links( $links, $file ) {
@@ -1282,29 +1290,38 @@ function ographr_plugin_action_links( $links, $file ) {
 	return $links;
 }
 
+
 function ographr_admin_notice(){
     global $options;
 
-	if (!$options['exec_mode']) {
+	// Update
+	if ((!$options['exec_mode']) && (is_admin())) {
 		echo '<div class="updated">
-       		<p>Please review your <a href="'.get_admin_url().'options-general.php?page=meta-ographr/meta-ographr_admin.php">settings</a> for the OGraphr plugin</p>
+       		<p>Please review your <a href="'.get_admin_url().'options-general.php?page=meta-ographr/meta-ographr_admin.php">settings</a> for the OGraphr plugin.</p>
     		</div>';
 	}
 	
-	if (OGRAPHR_DEBUG == TRUE) {
+	// Debug
+	if ((OGRAPHR_DEBUG == TRUE) && (is_admin())) {
 		echo '<div class="error">
-       		<p>OGraphr is currently running in debug mode</p>
+       		<p>OGraphr is currently running in debug mode. You can disable it in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plugin editor</a>!</p>
     		</div>';
 	}
 	
+	// Beta
+	if ((OGRAPHR_BETA == TRUE) && (OGRAPHR_DEBUG == FALSE) && (is_admin())) {
+		echo '<div class="updated">
+       		<p>OGraphr is currently running with beta features enabled. You can disable it in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plugin editor</a>!</p>
+    		</div>';
+	}
 }
-add_action('admin_notices', 'ographr_admin_notice');
+
 
 // Save thumbnails as postdata
 function ographr_save_postmeta($post_id) {
 	global $core;
 	global $options;
-	
+	    
 	if($options['exec_mode'] == 2) {
 		return;
 	}
@@ -1319,6 +1336,30 @@ function ographr_save_postmeta($post_id) {
 
 }
 
-add_action( 'save_post', 'ographr_save_postmeta');
+
+
+
+
+function ographr_admin_bar() {
+    global $wp_admin_bar;
+	global $options;
+	
+
+    if ((current_user_can('manage_options')) && ($options['exec_mode'] == 1) && (is_single())) {
+        $menu_items = array(
+            array(
+                'id' => 'ographr',
+                'title' => 'OGraphr',
+                'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+            )
+        );
+
+        foreach ($menu_items as $menu_item) {
+            $wp_admin_bar->add_menu($menu_item);
+        }
+    }
+}
+
+
 
 ?>
