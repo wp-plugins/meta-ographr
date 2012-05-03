@@ -3,7 +3,7 @@ Contributors: yathosho
 Tags: opengraph,open-graph,metatags,facebook,google+,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,official.fm,ustream,viddler,html5 video,jwplayer,flickr,justin.tv,8tracks
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -40,22 +40,29 @@ OpenGraph tags will be used by social-media sites such as Facebook or Google+ to
 
 == Frequently Asked Questions ==
 
-= Why doesn't Facebook display the cover artwork? =
+= What is the Open Graph protocol? =
 
-Facebook caches previously submitted links for an undisclosed time. If your post has been shared/liked on Facebook before, the cover artwork will not appear until the cache has expired. To make sure the plugin is active and working, you can always look for the og:image tags in the source of your post.
+The [Open Graph protocol](http://ogp.me/ "Open Graph protocol") enables any web page to become a rich object in a social graph. For instance, this is used on Facebook to allow any web page to have the same functionality as any other object on Facebook. The OGraphr plugin for Wordpress detects images from popular media players and adds them, alongside other information, to the metadata of your page.
 
 = I don't use social media, why would I use this? =
 
 People share links with their friends on social media sites whether you like it or not. This plug-in gives you some control over how your content is presented on platforms such as Facebook and Google+. Displaying cover artwork or video snapshots with your link usually looks nicer and attracts the attention of potential visitors.
 
+= Why doesn't Facebook display the cover artwork? =
+
+Facebook caches previously submitted links for an undisclosed time. If your page has been shared/liked on Facebook before, the cover artwork will not appear until that cache has expired. To make sure the plugin is active and working, you can always look for the og:image tags in the source of your page.
+
 = Why do I need a Bandcamp API key? =
 
-Bandcamp is rather restrictive with access to their API, usually only allowing access to owners of material hosted on
-their platform. In order to get an API key, you have to apply via email.
+Bandcamp is rather restrictive with access to their API, usually only allowing access to owners of material hosted on their platform. In order to get an API key, you have to apply via email.
 
 = Why do I need a Viddler API key? =
 
 You probably don't. All new Viddler players use HTML5-compliant poster images and these can be detected without making an API call. It's only old "Legacy" players rely on Viddler's API and you need a valid developer key to access it.
+
+= What about site performance? =
+
+Depending on the amount of embed codes in your site, retrieving images and other informations can delay the rendering of a page. This can be avoided by retrieving images only once when an article has been published or updated. You can further restrict OGraphr to trigger only when called by Facebook, Google+ or LinkedIn.
 
 == Screenshots ==
 
@@ -66,6 +73,12 @@ You probably don't. All new Viddler players use HTML5-compliant poster images an
 3. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.5.2 =
+* wrapped admin functions in class
+* improved on-post fallback to harvest new data (disable in source)
+* improved input validation
+* updated FAQ
 
 = 0.5.1 =
 * interface refinements
@@ -185,7 +198,7 @@ You probably don't. All new Viddler players use HTML5-compliant poster images an
 * fixed permalink on front page
 
 = 0.2.1 =
-* wrapped functions inside class
+* wrapped functions in class
 * added option to use tagline as custom description
 * added rudimentary support for Viper's Video Quicktags
 * added support for SoundCloud shortcodes
