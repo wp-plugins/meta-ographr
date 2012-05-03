@@ -33,7 +33,7 @@ add_action('admin_init', array($admin_core, 'ographr_init') );
 add_action('admin_menu', array($admin_core, 'ographr_add_options_page') );
 add_action('admin_head', array($admin_core, 'ographr_stylesheet') );
 add_action('admin_footer', array($admin_core, 'ographr_javascript') );
-add_filter( 'plugin_action_links', array($admin_core, 'ographr_plugin_action_links'), 10, 2 );
+add_filter( 'plugin_action_links', array($core, 'ographr_plugin_action_links'), 10, 2 );
 
 class OGraphr_Admin_Core {
 	// --------------------------------------------------------------------------------------
