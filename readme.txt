@@ -3,7 +3,7 @@ Contributors: yathosho
 Tags: opengraph,open-graph,metatags,facebook,google+,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,official.fm,ustream,viddler,html5 video,jwplayer,flickr,justin.tv,8tracks
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.5.2.1
+Stable tag: 0.5.3
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -70,9 +70,19 @@ Depending on the amount of embed codes in your site, retrieving images and other
 
 2. a link with a SoundCloud widget added as Google+ status update
 
-3. advanced settings page for OGraphr
+3. standard settings page for OGraphr
+
+4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.5.3 =
+* added options to limit User Agent access to Digg
+* added option to filter images in theme directory
+* β: added statistics on option page
+* improved fallback harvester
+* moved shifting function
+* tweaked CSS
 
 = 0.5.2.1 =
 * fixed bug on plugins page

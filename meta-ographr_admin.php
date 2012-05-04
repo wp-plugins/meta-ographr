@@ -33,7 +33,6 @@ add_action('admin_init', array($admin_core, 'ographr_init') );
 add_action('admin_menu', array($admin_core, 'ographr_add_options_page') );
 add_action('admin_head', array($admin_core, 'ographr_stylesheet') );
 add_action('admin_footer', array($admin_core, 'ographr_javascript') );
-add_filter( 'plugin_action_links', array($core, 'ographr_plugin_action_links'), 10, 2 );
 
 class OGraphr_Admin_Core {
 	// --------------------------------------------------------------------------------------
@@ -90,10 +89,12 @@ class OGraphr_Admin_Core {
 							"enable_vimeo" => "1",
 							"enable_youtube" => "1",
 							"filter_smilies" => "1",
+							"filter_themes" => "0",
 							"filter_gravatar" => "1",
 							"facebook_ua" => "0",
 							"gplus_ua" => "0",
 							"linkedin_ua" => "0",
+							"digg_ua" => "0",
 							"add_comment" => "1",
 							"fb_site_name" => "%sitename%",
 							"fb_type" => "_none"
@@ -326,8 +327,12 @@ class OGraphr_Admin_Core {
 								<!-- FILTERS -->
 								<tr valign="center"> 
 									<th align="left" width="140px" scope="row"><label>Filters:</label></th> 
-									<td colspan="2"><label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
-									<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label></td> 
+									<td colspan="2">
+										<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label>&nbsp;
+										<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
+										<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); } ?> /> Exclude themes </label>&nbsp;
+									</td> 
+										
 								</tr>
 							
 								<!-- CUSTOM URLS -->
@@ -340,16 +345,23 @@ class OGraphr_Admin_Core {
 								<!-- LIMIT ACCESS -->
 								<tr valign="center"> 
 									<th align="left" width="140px" scope="row"><a name="user_agents" id="user_agents"></a><label>User Agents:</label></th> 
-									<td colspan="2"><label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Facebook </label>&nbsp;
+									<td colspan="2">
+										
+										<!-- Checkbox -->
+										<label><input name="ographr_options[digg_ua]" type="checkbox" value="1" <?php if (isset($options['digg_ua'])) { checked('1', $options['digg_ua']); } ?> /> Digg </label>&nbsp;
+										
+										<!-- Checkbox -->
+										<label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Facebook </label>&nbsp;
 										<!-- Checkbox -->
 										<label><input name="ographr_options[gplus_ua]" type="checkbox" value="1" <?php if (isset($options['gplus_ua'])) { checked('1', $options['gplus_ua']); } ?> /> Google+ </label>&nbsp;
-											<!-- Checkbox -->
-											<label><input name="ographr_options[linkedin_ua]" type="checkbox" value="1" <?php if (isset($options['linkedin_ua'])) { checked('1', $options['linkedin_ua']); } ?> /> LinkedIn </label></td>
+										
+										<!-- Checkbox -->
+										<label><input name="ographr_options[linkedin_ua]" type="checkbox" value="1" <?php if (isset($options['linkedin_ua'])) { checked('1', $options['linkedin_ua']); } ?> /> LinkedIn </label></td>
 								</tr>
 							
 								<tr valign="top"> 
 									<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-									<td colspan="2"><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites. Google+ currently does not use a unique <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank" >user-agent</a>!</small></td>
+									<td colspan="2"><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites. Neither Digg nor <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank" >Google+</a> currently use a unique user-agent, hence the detection is inaccurate</a>!</small></td>
 								</tr>
 						
 							</tbody></table>			
@@ -572,6 +584,38 @@ class OGraphr_Admin_Core {
 							</dd>
 
 						</dl>
+						
+						<? if (OGRAPHR_BETA == TRUE) { ?>
+						<dl id="advanced_opt">
+							<dt><h4>Statistics</h4></dt>
+							<dd>
+								<?php
+									global $post;
+									$posts_published = wp_count_posts();
+									$posts_published = $posts_published->publish;
+									$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
+									$myposts = get_posts( $args );
+									$posts_harvested = count($myposts);
+									
+									$pages_published = wp_count_posts('page');
+									$pages_published = $pages_published->publish;
+									$args = array( 'number' => $pages_published, 'meta_key' => 'ographr_urls' );
+									$mypages = get_pages( $args );
+									$pages_harvested = count($mypages);
+									
+								?>
+							<p style="font-size:8pt;">
+								<? print "Posts harvested: $posts_harvested / $posts_published"; ?><br/>
+								<? print "Pages harvested: $pages_harvested / $pages_published"; ?>
+							</p>
+									
+							</dd>
+
+						</dl>
+						<? } ?>
+						
+						
+						
 						<!-- *********************** END: Sidebar ************************ -->
 						</td> <!-- [right] -->
 
@@ -667,7 +711,7 @@ class OGraphr_Admin_Core {
 			text-decoration:none;
 			background-position:0px 60%;
 			background-repeat:no-repeat;
-			padding: 4px 0px 4px 22px;
+			padding: 4px 0px 2px 22px;
 			border: 0 none;
 			display:block;}
 		td.right a.lhome {
