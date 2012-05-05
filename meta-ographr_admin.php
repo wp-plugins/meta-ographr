@@ -88,6 +88,7 @@ class OGraphr_Admin_Core {
 							"enable_viddler" => "1",
 							"enable_vimeo" => "1",
 							"enable_youtube" => "1",
+							"google_tags" => "0",
 							"filter_smilies" => "1",
 							"filter_themes" => "0",
 							"filter_gravatar" => "1",
@@ -224,7 +225,7 @@ class OGraphr_Admin_Core {
 						
 							<!-- META TAGS -->
 							<tr valign="center"> 
-								<th align="left" scope="row"><label>Meta-tags:</label></th> 
+								<th align="left" scope="row"><label>Metadata:</label></th> 
 								<td colspan="2"><label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label>&nbsp;
 
 								<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
@@ -273,7 +274,13 @@ class OGraphr_Admin_Core {
 								<? if((!$options['bandcamp_api']) && ($options['enable_bandcamp'])) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
 								<? if((!$options['viddler_api']) && ($options['enable_viddler'])) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 							</tr>
-						
+							
+							<!-- Other Meta -->
+							<tr valign="center" id="advanced_opt"> 
+								<th align="left" scope="row"><label>Other Metadata:</label></th> 
+								<td colspan="2"><label><input name="ographr_options[google_tags]" type="checkbox" value="1" <?php if (isset($options['google_tags'])) { checked('1', $options['google_tags']); } ?> /> Google+ Snippets (<a href="https://developers.google.com/+/plugins/snippet/" target="_blank">?</a>)</label></td>
+							</tr>
+							
 							<!-- ADVERTISEMENT -->
 							<tr valign="center" id="advanced_opt"> 
 								<th align="left" scope="row"><label>Advertisement:</label></th> 
@@ -585,7 +592,6 @@ class OGraphr_Admin_Core {
 
 						</dl>
 						
-						<? if (OGRAPHR_BETA == TRUE) { ?>
 						<dl id="advanced_opt">
 							<dt><h4>Statistics</h4></dt>
 							<dd>
@@ -608,14 +614,10 @@ class OGraphr_Admin_Core {
 								<? print "Posts harvested: $posts_harvested / $posts_published"; ?><br/>
 								<? print "Pages harvested: $pages_harvested / $pages_published"; ?>
 							</p>
-									
+							
 							</dd>
 
 						</dl>
-						<? } ?>
-						
-						
-						
 						<!-- *********************** END: Sidebar ************************ -->
 						</td> <!-- [right] -->
 

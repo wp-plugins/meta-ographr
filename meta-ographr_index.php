@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.5.3
+Version: 0.5.4
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.5.3");
+    define("OGRAPHR_VERSION", "0.5.4");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -101,6 +101,7 @@ $core = new OGraphr_Core();
 add_action('wp_head', array($core,'ographr_core_init'));
 add_action('save_post', array($core,'ographr_save_postmeta'));
 add_action('admin_notices', array($core,'ographr_admin_notice'));
+add_action('admin_bar_menu', array($core,'ographr_admin_bar'), 150);
 add_filter( 'plugin_action_links', array($core, 'ographr_plugin_action_links'), 10, 2 );
 
 if ( is_admin() )
@@ -339,6 +340,7 @@ class OGraphr_Core {
 				if ($options['filter_gravatar']) { print "\t Avatars are filtered\n"; }
 				if ($options['filter_smilies']) { print "\t Emoticons are filtered \n"; }
 				if ($options['filter_themes']) { print "\t Themes are filtered\n"; }
+				if ($options['google_tags']) { print "\t Google+ Snippets are active\n"; }
 				
 				if ($options['filter_custom_urls']) {
 					foreach(preg_split("/((\r?\n)|(\n?\r))/", $options['filter_custom_urls']) as $line){
@@ -461,6 +463,8 @@ class OGraphr_Core {
 					// Blog title
 					$title = get_settings('blogname');
 					if($title) {
+						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
+							print "<meta name=\"title\" content=\"$title\" />\n";
 						print "<meta property=\"og:title\" content=\"$title\" />\n";
 					}
 					// Add custom description
@@ -468,16 +472,22 @@ class OGraphr_Core {
 					$wp_tagline = get_bloginfo('description');
 					$description = str_replace("%tagline%", $wp_tagline, $description);
 					if($description) {
+						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
+							print "<meta name=\"description\" content=\"$description\" />\n";
 						print "<meta property=\"og:description\" content=\"$description\" />\n";
 					}
 				} else { //single posts
 					if ($options['add_title'] && ($title)) {
 						// Post title
+						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
+							print "<meta name=\"title\" content=\"$title\" />\n";
 						print "<meta property=\"og:title\" content=\"$title\" />\n"; 
 					}
 									
 					if($options['add_excerpt'] && ($description = wp_strip_all_tags((get_the_excerpt()), true))) {
 						// Post excerpt
+						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
+							print "<meta name=\"description\" content=\"$description\" />\n";
 						print "<meta property=\"og:description\" content=\"$description\" />\n";
 					}
 				}
@@ -509,12 +519,24 @@ class OGraphr_Core {
 					
 				if (($total_img == 0) && ($web_thumb)) {
 					print "<meta property=\"og:image\" content=\"$web_thumb\" />\n";
+					$ext = pathinfo($web_thumb, PATHINFO_EXTENSION);
+					if (($ext == "jpg") || ($ext == "jpe"))
+						$ext = "jpeg";
+					print "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
 				} else if ($thumbnails) { // investigate?
 					foreach ($thumbnails as $thumbnail) {
 						if ($thumbnail) {
-						 print "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
+							$thumbnail = preg_replace('/\?([A-Za-z0-9_-]+)\Z/', '', $thumbnail); // remove suffix
+							print "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
 						}
 					}
+				}
+				
+				if ($total_img == 1) {
+					$ext = pathinfo($thumbnail, PATHINFO_EXTENSION);
+					if (($ext == "jpg") || ($ext == "jpe"))
+						$ext = "jpeg";
+					print "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
 				}
 			
 				// Add Facebook ID
@@ -1397,6 +1419,41 @@ class OGraphr_Core {
 		$widget_thumbnails = serialize($widget_thumbnails);
 		update_post_meta($post_id, 'ographr_urls', $widget_thumbnails);
 
+	}
+	
+	
+	function ographr_admin_bar() {
+	    
+		if (OGRAPHR_DEBUG != TRUE)
+			return;
+			
+		global $wp_admin_bar;
+
+
+	    if ( (current_user_can('manage_options')) && ( (is_single()) || (is_front_page()) ) ) {
+		
+				global $post;
+				
+				$published = wp_count_posts();
+				$published = $published->publish;
+				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
+				$myposts = get_posts( $args );
+				$harvested = count($myposts);
+				
+	            $menu_items = array(
+	                array(
+	                    'id' => 'ographr',
+	                    'title' => "OGraphr [$harvested/$published]",
+						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+	                )
+	            );
+
+	        foreach ($menu_items as $menu_item) {
+	            $wp_admin_bar->add_menu($menu_item);
+	        }
+	    }
+	
+	
 	}
 	
 }; // end of class
