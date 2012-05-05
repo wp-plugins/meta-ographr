@@ -70,6 +70,7 @@ class OGraphr_Admin_Core {
 							"enable_triggers_on_front" => "0",
 							"website_description" => "",
 							"not_always" => "0",
+							"add_adminbar" => "0",
 							"add_comment" => "1",
 							"add_title" => "1",
 							"add_excerpt" => "1",
@@ -88,7 +89,12 @@ class OGraphr_Admin_Core {
 							"enable_viddler" => "1",
 							"enable_vimeo" => "1",
 							"enable_youtube" => "1",
-							"google_tags" => "0",
+							"add_post_images" => "1",
+							"enable_videoposter" => "1",
+							"enable_jwplayer" => "1",
+							"add_post_thumbnail" => "0",
+							"add_add_google_meta" => "0",
+							"add_image_prop" => "0",
 							"filter_smilies" => "1",
 							"filter_themes" => "0",
 							"filter_gravatar" => "1",
@@ -96,7 +102,6 @@ class OGraphr_Admin_Core {
 							"gplus_ua" => "0",
 							"linkedin_ua" => "0",
 							"digg_ua" => "0",
-							"add_comment" => "1",
 							"fb_site_name" => "%sitename%",
 							"fb_type" => "_none"
 			);
@@ -225,14 +230,14 @@ class OGraphr_Admin_Core {
 						
 							<!-- META TAGS -->
 							<tr valign="center"> 
-								<th align="left" scope="row"><label>Metadata:</label></th> 
+								<th align="left" scope="row"><label>Meta-tags:</label></th> 
 								<td colspan="2"><label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label>&nbsp;
 
 								<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
 
 								<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label>&nbsp;
 
-								<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); } ?> /> Add post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label></td>
+								</td>
 							</tr>
 						
 							<!-- TRIGGERS -->
@@ -275,16 +280,39 @@ class OGraphr_Admin_Core {
 								<? if((!$options['viddler_api']) && ($options['enable_viddler'])) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 							</tr>
 							
-							<!-- Other Meta -->
+							<!-- MORE TRIGGERS -->
 							<tr valign="center" id="advanced_opt"> 
-								<th align="left" scope="row"><label>Other Metadata:</label></th> 
-								<td colspan="2"><label><input name="ographr_options[google_tags]" type="checkbox" value="1" <?php if (isset($options['google_tags'])) { checked('1', $options['google_tags']); } ?> /> Google+ Snippets (<a href="https://developers.google.com/+/plugins/snippet/" target="_blank">?</a>)</label></td>
+								<th align="left" scope="row"><label>Other Triggers:</label></th> 
+								<td colspan="2">
+									
+									<label><input name="ographr_options[enable_videoposter]" type="checkbox" value="1" <?php if (isset($options['enable_videoposter'])) { checked('1', $options['enable_videoposter']); } ?> /> Video posters </label>&nbsp;
+									
+									<label><input name="ographr_options[enable_jwplayer]" type="checkbox" value="1" <?php if (isset($options['enable_jwplayer'])) { checked('1', $options['enable_jwplayer']); } ?> /> JW Player </label>&nbsp;
+									
+									<label><input name="ographr_options[add_post_images]" type="checkbox" id="enable_images" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
+									
+									<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); } ?> /> Post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label>&nbsp;
+								</td>
+							</tr>
+							
+							<!-- GOOGLE SNIPPETS -->
+							<tr valign="center" id="advanced_opt"> 
+								<th align="left" scope="row"><label>Google+ Snippets:</label></th> 
+								<td colspan="2">
+									<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Meta-tags (<a href="https://developers.google.com/+/plugins/snippet/" target="_blank">?</a>)</label>
+										
+									<label><input name="ographr_options[add_image_prop]" type="checkbox" value="1" <?php if (isset($options['add_image_prop'])) { checked('1', $options['add_image_prop']); } ?> /> Image properties (<a href="http://schema.org/docs/gs.html" target="_blank">?</a>)</label>
+								</td>
 							</tr>
 							
 							<!-- ADVERTISEMENT -->
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="top" id="advanced_opt"> 
 								<th align="left" scope="row"><label>Advertisement:</label></th> 
-								<td colspan="2"><label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source (<em>OGraphr v<? echo OGRAPHR_VERSION ?></em>)</label></td>
+								<td colspan="2">
+									<label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source (<em>OGraphr v<? echo OGRAPHR_VERSION ?></em>)</label><br/>
+
+									<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>
+								</td>
 							</tr>
 						
 							</tbody></table></dd>
@@ -300,7 +328,7 @@ class OGraphr_Admin_Core {
 								<tr valign="center" id="advanced_opt"> 
 									<th align="left" scope="row"><label>Functionality:</label></th> 
 									<td colspan="2">
-									<label><input name="ographr_options[enable_plugin_on_front]" type="checkbox" id="enable_plugin" value="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?> /> Enable plugin </label>&nbsp;
+									<label><input name="ographr_options[enable_plugin_on_front]" type="checkbox" id="enable_plugin" value="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?> /> Enable plug-in </label>&nbsp;
 								
 									<label><input name="ographr_options[enable_triggers_on_front]" type="checkbox" id="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!$options['enable_plugin_on_front']) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
 									</td> 
@@ -335,9 +363,11 @@ class OGraphr_Admin_Core {
 								<tr valign="center"> 
 									<th align="left" width="140px" scope="row"><label>Filters:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label>&nbsp;
-										<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
-										<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); } ?> /> Exclude themes </label>&nbsp;
+										<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" id="disable_filters" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label>&nbsp;
+										
+										<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" id="disable_filters" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
+										
+										<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" id="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); } ?> /> Exclude themes </label>&nbsp;
 									</td> 
 										
 								</tr>
@@ -345,7 +375,7 @@ class OGraphr_Admin_Core {
 								<!-- CUSTOM URLS -->
 								<tr valign="top"> 
 									<th align="left" width="140px" scope="row"><label>Custom URLs:</label></th> 
-									<td colspan="2"><textarea name="ographr_options[filter_custom_urls]" cols="76%" rows="4" ><?php echo $options['filter_custom_urls']; ?></textarea><br/>
+									<td colspan="2"><textarea name="ographr_options[filter_custom_urls]" cols="76%" rows="4" id="disable_filters"><?php echo $options['filter_custom_urls']; ?></textarea><br/>
 										<small><strong>BETA:</strong> You can enter filenames and URLs (e.g. <em><? echo 'http://' . $wp_url . '/wp-content'; ?></em>) to the filter-list above</small></td> 
 								</tr>
 							
@@ -649,6 +679,7 @@ class OGraphr_Admin_Core {
 		$input['fb_site_name'] =  htmlentities($input['fb_site_name']);
 		$input['fb_admins'] =  htmlentities($input['fb_admins']);
 		$input['fb_app_id'] =  htmlentities($input['fb_app_id']);
+		
 		return $input;
 	}
 
@@ -656,6 +687,7 @@ class OGraphr_Admin_Core {
 	function ographr_javascript() {
 		?>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+		<script src="less.js" type="text/javascript"></script>
 		<script type="text/javascript">
 		$(document).ready(function() {
 				if (! $('#show_advanced').attr('checked') ) {
@@ -666,6 +698,8 @@ class OGraphr_Admin_Core {
 				});
 			
 				$("#enable_plugin").click(enable_cb);
+				$("#enable_images").click(enable_images);
+				
 		});
 	
 		function enable_cb() {
@@ -673,6 +707,14 @@ class OGraphr_Admin_Core {
 		    $("input#enable_triggers").removeAttr("disabled");
 		  } else {
 		    $("input#enable_triggers").attr("disabled", true);
+		  }
+		}
+		
+		function enable_images() {
+		  if (this.checked) {
+		    $("input#disable_filters, textarea#disable_filters").removeAttr("disabled");
+		  } else {
+		    $("input#disable_filters, textarea#disable_filters").attr("disabled", true);
 		  }
 		}
 	    </script>
@@ -728,8 +770,7 @@ class OGraphr_Admin_Core {
 		td.right a.lwp {
 			background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACWklEQVR42n1TyWoaUBR11UU+oJ/QQqHL0C/qwkU2bl2EYEiixeCQSRIFN4EEEodYDYRYUUwgQwuNrVoTcNiIaOtEnT2955LQkrR9cOG9e8857w7vGQyPltVqfbm8vGxfWVm5Ehvf2xV9jBn+twRostls3wOBQOLu7u5juVz+QeOePsaIeUKcn59/JoHYxsZGvlarFdLpNHw+H8QHi8WC7e1tXFxcoNFofCOGWHL+vNkhoE/NZrNN8NLS0l8tGo1C1k9iWdID+TVT6/V62ePjY0QiEayuriIcDuuetre3B6kfw+GQAhgMBmVyRPSV3i7g04dgoVCAy+VSgel0qr79/X3Y7XaUyiU9t5pNxk81CxHIVSqVK97OJU2D0+mEw+HA7e2t+o6OjvR8eBjQ883nG5Aj3C8UGIxGo8bW1habBNljZ2cHa2triMVimoVMAe+koT6vTwVkIpCSOZGmCvDg9XpxdnamhFQqBbfbrZ3neTweY319XUup1+vweDzo9/sU6FCgwHRCoRB2d3cxmUxQrVb1xmw2i0QioSLBYFCFT05OIKP8XYI0ws2GZDIZ+P1+lEolJRwcHGjti4uLEAeKxSJJEDzi8bg2kQN4GGO90+nkObJkMqkCrVZLp2EymSAxTCdT5HM5sFftdjtHDrn6FpiFPI7rbrfboYjMmSAICAsLC7i8vNQszs/PIY+tQ6ze/vgpb25ufuVTlgbpCDkNGrPiYkwwmSdP+fFnkoZ+kJqvhdOgcU/fvz7TjNhzsRdib2ZnZ98ajcb3ZrO5Mjc3Bxr39DFGzD2WnJlfboSSy4YB5JcAAAAASUVORK5CYII=)
 		}
-		td.right a.ltwitter {
-			background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB20lEQVR4nKWTPWhTURzFf+/mJXl5uby+JFaTfiwawWArQYmDU0GHTtKgc9VBEfxqVeokKuokVARDYxEpLh0KunQQFBR0EIu0RdpBKqh0EIy2tc9Y4/twKA3pCxRKzvi/95x77jn8Fc/zaASiIfZmBMSFoS7RVzy+oYA4X8jWXegrmmJgZBJpvszv29W5oYAmjVExMDIp+oerL0WNpivEklniKca/WqfF5Uc9tRylNsSjY+8+PPm00MFKGcq/XuG5J0KxrTMVo1lHDcKKhbr03bIXS+3u3VOLdQ7ymdZxogYkkhBPdonYtulKxNAJhiGggiaxZUxqTfGCuPTwaZ0DIJ0bnZ54v4yJY4PjgBpcJa/h31/4swzWEu61HsXfwtzZzuYXq8QQhLT1ZICASu+e9vmZM4feVr8gzt03186PdbTc7t0u5/FcUBR/6Ejh2ldzLfcyW2QeQAXQInpB9D8Yw/Om0KJmZmf6J064DdVn0HUYPJCa2mHqRcCqZvB5wbqRG3p++Ee5kiUUBhkD3VhnXwY8+3o2MXdxb+tJ4I2/RgncHJz40j08W2r7+NuTqEFQBFLFPpiMlG7tT83uTkTvAM9qTflb6AaOAOmamQW8Bh4D3/yZ+AU2jYa38T+I6JdNPFroagAAAABJRU5ErkJggg==)
+		td.right a.ltwitter {	background-image:url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB20lEQVR4nKWTPWhTURzFf+/mJXl5uby+JFaTfiwawWArQYmDU0GHTtKgc9VBEfxqVeokKuokVARDYxEpLh0KunQQFBR0EIu0RdpBKqh0EIy2tc9Y4/twKA3pCxRKzvi/95x77jn8Fc/zaASiIfZmBMSFoS7RVzy+oYA4X8jWXegrmmJgZBJpvszv29W5oYAmjVExMDIp+oerL0WNpivEklniKca/WqfF5Uc9tRylNsSjY+8+PPm00MFKGcq/XuG5J0KxrTMVo1lHDcKKhbr03bIXS+3u3VOLdQ7ymdZxogYkkhBPdonYtulKxNAJhiGggiaxZUxqTfGCuPTwaZ0DIJ0bnZ54v4yJY4PjgBpcJa/h31/4swzWEu61HsXfwtzZzuYXq8QQhLT1ZICASu+e9vmZM4feVr8gzt03186PdbTc7t0u5/FcUBR/6Ejh2ldzLfcyW2QeQAXQInpB9D8Yw/Om0KJmZmf6J064DdVn0HUYPJCa2mHqRcCqZvB5wbqRG3p++Ee5kiUUBhkD3VhnXwY8+3o2MXdxb+tJ4I2/RgncHJz40j08W2r7+NuTqEFQBFLFPpiMlG7tT83uTkTvAM9qTflb6AaOAOmamQW8Bh4D3/yZ+AU2jYa38T+I6JdNPFroagAAAABJRU5ErkJggg==)
 		}
 		td.right ul li {
 			padding:0;

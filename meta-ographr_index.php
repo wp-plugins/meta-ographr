@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.5.4
+Version: 0.5.5
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.5.4");
+    define("OGRAPHR_VERSION", "0.5.5");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -102,7 +102,7 @@ add_action('wp_head', array($core,'ographr_core_init'));
 add_action('save_post', array($core,'ographr_save_postmeta'));
 add_action('admin_notices', array($core,'ographr_admin_notice'));
 add_action('admin_bar_menu', array($core,'ographr_admin_bar'), 150);
-add_filter( 'plugin_action_links', array($core, 'ographr_plugin_action_links'), 10, 2 );
+add_filter('plugin_action_links', array($core, 'ographr_plugin_action_links'), 10, 2 );
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -558,80 +558,83 @@ class OGraphr_Core {
 		global $options;
 		
 		// Get images in post
-		preg_match_all('/<img.+?src=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
-		foreach($matches[1] as $match) {
-		  	if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Image tag: $match\n";
-			}
+		if ($options['add_post_images']) {
+			preg_match_all('/<img.+?src=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
+			foreach($matches[1] as $match) {
+			  	if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
+					print "\t Image tag: $match\n";
+				}
 			
-			$no_smilies = FALSE;
-			$no_themes = FALSE;
-			$no_gravatar = FALSE;
-			$no_custom_url = TRUE;
+				$no_smilies = FALSE;
+				$no_themes = FALSE;
+				$no_gravatar = FALSE;
+				$no_custom_url = TRUE;
 			
-			// filter Wordpress smilies
-			preg_match('/\/wp-includes\/images\/smilies\/icon_.+/i', $match, $filter);
-			if ((!$options['filter_smilies']) || (!$filter[0])) {
-				//$thumbnails[] = $match;
-				$no_smilies = TRUE;
-			}
+				// filter Wordpress smilies
+				preg_match('/\/wp-includes\/images\/smilies\/icon_.+/i', $match, $filter);
+				if ((!$options['filter_smilies']) || (!$filter[0])) {
+					//$thumbnails[] = $match;
+					$no_smilies = TRUE;
+				}
 			
-			// filter Wordpress theme images
-			preg_match('/\/wp-content\/themes\//i', $match, $filter);
-			if ((!$options['filter_themes']) || (!$filter[0])) {
-				//$thumbnails[] = $match;
-				$no_themes = TRUE;
-			}
+				// filter Wordpress theme images
+				preg_match('/\/wp-content\/themes\//i', $match, $filter);
+				if ((!$options['filter_themes']) || (!$filter[0])) {
+					//$thumbnails[] = $match;
+					$no_themes = TRUE;
+				}
 			
-			// filter Gravatar
-			$pattern = '/https?:\/\/w*.?gravatar.com\/avatar\/.*/i';
-			preg_match($pattern, $match, $filter);
-			if ((!$options['filter_gravatar']) || (!$filter[0])) {
-				//$thumbnails[] = $match;
-				$no_gravatar = TRUE;
-			}
+				// filter Gravatar
+				$pattern = '/https?:\/\/w*.?gravatar.com\/avatar\/.*/i';
+				preg_match($pattern, $match, $filter);
+				if ((!$options['filter_gravatar']) || (!$filter[0])) {
+					//$thumbnails[] = $match;
+					$no_gravatar = TRUE;
+				}
 			
-			// filter custom URLs
-			foreach(preg_split("/((\r?\n)|(\n?\r))/", preg_quote($options['filter_custom_urls'], '/')) as $line) {
-				//print "<!-- \$line=$line -->\n";
-				preg_match("/$line/", $match, $filter);
-				foreach($filter as $key => $value) {
-					if ($value) {
-						$no_custom_url = FALSE;						
+				// filter custom URLs
+				foreach(preg_split("/((\r?\n)|(\n?\r))/", preg_quote($options['filter_custom_urls'], '/')) as $line) {
+					//print "<!-- \$line=$line -->\n";
+					preg_match("/$line/", $match, $filter);
+					foreach($filter as $key => $value) {
+						if ($value) {
+							$no_custom_url = FALSE;						
+						}
+					}				
+				}
+			
+				if (($no_gravatar) && ($no_themes) && ($no_smilies) && ($no_custom_url)) {
+					if (isset($match)) {
+						if ($options['exec_mode'] == 1)  {
+							$exists = $this->remote_exists($match);
+							if($exists)
+								$thumbnails[] = $match;
+						} else {
+							$thumbnails[] = $match;
+						}
 					}
-				}				
-			}
+				}
 			
-			if (($no_gravatar) && ($no_themes) && ($no_smilies) && ($no_custom_url)) {
+			}
+		}
+		
+		// Get video poster
+		if($options['enable_videoposter']) {
+			preg_match_all('/<video.+?poster=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
+			foreach($matches[1] as $match) {
+				$match = preg_replace('/^\/\/+?/', 'http://', $match); // fix Viddler thumbnail URL
+			  	if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
+					print "\t HTML5 video poster: $match\n";
+				}
+			
 				if (isset($match)) {
 					if ($options['exec_mode'] == 1)  {
 						$exists = $this->remote_exists($match);
-						if($exists)
+						if(($exists) && (!$match)) //temp?
 							$thumbnails[] = $match;
 					} else {
 						$thumbnails[] = $match;
 					}
-				}
-			}
-			
-		}
-		
-		// Get video poster
-		preg_match_all('/<video.+?poster=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
-		foreach($matches[1] as $match) {
-			$match = preg_replace('/^\/\/+?/', 'http://', $match); // fix Viddler thumbnail URL
-		  	if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t HTML5 video poster: $match\n";
-			}
-			
-			
-			if (isset($match)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($match);
-					if(($exists) && (!$match)) //temp?
-						$thumbnails[] = $match;
-				} else {
-					$thumbnails[] = $match;
 				}
 			}
 		}
@@ -652,20 +655,22 @@ class OGraphr_Core {
 		}
 		
 		// JWPlayer
-		preg_match_all('/jwplayer\(.*?(?:image:[\s]*?)["\']([a-zA-Z0-9_\-\.]+)["\'].*?\)/smi', $markup, $matches);
+		if($options['enable_jwplayer']) {
+			preg_match_all('/jwplayer\(.*?(?:image:[\s]*?)["\']([a-zA-Z0-9_\-\.]+)["\'].*?\)/smi', $markup, $matches);
 		
-		foreach($matches[1] as $match) {
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t JWPlayer image: $match\n";
-			}
+			foreach($matches[1] as $match) {
+				if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
+					print "\t JWPlayer image: $match\n";
+				}
 			
-			if (isset($match)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($match);
-					if(($exists) && (!$match)) //temp?
+				if (isset($match)) {
+					if ($options['exec_mode'] == 1)  {
+						$exists = $this->remote_exists($match);
+						if(($exists) && (!$match)) //temp?
+							$thumbnails[] = $match;
+					} else {
 						$thumbnails[] = $match;
-				} else {
-					$thumbnails[] = $match;
+					}
 				}
 			}
 		}
@@ -1354,7 +1359,49 @@ class OGraphr_Core {
 	// initialize
 	function ographr_core_init() {
 		global $core;
+		global $options;
+		
+		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
+			$core->ographer_self_update();
+		
 		$core->ographr_main_dish();
+	}
+	
+	// upgrades?
+	function ographer_self_update() {
+		global $options;
+		
+		// house keeping
+			$last_update = $options['last_update'];
+			$opt_updated = FALSE;
+		
+			// pre 0.5
+			if (!$options['exec_mode']) {
+				$options['exec_mode'] = "1";
+				if ($options[‘flickr_api’] == FLICKR_API_KEY)
+					$options[‘flickr_api’] = "";
+				if ($options[‘official_api’] == OFFICIAL_API_KEY)
+					$options[‘official_api’] = "";
+				if ($options[‘soundcloud_api’] == SOUNDCLOUD_API_KEY)
+					$options[‘soundcloud_api’] = "";
+				if ($options[‘ustream_api’] == USTREAM_API_KEY)
+					$options[‘ustream_api’] = "";
+				$opt_updated = TRUE;
+			}
+
+			// pre 0.5.5
+			if (!$last_update) {
+				$options['enable_videoposter'] = "1";
+				$options['enable_jwplayer'] = "1";
+				$options['add_post_images'] = "1";
+				$opt_updated = TRUE;
+			}
+		
+			// version that performed update
+			if ($opt_updated) {
+				$options['last_update'] = OGRAPHR_VERSION;
+				update_option('ographr_options', $options);
+			}
 	}
 	
 	// Display a Settings link on the OGraphr Plugins page
@@ -1423,16 +1470,15 @@ class OGraphr_Core {
 	
 	
 	function ographr_admin_bar() {
-	    
-		if (OGRAPHR_DEBUG != TRUE)
+		global $options;	
+		if (!$options['add_adminbar'])
 			return;
 			
 		global $wp_admin_bar;
 
-
-	    if ( (current_user_can('manage_options')) && ( (is_single()) || (is_front_page()) ) ) {
+	    if (current_user_can('manage_options')) {
 		
-				global $post;
+				//global $post;
 				
 				$published = wp_count_posts();
 				$published = $published->publish;
@@ -1445,6 +1491,18 @@ class OGraphr_Core {
 	                    'id' => 'ographr',
 	                    'title' => "OGraphr [$harvested/$published]",
 						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+	                ),
+					array(
+	                    'id' => 'ographr-settings',
+						'parent' => 'ographr',
+	                    'title' => 'Settings',
+						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+	                ),
+					array(
+	                    'id' => 'ographr-home',
+						'parent' => 'ographr',
+	                    'title' => 'Website',
+						'href' => 'http://wordpress.org/extend/plugins/meta-ographr/'
 	                )
 	            );
 
