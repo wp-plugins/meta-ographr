@@ -29,10 +29,10 @@ $admin_core = new OGraphr_Admin_Core();
 // Set-up Action and Filter Hooks
 //register_activation_hook(__FILE__, 'ographr_restore_defaults');
 register_uninstall_hook(__FILE__, 'ographr_delete_plugin_options');
-add_action('admin_init', array($admin_core, 'ographr_init') );
-add_action('admin_menu', array($admin_core, 'ographr_add_options_page') );
-add_action('admin_head', array($admin_core, 'ographr_stylesheet') );
-add_action('admin_footer', array($admin_core, 'ographr_javascript') );
+add_action('admin_init', array(&$admin_core, 'ographr_init') );
+add_action('admin_menu', array(&$admin_core, 'ographr_add_options_page') );
+add_action('admin_head', array(&$admin_core, 'ographr_stylesheet') );
+add_action('admin_footer', array(&$admin_core, 'ographr_javascript') );
 
 class OGraphr_Admin_Core {
 	// --------------------------------------------------------------------------------------
@@ -63,6 +63,7 @@ class OGraphr_Admin_Core {
 	    if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
 			delete_option('ographr_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
 			$arr = array(	"exec_mode" => "1",
+							"data_expiry" => "-1",
 							"advanced_opt" => "0",
 							"website_title" => "%postname%",
 							"website_thumbnail" => "",
@@ -121,6 +122,11 @@ class OGraphr_Admin_Core {
 	// Init plugin options to white list our options
 	function ographr_init(){
 		register_setting( 'ographr_plugin_options', 'ographr_options', array($this, 'ographr_validate_options') );
+		
+		global $options;
+		
+		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
+			OGraphr_Core::ographer_self_update();
 	}
 
 	// ------------------------------------------------------------------------------
@@ -173,21 +179,40 @@ class OGraphr_Admin_Core {
 							<tbody>
 						
 							<!-- IMAGE RETRIEVAL -->	
-							<tr valign="top" id="advanced_opt"> 
+							<tr valign="top" class="advanced_opt"> 
 								<th align="left" scope="row"><label>Image Retrieval:</label></th> 
 								<td colspan="2">
-									<label><input name="ographr_options[exec_mode]" type="radio" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?> />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
+									<label><input name="ographr_options[exec_mode]" type="radio" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?>  />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
 								
-									<label><input name="ographr_options[exec_mode]" type="radio" value="2" <?php if (isset($options['exec_mode'])) { checked('2', $options['exec_mode']); } ?> />&nbsp;Everytime your site is visited (slow, more accurate)&nbsp;</label>
+									<label><input name="ographr_options[exec_mode]" type="radio" value="2" <?php if (isset($options['exec_mode'])) { checked('2', $options['exec_mode']); } ?> id="enable_expiry" />&nbsp;Everytime your site is visited (slow, more accurate)&nbsp;</label>
 								</td> 
 							</tr>
 						
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row">&nbsp;</th> 
 							<td colspan="2"><small>Retrieving images <em>on-post</em> decreases the loadtime of your page significantly, but on the downside the results might be outdated at some point. Should you choose to retrieve images <em>on-view</em>, it is recommended to <a href="#user_agents">restrict access</a> to decrease load times for human readers.</small></td> 
 							<td>&nbsp;</td>
 							</tr>
-						
+							
+							<?php if (OGRAPHR_BETA == TRUE) { ?>
+							<!-- OBJECT TYPE -->	
+							<tr valign="center" class="advanced_opt"> 
+							<th align="left" width="140px" scope="row"><label>Data Expiry:</label></th> 
+							<td colspan="2">
+								<select name='ographr_options[data_expiry]' class="no_expiry" <?php if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?> >
+									<option value='-1' <?php selected('_never', $options['data_expiry']); ?> >(never)</option>
+									<option value='30' <?php selected('expiry_30days', $options['data_expiry']); ?> >after 30 days</option>
+									<option value='60' <?php selected('expiry_60days', $options['data_expiry']); ?> >after 60 days</option>
+									<option value='90' <?php selected('expiry_90days', $options['data_expiry']); ?> >after 90 days</option>
+									<option value='180' <?php selected('expiry_6months', $options['data_expiry']);?> >after 6 months</option>
+									<option value='270' <?php selected('expiry_9months', $options['data_expiry']); ?> >after 9 months</option>
+									<option value='364' <?php selected('expiry_12months', $options['data_expiry']); ?> >after 12 months</option>
+								</select>
+								</td> 
+							<td>&nbsp;</td>
+							</tr>
+							<? } ?>
+							
 							<!-- LINK TITLE -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Link Title:</label></th> 
@@ -223,7 +248,7 @@ class OGraphr_Admin_Core {
 								</small></td> 
 							</tr>
 						
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 								<th align="left" scope="row"><label>&nbsp;</label></th> 
 								<td colspan="2"><label><input name="ographr_options[not_always]" type="checkbox" value="1" <?php if (isset($options['not_always'])) { checked('1', $options['not_always']); } ?> /> Only add thumbnail when post contains no images </label></td> 
 							</tr>
@@ -241,7 +266,7 @@ class OGraphr_Admin_Core {
 							</tr>
 						
 							<!-- TRIGGERS -->
-							<tr valign="top" id="advanced_opt"> 
+							<tr valign="top" class="advanced_opt"> 
 								<th align="left" scope="row"><label>Triggers:</label></th> 
 								<td colspan="2">								
 									<label><input name="ographr_options[enable_eight_tracks]" type="checkbox" value="1" <?php if ((isset($options['enable_eight_tracks'])) && ($options['enable_eight_tracks'])) { checked('1', $options['enable_eight_tracks']); } ?> />&nbsp;8tracks</label>&nbsp;
@@ -281,7 +306,7 @@ class OGraphr_Admin_Core {
 							</tr>
 							
 							<!-- MORE TRIGGERS -->
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 								<th align="left" scope="row"><label>Other Triggers:</label></th> 
 								<td colspan="2">
 									
@@ -296,17 +321,19 @@ class OGraphr_Admin_Core {
 							</tr>
 							
 							<!-- GOOGLE SNIPPETS -->
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 								<th align="left" scope="row"><label>Google+ Snippets:</label></th> 
 								<td colspan="2">
 									<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Meta-tags (<a href="https://developers.google.com/+/plugins/snippet/" target="_blank">?</a>)</label>
-										
+									
+									<?php if (OGRAPHR_BETA == TRUE) { ?>
 									<label><input name="ographr_options[add_image_prop]" type="checkbox" value="1" <?php if (isset($options['add_image_prop'])) { checked('1', $options['add_image_prop']); } ?> /> Image properties (<a href="http://schema.org/docs/gs.html" target="_blank">?</a>)</label>
+									<? } ?>
 								</td>
 							</tr>
 							
 							<!-- ADVERTISEMENT -->
-							<tr valign="top" id="advanced_opt"> 
+							<tr valign="top" class="advanced_opt"> 
 								<th align="left" scope="row"><label>Advertisement:</label></th> 
 								<td colspan="2">
 									<label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source (<em>OGraphr v<? echo OGRAPHR_VERSION ?></em>)</label><br/>
@@ -325,12 +352,12 @@ class OGraphr_Admin_Core {
 								<table width="100%" cellspacing="2" cellpadding="5"> 
 								<tbody>
 							
-								<tr valign="center" id="advanced_opt"> 
+								<tr valign="center" class="advanced_opt"> 
 									<th align="left" scope="row"><label>Functionality:</label></th> 
 									<td colspan="2">
 									<label><input name="ographr_options[enable_plugin_on_front]" type="checkbox" id="enable_plugin" value="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?> /> Enable plug-in </label>&nbsp;
 								
-									<label><input name="ographr_options[enable_triggers_on_front]" type="checkbox" id="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!$options['enable_plugin_on_front']) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
+									<label><input name="ographr_options[enable_triggers_on_front]" type="checkbox" class="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!$options['enable_plugin_on_front']) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
 									</td> 
 								</tr>
 
@@ -352,7 +379,7 @@ class OGraphr_Admin_Core {
 						</dl>
 					
 						<!-- R E S T R I C T I O N S -->
-						<dl id="advanced_opt">
+						<dl class="advanced_opt">
 							<dt><h3>Restrictions</h3></dt>
 							<dd>
 	
@@ -363,11 +390,11 @@ class OGraphr_Admin_Core {
 								<tr valign="center"> 
 									<th align="left" width="140px" scope="row"><label>Filters:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" id="disable_filters" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label>&nbsp;
+										<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label>&nbsp;
 										
-										<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" id="disable_filters" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
+										<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
 										
-										<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" id="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); } ?> /> Exclude themes </label>&nbsp;
+										<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); } ?> /> Exclude themes </label>&nbsp;
 									</td> 
 										
 								</tr>
@@ -375,7 +402,7 @@ class OGraphr_Admin_Core {
 								<!-- CUSTOM URLS -->
 								<tr valign="top"> 
 									<th align="left" width="140px" scope="row"><label>Custom URLs:</label></th> 
-									<td colspan="2"><textarea name="ographr_options[filter_custom_urls]" cols="76%" rows="4" id="disable_filters"><?php echo $options['filter_custom_urls']; ?></textarea><br/>
+									<td colspan="2"><textarea name="ographr_options[filter_custom_urls]" cols="76%" rows="4" class="disable_filters"><?php echo $options['filter_custom_urls']; ?></textarea><br/>
 										<small><strong>BETA:</strong> You can enter filenames and URLs (e.g. <em><? echo 'http://' . $wp_url . '/wp-content'; ?></em>) to the filter-list above</small></td> 
 								</tr>
 							
@@ -413,12 +440,12 @@ class OGraphr_Admin_Core {
 							<p>
 								Bandcamp offers only limited access to their API and in any case you have to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. To support <em>legacy</em> Viddler widgets you will have to provide a valid <a href="http://developers.viddler.com/">API key</a>, whereas new embed codes use HTML5-compliant poster images and will work without one.
 							</p>
-							<p id="advanced_opt">All other services will work without providing an API key. However, if you prefer using your own ones, you can enter them below.</p>
+							<p class="advanced_opt">All other services will work without providing an API key. However, if you prefer using your own ones, you can enter them below.</p>
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
 							
 							<!-- 8TRACKS -->	
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label><a name="etracks_api_key" id="etracks_api_key"></a>8tracks:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[etracks_api]" value="<?php if ($options['etracks_api']) { echo $options['etracks_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
@@ -432,14 +459,14 @@ class OGraphr_Admin_Core {
 							</tr>
 						
 							<!-- FLICKR -->	
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>Flickr:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[flickr_api]" value="<?php if ($options['flickr_api']) { echo $options['flickr_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 						
 							<!-- OFFICIAL.FM -->	
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>Official.fm:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[official_api]" value="<?php if ($options['official_api']) { echo $options['official_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
@@ -452,14 +479,14 @@ class OGraphr_Admin_Core {
 							-->
 						
 							<!-- SOUNDCLOUD -->	
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>SoundCloud:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 						
 							<!-- USTREAM -->	
-							<tr valign="center" id="advanced_opt"> 
+							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>Ustream:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[ustream_api]" value="<?php if ($options['ustream_api']) { echo $options['ustream_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
@@ -478,7 +505,7 @@ class OGraphr_Admin_Core {
 						</dl>
 					
 						<!-- F A C E B O O K -->
-						<dl id="advanced_opt">
+						<dl class="advanced_opt">
 							<dt><h3>Facebook</h3></dt>
 							<dd>	
 							<table width="100%" cellspacing="2" cellpadding="5"> 
@@ -497,7 +524,7 @@ class OGraphr_Admin_Core {
 								<code>%siteurl%</code> &#8211; the URL of your blog (<em><? echo $wp_url; ?></em>)</small></td> 
 							</tr>
 						
-							<!-- OFFICIAL.FM -->	
+							<!-- OBJECT TYPE -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Object Type:</label></th> 
 							<td width="30px">
@@ -577,7 +604,7 @@ class OGraphr_Admin_Core {
 
 						</dl>
 
-						<label id="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" id="advanced_opt" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>
+						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>
 						<div class="submit">
 							<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
 						</div>
@@ -598,8 +625,8 @@ class OGraphr_Admin_Core {
 								<li><strong><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">Website</a></strong></li>
 								<li><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/faq/" title="Frequently Asked Questions" target="_blank">FAQ</a></li>
 								<li><a class="lwp" href="http://wordpress.org/tags/meta-ographr?forum_id=10" target="_blank">Need help?</a></li>
-								<li id="advanced_opt"><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/changelog/" target="_blank">Changes</a></li>
-								<li id="advanced_opt"><a class="lwp" href="http://plugins.svn.wordpress.org/meta-ographr/" target="_blank">SVN</a></li>
+								<li class="advanced_opt"><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/changelog/" target="_blank">Changes</a></li>
+								<li class="advanced_opt"><a class="lwp" href="http://plugins.svn.wordpress.org/meta-ographr/" target="_blank">SVN</a></li>
 							
 								<li><a class="lhome" href="http://whyeye.org" target="_blank">whyEye.org</a></li>
 								<li>&nbsp;</li>
@@ -622,7 +649,7 @@ class OGraphr_Admin_Core {
 
 						</dl>
 						
-						<dl id="advanced_opt">
+						<dl class="advanced_opt">
 							<dt><h4>Statistics</h4></dt>
 							<dd>
 								<?php
@@ -694,29 +721,39 @@ class OGraphr_Admin_Core {
 					$('div.nothing,#advanced_opt').hide();
 				}
 				$('#show_advanced').click(function(){
-					$('div.nothing,#advanced_opt').fadeToggle('slow');
+					$('div.nothing,.advanced_opt').fadeToggle('slow');
 				});
 			
 				$("#enable_plugin").click(enable_cb);
 				$("#enable_images").click(enable_images);
+				$("#enable_expiry").click(enable_expiry);
 				
 		});
 	
 		function enable_cb() {
-		  if (this.checked) {
-		    $("input#enable_triggers").removeAttr("disabled");
-		  } else {
-		    $("input#enable_triggers").attr("disabled", true);
-		  }
+			if (this.checked) {
+				$("input.enable_triggers").removeAttr("disabled");
+			} else {
+				$("input.enable_triggers").attr("disabled", true);
+			}
 		}
 		
 		function enable_images() {
-		  if (this.checked) {
-		    $("input#disable_filters, textarea#disable_filters").removeAttr("disabled");
-		  } else {
-		    $("input#disable_filters, textarea#disable_filters").attr("disabled", true);
-		  }
+			if (this.checked) {
+				$("input.disable_filters, textarea.disable_filters").removeAttr("disabled");
+			} else {
+				$("input.disable_filters, textarea.disable_filters").attr("disabled", true);
+			}
 		}
+		
+		function enable_expiry() {
+			if ($(this.checked).val('1') == 'true') {
+				$("select.no_expiry").removeAttr("disabled");
+			} else {
+				$("select.no_expiry").attr("disabled", "true");
+			}
+		}
+
 	    </script>
 		<?php
 	}

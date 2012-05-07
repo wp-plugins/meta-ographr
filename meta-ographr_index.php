@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.5.5
+Version: 0.5.6
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.5.5");
+    define("OGRAPHR_VERSION", "0.5.6");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -98,11 +98,12 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 	
 $core = new OGraphr_Core();
 
-add_action('wp_head', array($core,'ographr_core_init'));
-add_action('save_post', array($core,'ographr_save_postmeta'));
-add_action('admin_notices', array($core,'ographr_admin_notice'));
-add_action('admin_bar_menu', array($core,'ographr_admin_bar'), 150);
-add_filter('plugin_action_links', array($core, 'ographr_plugin_action_links'), 10, 2 );
+add_action('init', array(&$core,'ographr_core_init'));
+add_action('wp_head', array(&$core,'ographr_main_dish'));
+add_action('save_post', array(&$core,'ographr_save_postmeta'));
+add_action('admin_notices', array(&$core,'ographr_admin_notice'));
+add_action('admin_bar_menu', array(&$core,'ographr_admin_bar'), 150);
+add_filter('plugin_action_links', array(&$core, 'ographr_plugin_action_links'), 10, 2 );
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -653,6 +654,7 @@ class OGraphr_Core {
 				}
 			}
 		}
+		
 		
 		// JWPlayer
 		if($options['enable_jwplayer']) {
@@ -1363,8 +1365,8 @@ class OGraphr_Core {
 		
 		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
 			$core->ographer_self_update();
-		
-		$core->ographr_main_dish();
+
+		//$core->ographr_main_dish();
 	}
 	
 	// upgrades?
@@ -1372,7 +1374,7 @@ class OGraphr_Core {
 		global $options;
 		
 		// house keeping
-			$last_update = $options['last_update'];
+			$last_update = $options['last_updated'];
 			$opt_updated = FALSE;
 		
 			// pre 0.5
@@ -1509,10 +1511,9 @@ class OGraphr_Core {
 	        foreach ($menu_items as $menu_item) {
 	            $wp_admin_bar->add_menu($menu_item);
 	        }
-	    }
-	
-	
+	    }	
 	}
+
 	
 }; // end of class
 
