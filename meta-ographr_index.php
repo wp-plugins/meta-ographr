@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.5.6
+Version: 0.5.7
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.5.6");
+    define("OGRAPHR_VERSION", "0.5.7");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -115,7 +115,8 @@ $options = get_option('ographr_options');
 if (!$options['etracks_api']) { $options['etracks_api'] = ETRACKS_API_KEY; $etracks_api = $options['etracks_api']; }
 if (!$options['flickr_api']) { $options['flickr_api'] = FLICKR_API_KEY; $flickr_api = $options['flickr_api']; }
 if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
-//if (!$options['playfm_api']) { $options['playfm_api'] = PLAYFM_API_KEY; $playfm_api = $options['playfm_api']; }
+if (OGRAPHR_BETA == TRUE )
+	if (!$options['playfm_api']) { $options['playfm_api'] = PLAYFM_API_KEY; $playfm_api = $options['playfm_api']; }
 if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
 
@@ -317,14 +318,33 @@ class OGraphr_Core {
 			}
 		
 			if (($web_thumb) && (!$options['not_always']))
-				$thumbnails[] = $web_thumb;				
-		
+				$thumbnails[] = $web_thumb;		
+			
+			// Get date et al
+			$today = date("U"); // Y-m-d H:i:s
+			$last_indexed = get_post_meta($post_id, 'ographr_indexed', true);
+			if (!$last_indexed) // set to release date of v0.5.3
+				$last_indexed = 1336082400; // 2012-05-04 00:00:00 CET
+			
+			$interval = $today - $last_indexed;
+			$expiry = $options['data_expiry'];
+			if (($expiry) && ($expiry != "-1")) {
+				$expiry = $expiry * 86400;
+			} else {
+				$expiry = $today + 86400; // tomorrow never dies
+			}
+			
 			// debugging?
 			if(OGRAPHR_DEBUG == TRUE) {
 				print "\n<!--\tOGRAPHR v" . OGRAPHR_VERSION ." DEBUGGER\n";
 				
 				if ($options['exec_mode'] == 1) {
 					print "\t Image Retrieval: On-Post\n";
+					if ($options['data_expiry'] == -1) {
+						print "\t Last indexed on " . date('Y-m-d', $last_indexed) . ", never expires\n";
+					} else {
+						print "\t Last indexed on " . date('Y-m-d', $last_indexed) . ", expires after " . round($expiry / 86400) ." days\n";
+					}
 				} else if ($options['exec_mode'] == 2) {
 					print "\t Image Retrieval: On-View\n";
 				}
@@ -351,25 +371,28 @@ class OGraphr_Core {
 				
 				print "\n"; // an empty line!
 				
-				if ($etracks_api = $options['etracks_api']) { print "\t 8tracks API key: $etracks_api\n"; }
-				if ($bandcamp_api = $options['bandcamp_api']) { print "\t Bandcamp API key: $bandcamp_api\n"; }
-				if ($flickr_api = $options['flickr_api']) { print "\t Flickr API key: $flickr_api\n"; }
-				if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
-				//if ($ playfm_api = $options['playfm_api']) { print "\t Play.fm API key: $playfm_api\n"; }
-				if ($soundcloud_api = $options['soundcloud_api']) { print "\t SoundCloud API key: $soundcloud_api\n"; }
-				if ($ustream_api = $options['ustream_api']) { print "\t Ustream API key: $ustream_api\n"; }
-				if ($viddler_api = $options['viddler_api']) { print "\t Viddler API key: $viddler_api\n"; }
+				if (current_user_can('manage_options')) {
+					if ($etracks_api = $options['etracks_api']) { print "\t 8tracks API key: $etracks_api\n"; }
+					if ($bandcamp_api = $options['bandcamp_api']) { print "\t Bandcamp API key: $bandcamp_api\n"; }
+					if ($flickr_api = $options['flickr_api']) { print "\t Flickr API key: $flickr_api\n"; }
+					if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
+					if (OGRAPHR_BETA == TRUE )
+						if ($playfm_api = $options['playfm_api']) { print "\t Play.fm API key: $playfm_api\n"; }
+					if ($soundcloud_api = $options['soundcloud_api']) { print "\t SoundCloud API key: $soundcloud_api\n"; }
+					if ($ustream_api = $options['ustream_api']) { print "\t Ustream API key: $ustream_api\n"; }
+					if ($viddler_api = $options['viddler_api']) { print "\t Viddler API key: $viddler_api\n"; }
 				
-				print "\n"; // an empty line!
+					print "\n"; // an empty line!
+				}
 				
 				if ($web_thumb) { print "\t Default Thumbnail: $web_thumb\n"; }
 			}
 			
 			// GO!
 			if (($enable_triggers_on_front = $options['enable_triggers_on_front']) || (is_single()) || (is_page())) {
-		
-				// Did we retrieve those images before?
-				if ($options['exec_mode'] == 1) {
+				
+				// Did we retrieve those images before and did they expire?
+				if (($options['exec_mode'] == 1) && ($expiry >= $interval) )  {
 					$meta_values = get_post_meta($post_id, 'ographr_urls', true);
 					$meta_values = unserialize($meta_values);
 					
@@ -378,14 +401,14 @@ class OGraphr_Core {
 							$meta_value =  htmlentities($meta_value);
 				}
 
-				if ((is_array($meta_values)) && (is_array($thumbnails))) {
+				if ((is_array($meta_values)) && (is_array($thumbnails)) && ($expiry >= $interval) ) {
 					$thumbnails = array_merge($thumbnails, $meta_values);
 					if(OGRAPHR_DEBUG == TRUE) {
 						foreach($thumbnails as $thumbnail) {
 							print "\t Post meta: $thumbnail\n";
 						}
 					}
-				} else if ((is_array($meta_values)) && (!is_array($thumbnails))) {
+				} else if ((is_array($meta_values)) && (!is_array($thumbnails)) && ($expiry >= $interval) ) {
 					$thumbnails = $meta_values;
 					if(OGRAPHR_DEBUG == TRUE) {
 						foreach($thumbnails as $thumbnail) {
@@ -393,8 +416,10 @@ class OGraphr_Core {
 						}
 					}
 				} else {
-					if ((OGRAPHR_DEBUG == TRUE) && ($options['exec_mode'] == 1)) {
+					if ((OGRAPHR_DEBUG == TRUE) && ($options['exec_mode'] == 1) && ($expiry >= $interval)) {
 						print "\t Empty post-meta, using On-View fallback\n\n";
+					} else if ((OGRAPHR_DEBUG == TRUE) && ($options['exec_mode'] == 1) && ($expiry < $interval)) {
+						print "\t Data expired, indexing\n\n";
 					}
 					
 					// Get Widget Thumbnails (fallback)
@@ -411,7 +436,7 @@ class OGraphr_Core {
 					//write to db for future use
 					if (($options['exec_mode'] == 1) && ($total_img >= 1) && (OGRAPHR_FALLBACK == TRUE)) {
 						if (OGRAPHR_DEBUG == TRUE)
-							print "\n\t New data harvested and written to database\n";
+							print "\n\t New data indexed and written to database\n";
 						
 						if (is_array($thumbnails))
 							foreach($thumbnails as $thumbnail)
@@ -419,6 +444,8 @@ class OGraphr_Core {
 							
 						$thumbnails_db = serialize($thumbnails);
 						update_post_meta($post_id, 'ographr_urls', $thumbnails_db);
+						$indexed = date("U"); // Y-m-d H:i:s
+						update_post_meta($post_id, 'ographr_indexed', $indexed);
 					}
 				}
 				
@@ -631,7 +658,7 @@ class OGraphr_Core {
 				if (isset($match)) {
 					if ($options['exec_mode'] == 1)  {
 						$exists = $this->remote_exists($match);
-						if(($exists) && (!$match)) //temp?
+						if(($exists) && (!$match))
 							$thumbnails[] = $match;
 					} else {
 						$thumbnails[] = $match;
@@ -647,7 +674,7 @@ class OGraphr_Core {
 			if (isset($website_thumbnail)) {
 				if ($options['exec_mode'] == 1)  {
 					$exists = $this->remote_exists($website_thumbnail);
-					if(($exists) && (!$website_thumbnail)) //temp?
+					if(($exists) && (!$website_thumbnail))
 						$thumbnails[] = $website_thumbnail;
 				} else {
 					$thumbnails[] = $website_thumbnail;
@@ -668,7 +695,7 @@ class OGraphr_Core {
 				if (isset($match)) {
 					if ($options['exec_mode'] == 1)  {
 						$exists = $this->remote_exists($match);
-						if(($exists) && (!$match)) //temp?
+						if(($exists) && (!$match))
 							$thumbnails[] = $match;
 					} else {
 						$thumbnails[] = $match;
@@ -682,7 +709,7 @@ class OGraphr_Core {
 			$etracks_thumbnails = $this->find_etracks_widgets($markup);
 			if (isset($etracks_thumbnails)) {			
 				foreach ($etracks_thumbnails as $etracks_thumbnail) {
-					if ($etracks_thumbnail) //temp?
+					if ($etracks_thumbnail)
 						$thumbnails[] = $etracks_thumbnail;
 				}
 			}
@@ -693,7 +720,7 @@ class OGraphr_Core {
 			$bandcamp_thumbnails = $this->find_bandcamp_widgets($markup, $options['bandcamp_api']);
 			if (isset($bandcamp_thumbnails)) {			
 				foreach ($bandcamp_thumbnails as $bandcamp_thumbnail) {
-					if ($bandcamp_thumbnail) //temp?
+					if ($bandcamp_thumbnail)
 						$thumbnails[] = $bandcamp_thumbnail;
 				}
 			}
@@ -704,7 +731,7 @@ class OGraphr_Core {
 			$bliptv_thumbnails = $this->find_bliptv_widgets($markup);
 			if (isset($bliptv_thumbnails)) {			
 				foreach ($bliptv_thumbnails as $bliptv_thumbnail) {
-					if ($bliptv_thumbnail) //temp?
+					if ($bliptv_thumbnail)
 						$thumbnails[] = $bliptv_thumbnail;
 				}
 			}
@@ -715,7 +742,7 @@ class OGraphr_Core {
 			$dailymotion_thumbnails = $this->find_dailymotion_widgets($markup);
 			if (isset($dailymotion_thumbnails)) {			
 				foreach ($dailymotion_thumbnails as $dailymotion_thumbnail) {
-					if ($dailymotion_thumbnail) //temp?
+					if ($dailymotion_thumbnail)
 						$thumbnails[] = $dailymotion_thumbnail;
 				}
 			}
@@ -726,7 +753,7 @@ class OGraphr_Core {
 			$flickr_thumbnails = $this->find_flickr_widgets($markup, $options['flickr_api']);
 			if (isset($flickr_thumbnails)) {			
 				foreach ($flickr_thumbnails as $flickr_thumbnail) {
-						if ($flickr_thumbnail) //temp?
+						if ($flickr_thumbnail)
 							$thumbnails[] = $flickr_thumbnail;
 				}
 			}
@@ -737,7 +764,7 @@ class OGraphr_Core {
 			$hulu_thumbnails = $this->find_hulu_widgets($markup);
 			if (isset($hulu_thumbnails)) {			
 				foreach ($hulu_thumbnails as $hulu_thumbnail) {
-					if ($hulu_thumbnail) //temp?
+					if ($hulu_thumbnail)
 						$thumbnails[] = $hulu_thumbnail;
 				}
 			}
@@ -748,7 +775,7 @@ class OGraphr_Core {
 			$justintv_thumbnails = $this->find_justintv_widgets($markup);
 			if (isset($justintv_thumbnails)) {			
 				foreach ($justintv_thumbnails as $justintv_thumbnail) {
-					if ($justintv_thumbnail) //temp?
+					if ($justintv_thumbnail)
 						$thumbnails[] = $justintv_thumbnail;
 				}
 			}
@@ -759,7 +786,7 @@ class OGraphr_Core {
 			$mixcloud_thumbnails = $this->find_mixcloud_widgets($markup);
 			if (isset($mixcloud_thumbnails)) {			
 				foreach ($mixcloud_thumbnails as $mixcloud_thumbnail) {
-					if ($mixcloud_thumbnail) //temp?
+					if ($mixcloud_thumbnail)
 						$thumbnails[] = $mixcloud_thumbnail;
 				}
 			}
@@ -770,7 +797,7 @@ class OGraphr_Core {
 			$official_thumbnails = $this->find_official_widgets($markup, $options['official_api']);
 			if (isset($official_thumbnails)) {	
 				foreach ($official_thumbnails as $official_thumbnail) {
-					if ($official_thumbnail) //temp?
+					if ($official_thumbnail)
 						$thumbnails[] = $official_thumbnail;
 				}
 			}
@@ -782,7 +809,7 @@ class OGraphr_Core {
 			$playfm_thumbnails = $this->find_soundcloud_widgets($markup, $options['playfm_api']);
 			if (isset($playfm_thumbnails)) {	
 				foreach ($playfm_thumbnails as $playfm_thumbnail) {
-					if ($playfm_thumbnail) //temp?
+					if ($playfm_thumbnail)
 						$thumbnails[] = $playfm_thumbnail;
 				}
 			}
@@ -794,7 +821,7 @@ class OGraphr_Core {
 			$soundcloud_thumbnails = $this->find_soundcloud_widgets($markup, $options['soundcloud_api']);
 			if (isset($soundcloud_thumbnails)) {	
 				foreach ($soundcloud_thumbnails as $soundcloud_thumbnail) {
-					if ($soundcloud_thumbnail) //temp?
+					if ($soundcloud_thumbnail)
 						$thumbnails[] = $soundcloud_thumbnail;
 				}
 			}
@@ -805,7 +832,7 @@ class OGraphr_Core {
 			$ustream_thumbnails = $this->find_ustream_widgets($markup, $options['ustream_api']);
 			if (isset($ustream_thumbnails)) {
 				foreach ($ustream_thumbnails as $ustream_thumbnail) {
-					if ($ustream_thumbnail) //temp?
+					if ($ustream_thumbnail)
 						$thumbnails[] = $ustream_thumbnail;
 				}
 			}	
@@ -816,7 +843,7 @@ class OGraphr_Core {
 			$viddler_thumbnails = $this->find_viddler_widgets($markup, $options['viddler_api']);
 			if (isset($viddler_thumbnails)) {
 				foreach ($viddler_thumbnails as $viddler_thumbnail) {
-					if ($viddler_thumbnail) //temp?
+					if ($viddler_thumbnail)
 						$thumbnails[] = $viddler_thumbnail;
 				}
 			}
@@ -827,7 +854,7 @@ class OGraphr_Core {
 			$vimeo_thumbnails = $this->find_vimeo_widgets($markup);
 			if (isset($vimeo_thumbnails)) {
 				foreach ($vimeo_thumbnails as $vimeo_thumbnail) {
-					if ($vimeo_thumbnail) //temp?
+					if ($vimeo_thumbnail)
 						$thumbnails[] = $vimeo_thumbnail;
 				}
 			}
@@ -838,7 +865,7 @@ class OGraphr_Core {
 			$youtube_thumbnails = $this->find_youtube_widgets($markup);
 			if (isset($youtube_thumbnails)) {
 				foreach ($youtube_thumbnails as $youtube_thumbnail) {
-					if ($youtube_thumbnail) //temp?
+					if ($youtube_thumbnail)
 						$thumbnails[] = $youtube_thumbnail;
 				}
 			}
@@ -1364,13 +1391,13 @@ class OGraphr_Core {
 		global $options;
 		
 		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
-			$core->ographer_self_update();
+			$core->ographr_self_update();
 
 		//$core->ographr_main_dish();
 	}
 	
 	// upgrades?
-	function ographer_self_update() {
+	function ographr_self_update() {
 		global $options;
 		
 		// house keeping
@@ -1423,22 +1450,15 @@ class OGraphr_Core {
 	function ographr_admin_notice(){
 	    global $options;
 
-		// Update
-		if ((!$options['exec_mode']) && (is_admin())) {
-			echo '<div class="updated">
-	       		<p>Please review your <a href="'.get_admin_url().'options-general.php?page=meta-ographr/meta-ographr_admin.php">settings</a> for the OGraphr plugin.</p>
-	    		</div>';
-		}
-
 		// Debug
-		if ((OGRAPHR_DEBUG == TRUE) && (is_admin())) {
+		if ((OGRAPHR_DEBUG == TRUE) && (current_user_can('manage_options'))) {
 			echo '<div class="error">
 	       		<p>OGraphr is currently running in debug mode. You can disable it in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plugin editor</a>!</p>
 	    		</div>';
 		}
 
 		// Beta
-		if ((OGRAPHR_BETA == TRUE) && (OGRAPHR_DEBUG == FALSE) && (is_admin())) {
+		if ((OGRAPHR_BETA == TRUE) && (OGRAPHR_DEBUG == FALSE) && (current_user_can('manage_options'))) {
 			echo '<div class="updated">
 	       		<p>OGraphr is currently running with beta features enabled. You can disable this in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plugin editor</a>!</p>
 	    		</div>';
@@ -1464,9 +1484,12 @@ class OGraphr_Core {
 		if (is_array($widget_thumbnails))
 			foreach($widget_thumbnails as $widget_thumbnail)
 				$widget_thumbnail =  htmlentities($widget_thumbnail);
-			
+
 		$widget_thumbnails = serialize($widget_thumbnails);
 		update_post_meta($post_id, 'ographr_urls', $widget_thumbnails);
+		
+		$indexed = date("U"); //Y-m-d H:i:s
+		update_post_meta($post_id, 'ographr_indexed', $indexed);
 
 	}
 	

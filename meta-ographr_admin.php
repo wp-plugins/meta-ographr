@@ -77,7 +77,7 @@ class OGraphr_Admin_Core {
 							"add_excerpt" => "1",
 							"add_permalink" => "1",
 							"enable_eight_tracks" => "1",
-							"enable_bandcamp" => "1",
+							"enable_bandcamp" => "0",
 							"enable_bliptv" => "1",
 							"enable_dailymotion" => "1",
 							"enable_flickr" => "1",
@@ -87,7 +87,7 @@ class OGraphr_Admin_Core {
 							"enable_official" => "1",
 							"enable_soundcloud" => "1",
 							"enable_ustream" => "1",
-							"enable_viddler" => "1",
+							"enable_viddler" => "0",
 							"enable_vimeo" => "1",
 							"enable_youtube" => "1",
 							"add_post_images" => "1",
@@ -126,7 +126,7 @@ class OGraphr_Admin_Core {
 		global $options;
 		
 		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
-			OGraphr_Core::ographer_self_update();
+			OGraphr_Core::ographr_self_update();
 	}
 
 	// ------------------------------------------------------------------------------
@@ -177,41 +177,6 @@ class OGraphr_Admin_Core {
 							<dd>
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
-						
-							<!-- IMAGE RETRIEVAL -->	
-							<tr valign="top" class="advanced_opt"> 
-								<th align="left" scope="row"><label>Image Retrieval:</label></th> 
-								<td colspan="2">
-									<label><input name="ographr_options[exec_mode]" type="radio" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?>  />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
-								
-									<label><input name="ographr_options[exec_mode]" type="radio" value="2" <?php if (isset($options['exec_mode'])) { checked('2', $options['exec_mode']); } ?> id="enable_expiry" />&nbsp;Everytime your site is visited (slow, more accurate)&nbsp;</label>
-								</td> 
-							</tr>
-						
-							<tr valign="center" class="advanced_opt"> 
-							<th align="left" width="140px" scope="row">&nbsp;</th> 
-							<td colspan="2"><small>Retrieving images <em>on-post</em> decreases the loadtime of your page significantly, but on the downside the results might be outdated at some point. Should you choose to retrieve images <em>on-view</em>, it is recommended to <a href="#user_agents">restrict access</a> to decrease load times for human readers.</small></td> 
-							<td>&nbsp;</td>
-							</tr>
-							
-							<?php if (OGRAPHR_BETA == TRUE) { ?>
-							<!-- OBJECT TYPE -->	
-							<tr valign="center" class="advanced_opt"> 
-							<th align="left" width="140px" scope="row"><label>Data Expiry:</label></th> 
-							<td colspan="2">
-								<select name='ographr_options[data_expiry]' class="no_expiry" <?php if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?> >
-									<option value='-1' <?php selected('_never', $options['data_expiry']); ?> >(never)</option>
-									<option value='30' <?php selected('expiry_30days', $options['data_expiry']); ?> >after 30 days</option>
-									<option value='60' <?php selected('expiry_60days', $options['data_expiry']); ?> >after 60 days</option>
-									<option value='90' <?php selected('expiry_90days', $options['data_expiry']); ?> >after 90 days</option>
-									<option value='180' <?php selected('expiry_6months', $options['data_expiry']);?> >after 6 months</option>
-									<option value='270' <?php selected('expiry_9months', $options['data_expiry']); ?> >after 9 months</option>
-									<option value='364' <?php selected('expiry_12months', $options['data_expiry']); ?> >after 12 months</option>
-								</select>
-								</td> 
-							<td>&nbsp;</td>
-							</tr>
-							<? } ?>
 							
 							<!-- LINK TITLE -->	
 							<tr valign="center"> 
@@ -287,9 +252,9 @@ class OGraphr_Admin_Core {
 							
 								<label><input name="ographr_options[enable_official]" type="checkbox" value="1" <?php if (isset($options['enable_official'])) { checked('1', $options['enable_official']); } ?> />&nbsp;Official.fm</label>&nbsp;
 							
-								<!-- PLAY.FM
-								<label><input name="ographr_options[enable_playfm]" type="checkbox" value="1" <?php if ((isset($options['enable_playfm'])) && ($options['enable_playfm'])) { checked('1', $options['enable_playfm']); } ?> />&nbsp;Play.fm</label>&nbsp;
-								-->
+								<?php if (OGRAPHR_BETA == TRUE) { ?>
+									<label><input name="ographr_options[enable_playfm]" type="checkbox" value="1" <?php if ((isset($options['enable_playfm'])) && ($options['enable_playfm'])) { checked('1', $options['enable_playfm']); } ?> disabled="disabled" />&nbsp;Play.fm</label>&nbsp;
+								<? } ?>
 							
 								<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> />&nbsp;SoundCloud</label>&nbsp;
 							
@@ -305,46 +270,17 @@ class OGraphr_Admin_Core {
 								<? if((!$options['viddler_api']) && ($options['enable_viddler'])) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 							</tr>
 							
-							<!-- MORE TRIGGERS -->
-							<tr valign="center" class="advanced_opt"> 
-								<th align="left" scope="row"><label>Other Triggers:</label></th> 
-								<td colspan="2">
-									
-									<label><input name="ographr_options[enable_videoposter]" type="checkbox" value="1" <?php if (isset($options['enable_videoposter'])) { checked('1', $options['enable_videoposter']); } ?> /> Video posters </label>&nbsp;
-									
-									<label><input name="ographr_options[enable_jwplayer]" type="checkbox" value="1" <?php if (isset($options['enable_jwplayer'])) { checked('1', $options['enable_jwplayer']); } ?> /> JW Player </label>&nbsp;
-									
-									<label><input name="ographr_options[add_post_images]" type="checkbox" id="enable_images" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
-									
-									<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); } ?> /> Post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label>&nbsp;
-								</td>
-							</tr>
-							
-							<!-- GOOGLE SNIPPETS -->
-							<tr valign="center" class="advanced_opt"> 
-								<th align="left" scope="row"><label>Google+ Snippets:</label></th> 
-								<td colspan="2">
-									<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Meta-tags (<a href="https://developers.google.com/+/plugins/snippet/" target="_blank">?</a>)</label>
-									
-									<?php if (OGRAPHR_BETA == TRUE) { ?>
-									<label><input name="ographr_options[add_image_prop]" type="checkbox" value="1" <?php if (isset($options['add_image_prop'])) { checked('1', $options['add_image_prop']); } ?> /> Image properties (<a href="http://schema.org/docs/gs.html" target="_blank">?</a>)</label>
-									<? } ?>
-								</td>
-							</tr>
-							
 							<!-- ADVERTISEMENT -->
 							<tr valign="top" class="advanced_opt"> 
 								<th align="left" scope="row"><label>Advertisement:</label></th> 
 								<td colspan="2">
 									<label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source (<em>OGraphr v<? echo OGRAPHR_VERSION ?></em>)</label><br/>
-
-									<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>
 								</td>
 							</tr>
 						
 							</tbody></table></dd>
 						</dl>
-					
+						
 						<!-- F R O N T   P A G E -->
 						<dl>
 							<dt><h3>Front Page</h3></dt>
@@ -364,7 +300,7 @@ class OGraphr_Admin_Core {
 								<!-- CUSTOM DESCRIPTION -->	
 								<tr valign="center"> 
 								<th align="left" width="140px" scope="row"><label>Custom Description:</label></th> 
-								<td width="30px"><input type="text" size="75" name="ographr_options[website_description]" value="<?php echo $options['website_description']; ?>" /></td> 
+								<td width="30px"><input type="text" size="75" name="ographr_options[website_description]" class="enable_triggers" value="<?php echo $options['website_description']; ?>" /></td> 
 								<td><small>(optional)</small></td>
 								</tr>
 							
@@ -447,7 +383,7 @@ class OGraphr_Admin_Core {
 							<!-- 8TRACKS -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label><a name="etracks_api_key" id="etracks_api_key"></a>8tracks:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[etracks_api]" value="<?php if ($options['etracks_api']) { echo $options['etracks_api']; } ?>" /></td> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[etracks_api]" value="<?php if (($options['etracks_api'] != ETRACKS_API_KEY) && ($options['etracks_api'])) { echo $options['etracks_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 
@@ -461,34 +397,35 @@ class OGraphr_Admin_Core {
 							<!-- FLICKR -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>Flickr:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[flickr_api]" value="<?php if ($options['flickr_api']) { echo $options['flickr_api']; } ?>" /></td> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[flickr_api]" value="<?php if (($options['flickr_api'] != FLICKR_API_KEY) && ($options['flickr_api'])) { echo $options['flickr_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 						
 							<!-- OFFICIAL.FM -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>Official.fm:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[official_api]" value="<?php if ($options['official_api']) { echo $options['official_api']; } ?>" /></td> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[official_api]" value="<?php if (($options['official_api'] != OFFICIAL_API_KEY) && ($options['official_api'])) { echo $options['official_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 						
-							<!-- PLAY.FM 	
-							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label>Play.fm:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[playfm_api]" value="<?php if ($options['playfm_api']) { echo $options['playfm_api']; } else { echo PLAYFM_API_KEY; } ?>" /></td>
-							-->
+							<?php if (OGRAPHR_BETA == TRUE) { ?>	
+								<tr valign="center" class="advanced_opt"> 
+								<th align="left" width="140px" scope="row"><label>Play.fm:</label></th> 
+								<td width="30px"><input type="text" size="75" name="ographr_options[playfm_api]" value="<?php if (($options['playfm_api'] != PLAYFM_API_KEY) && ($options['playfm_api'])) { echo $options['playfm_api']; } ?>" disabled="disabled" /></td>
+								<td><small>(optional)</small></td>
+							<? } ?>
 						
 							<!-- SOUNDCLOUD -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>SoundCloud:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[soundcloud_api]" value="<?php if ($options['soundcloud_api']) { echo $options['soundcloud_api']; } ?>" /></td> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[soundcloud_api]" value="<?php if (($options['soundcloud_api'] != SOUNDCLOUD_API_KEY) && ($options['soundcloud_api'])) { echo $options['soundcloud_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 						
 							<!-- USTREAM -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>Ustream:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[ustream_api]" value="<?php if ($options['ustream_api']) { echo $options['ustream_api']; } ?>" /></td> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[ustream_api]" value="<?php if (($options['ustream_api'] != USTREAM_API_KEY) && ($options['ustream_api'])) { echo $options['ustream_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 						
@@ -603,6 +540,88 @@ class OGraphr_Admin_Core {
 						</dd>
 
 						</dl>
+						
+						<!-- E X P E R T -->
+						<dl class="advanced_opt">
+							<dt><h3>Expert Settings</h3></dt>
+							<dd>
+								<table width="100%" cellspacing="2" cellpadding="5"> 
+								<tbody>
+									
+								<!-- IMAGE RETRIEVAL -->	
+								<tr valign="top""> 
+									<th align="left" scope="row"><label>Image Retrieval:</label></th> 
+									<td colspan="2">
+										<div id="enable_expiry">
+											<label><input name="ographr_options[exec_mode]" type="radio" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?>  />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
+
+											<label><input name="ographr_options[exec_mode]" type="radio" value="2" <?php if (isset($options['exec_mode'])) { checked('2', $options['exec_mode']); } ?> id="enable_expiry" />&nbsp;Everytime your site is visited (slow, more accurate)&nbsp;</label>
+										</div>
+									</td> 
+								</tr>
+
+								<tr valign="center"> 
+								<th align="left" width="140px" scope="row">&nbsp;</th> 
+								<td colspan="2"><small>Retrieving images <em>on-post</em> decreases the loadtime of your page significantly, but on the downside the results might be outdated at some point. Should you choose to retrieve images <em>on-view</em>, it is recommended to <a href="#user_agents">restrict access</a> to decrease load times for human readers.</small></td> 
+								<td>&nbsp;</td>
+								</tr>
+									
+								<!-- DATA EXPIRY -->	
+								<tr valign="center"> 
+								<th align="left" width="140px" scope="row"><label>Data Expiry:</label></th> 
+								<td colspan="2">
+									<select name='ographr_options[data_expiry]' class="no_expiry" <?php if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?> >
+										<option value='-1' <?php selected('-1', $options['data_expiry']); ?> >(never)</option>
+										<option value='30' <?php selected('30', $options['data_expiry']); ?> >after 30 days</option>
+										<option value='60' <?php selected('60', $options['data_expiry']); ?> >after 60 days</option>
+										<option value='90' <?php selected('90', $options['data_expiry']); ?> >after 90 days</option>
+										<option value='180' <?php selected('180', $options['data_expiry']);?> >after 6 months</option>
+										<option value='270' <?php selected('270', $options['data_expiry']); ?> >after 9 months</option>
+										<option value='364' <?php selected('364', $options['data_expiry']); ?> >after 12 months</option>
+									</select>
+									</td> 
+								<td>&nbsp;</td>
+								</tr>
+									
+								<!-- MORE TRIGGERS -->
+								<tr valign="center"> 
+									<th align="left" scope="row"><label>More Triggers:</label></th> 
+									<td colspan="2">
+
+										<label><input name="ographr_options[enable_videoposter]" type="checkbox" value="1" <?php if (isset($options['enable_videoposter'])) { checked('1', $options['enable_videoposter']); } ?> /> Video posters </label>&nbsp;
+
+										<label><input name="ographr_options[enable_jwplayer]" type="checkbox" value="1" <?php if (isset($options['enable_jwplayer'])) { checked('1', $options['enable_jwplayer']); } ?> /> JW Player </label>&nbsp;
+
+										<label><input name="ographr_options[add_post_images]" type="checkbox" id="enable_images" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
+
+										<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); } ?> /> Post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label>&nbsp;
+									</td>
+								</tr>
+							
+								<!-- GOOGLE SNIPPETS -->
+								<tr valign="center"> 
+									<th align="left" scope="row"><label>Google+ Snippets:</label></th> 
+									<td colspan="2">
+										<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Meta-tags (<a href="https://developers.google.com/+/plugins/snippet/" target="_blank">?</a>)</label>
+
+										<?php if (OGRAPHR_BETA == TRUE) { ?>
+										<label><input name="ographr_options[add_image_prop]" type="checkbox" value="1" <?php if (isset($options['add_image_prop'])) { checked('1', $options['add_image_prop']); } ?> /> Image properties (<a href="http://schema.org/docs/gs.html" target="_blank">?</a>)</label>
+										<? } ?>
+									</td>
+								</tr>
+								
+								<!-- GOOGLE SNIPPETS -->
+								<tr valign="center"> 
+									<th align="left" scope="row"><label>Menu Counter:</label></th> 
+									<td colspan="2">
+										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>
+									</td>
+								</tr>
+								
+								</tbody></table></dd>			
+						</dd>
+
+						</dl>
 
 						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>
 						<div class="submit">
@@ -660,16 +679,30 @@ class OGraphr_Admin_Core {
 									$myposts = get_posts( $args );
 									$posts_harvested = count($myposts);
 									
+									if ($posts_published >= 1 ) {
+										$posts_percent = $posts_harvested * 100 / $posts_published;
+										$posts_percent = round($posts_percent, 1);
+									} else {
+										$posts_percent = 0;
+									}
+									
 									$pages_published = wp_count_posts('page');
 									$pages_published = $pages_published->publish;
 									$args = array( 'number' => $pages_published, 'meta_key' => 'ographr_urls' );
 									$mypages = get_pages( $args );
 									$pages_harvested = count($mypages);
 									
+									if ($pages_published >= 1 ) {
+										$pages_percent = $pages_harvested * 100 / $pages_published;
+										$pages_percent = round($pages_percent, 1);
+									} else {
+										$pages_percent = 0;
+									}
+									
 								?>
 							<p style="font-size:8pt;">
-								<? print "Posts harvested: $posts_harvested / $posts_published"; ?><br/>
-								<? print "Pages harvested: $pages_harvested / $pages_published"; ?>
+								<? print "Posts indexed: $posts_harvested / $posts_published <span style=\"color:#999;\">&nbsp;$posts_percent%</span>"; ?><br/>
+								<? print "Pages indexed: $pages_harvested / $pages_published <span style=\"color:#999;\">&nbsp;$pages_percent%</span>"; ?>
 							</p>
 							
 							</dd>
@@ -717,16 +750,24 @@ class OGraphr_Admin_Core {
 		<script src="less.js" type="text/javascript"></script>
 		<script type="text/javascript">
 		$(document).ready(function() {
-				if (! $('#show_advanced').attr('checked') ) {
-					$('div.nothing,#advanced_opt').hide();
+				if (! $("#show_advanced").attr('checked') ) {
+					$('.advanced_opt').hide();
 				}
-				$('#show_advanced').click(function(){
-					$('div.nothing,.advanced_opt').fadeToggle('slow');
+				$("#show_advanced").click(function(){
+					$(".advanced_opt").fadeToggle('slow');
 				});
 			
 				$("#enable_plugin").click(enable_cb);
 				$("#enable_images").click(enable_images);
-				$("#enable_expiry").click(enable_expiry);
+
+				$("#enable_expiry input").click( function() {
+				    var val = parseInt( this.value );
+				    if ( val === 1 ) {
+				        $("select.no_expiry").removeAttr('disabled');
+				    } else {
+				        $("select.no_expiry").attr( 'disabled', 'disabled' );
+				    }
+				});
 				
 		});
 	
