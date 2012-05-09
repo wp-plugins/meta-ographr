@@ -46,6 +46,17 @@ class OGraphr_Admin_Core {
 	function ographr_delete_plugin_options() {
 		delete_option('ographr_options');
 	}
+	
+	function ographr_delete_postmeta() {
+		
+		$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
+		$ographr_urls = get_posts( $args );
+		foreach($ographr_urls as $ographr_url) {
+			$ographr_id = $ographr_url->ID;
+			delete_post_meta($ographr_id, 'ographr_urls');
+			delete_post_meta($ographr_id, 'ographr_indexed');
+		}
+	}
 
 	// ------------------------------------------------------------------------------
 	// CALLBACK FUNCTION FOR: register_activation_hook(__FILE__, 'ographr_restore_defaults')
@@ -61,6 +72,10 @@ class OGraphr_Admin_Core {
 	function ographr_restore_defaults() {
 		$tmp = get_option('ographr_options');
 	    if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
+		
+			if ($tmp['delete_postmeta'] == 1)
+				$this->ographr_delete_postmeta();
+			
 			delete_option('ographr_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
 			$arr = array(	"exec_mode" => "1",
 							"data_expiry" => "-1",
@@ -571,7 +586,7 @@ class OGraphr_Admin_Core {
 								<th align="left" width="140px" scope="row"><label>Data Expiry:</label></th> 
 								<td colspan="2">
 									<select name='ographr_options[data_expiry]' class="no_expiry" <?php if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?> >
-										<option value='-1' <?php selected('-1', $options['data_expiry']); ?> >(never)</option>
+										<option value='-1' <?php selected('-1', $options['data_expiry']); ?> >never</option>
 										<option value='30' <?php selected('30', $options['data_expiry']); ?> >after 30 days</option>
 										<option value='60' <?php selected('60', $options['data_expiry']); ?> >after 60 days</option>
 										<option value='90' <?php selected('90', $options['data_expiry']); ?> >after 90 days</option>
@@ -612,9 +627,9 @@ class OGraphr_Admin_Core {
 								
 								<!-- GOOGLE SNIPPETS -->
 								<tr valign="center"> 
-									<th align="left" scope="row"><label>Menu Counter:</label></th> 
+									<th align="left" scope="row"><label>Interface:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>
+										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -623,7 +638,10 @@ class OGraphr_Admin_Core {
 
 						</dl>
 
-						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>
+						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" id="enable_delete" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
+						
+						<label class="advanced_opt"><input name="ographr_options[delete_postmeta]" type="checkbox" value="1" class="advanced_opt enable_delete" <?php if (isset($options['delete_postmeta'])) { checked('1', $options['delete_postmeta']); } ?> disabled="disabled" /> and delete all indexed data </label>
+						
 						<div class="submit">
 							<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
 						</div>
@@ -631,7 +649,7 @@ class OGraphr_Admin_Core {
 						</fieldset>
 						</form>
 						<!-- *********************** END: Main Content ********************* -->
-						<p class="yifooter"><a style="" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">OGraphr <? echo OGRAPHR_VERSION ?></a> &copy 2012 by Jan T. Sott</p>
+						<p class="yifooter"><a style="" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">OGraphr <? echo OGRAPHR_VERSION ?></a> &copy <? $this_year = date(Y); if (date(Y) > 2012) { print "2012-$this_year"; } else { print "2012"; } ?> by Jan T. Sott</p>
 						</td> <!-- [left] -->
 
 						<td class="right">
@@ -756,10 +774,11 @@ class OGraphr_Admin_Core {
 				$("#show_advanced").click(function(){
 					$(".advanced_opt").fadeToggle('slow');
 				});
-			
+							
 				$("#enable_plugin").click(enable_cb);
 				$("#enable_images").click(enable_images);
-
+				$("#enable_delete").click(enable_delete);
+	
 				$("#enable_expiry input").click( function() {
 				    var val = parseInt( this.value );
 				    if ( val === 1 ) {
@@ -787,11 +806,11 @@ class OGraphr_Admin_Core {
 			}
 		}
 		
-		function enable_expiry() {
-			if ($(this.checked).val('1') == 'true') {
-				$("select.no_expiry").removeAttr("disabled");
+		function enable_delete() {
+			if (this.checked) {
+				$("input.enable_delete").removeAttr("disabled");
 			} else {
-				$("select.no_expiry").attr("disabled", "true");
+				$("input.enable_delete").attr("disabled", true);
 			}
 		}
 
