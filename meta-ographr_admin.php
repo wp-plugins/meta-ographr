@@ -49,6 +49,8 @@ class OGraphr_Admin_Core {
 	
 	function ographr_delete_postmeta() {
 		
+		$published = wp_count_posts();
+		$published = $published->publish;
 		$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
 		$ographr_urls = get_posts( $args );
 		foreach($ographr_urls as $ographr_url) {
