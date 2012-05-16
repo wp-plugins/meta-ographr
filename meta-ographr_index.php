@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.5.9
+Version: 0.5.10
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.5.9");
+    define("OGRAPHR_VERSION", "0.5.10");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -43,6 +43,10 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 	define("ETRACKS_API_KEY", "e310c354bf4633de8dca0e7fb0a3a23fcc1614fe");
 	// default artwork size (sq56=56x56, sq100=100x100, sq133=133x133, sq250=250x250, sq500=500x500, max133w=133 on longest side, max200=200 on longest side, max1024=1024 on longest side, original)
 	define("ETRACKS_IMAGE_SIZE", "max200");
+	
+// BAMBUSER
+	// no need to change this unless you want to use your own Bambuser API key (-> http://bambuser.com/api/keys)
+	define("BAMBUSER_API_KEY", "0b2d6b4a0c990fe87c64af3fff13832e");
 
 // BANDCAMP
 	// default artwork size (small_art_url=100x100, large_art_url=350x350)
@@ -113,6 +117,7 @@ $options = get_option('ographr_options');
 
 // Get API keys
 if (!$options['etracks_api']) { $options['etracks_api'] = ETRACKS_API_KEY; $etracks_api = $options['etracks_api']; }
+if (!$options['bambuser_api']) { $options['bambuser_api'] = BAMBUSER_API_KEY; $bambuser_api = $options['bambuser_api']; }
 if (!$options['flickr_api']) { $options['flickr_api'] = FLICKR_API_KEY; $flickr_api = $options['flickr_api']; }
 if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
 if (OGRAPHR_BETA == TRUE )
@@ -373,6 +378,7 @@ class OGraphr_Core {
 				
 				if (current_user_can('manage_options')) {
 					if ($etracks_api = $options['etracks_api']) { print "\t 8tracks API key: $etracks_api\n"; }
+					if ($bambuser_api = $options['bambuser_api']) { print "\t Bambuser API key: $bambuser_api\n"; }
 					if ($bandcamp_api = $options['bandcamp_api']) { print "\t Bandcamp API key: $bandcamp_api\n"; }
 					if ($flickr_api = $options['flickr_api']) { print "\t Flickr API key: $flickr_api\n"; }
 					if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
@@ -715,7 +721,18 @@ class OGraphr_Core {
 						$thumbnails[] = $etracks_thumbnail;
 				}
 			}
-		}		
+		}
+		
+		// BAMBUSER
+		if($options['enable_bambuser']) {					
+			$bambuser_thumbnails = $this->find_bambuser_widgets($markup, $options['bambuser_api']);
+			if (isset($bambuser_thumbnails)) {			
+				foreach ($bambuser_thumbnails as $bambuser_thumbnail) {
+					if ($bambuser_thumbnail)
+						$thumbnails[] = $bambuser_thumbnail;
+				}
+			}
+		}	
 			
 		// BANDCAMP
 		if($options['enable_bandcamp']) {					
@@ -879,10 +896,10 @@ class OGraphr_Core {
 	
 	function find_etracks_widgets($markup) {
 		// 8tracks iFrame and embed players
-		preg_match_all( '/8tracks.com\/mixes\/([0-9]+)\/player/', $markup, $matches1 );
+		preg_match_all( '/8tracks.com\/mixes\/([0-9]+)\/player/i', $markup, $matches1 );
 							
 		// 8tracks shortcode (Jetpack)
-		preg_match_all('/\[8tracks.*?url="https?:\/\/w*.?8tracks.com\/mixes\/([0-9]+)"/', $markup, $matches2);
+		preg_match_all('/\[8tracks.*?url="https?:\/\/w*.?8tracks.com\/mixes\/([0-9]+)"/i', $markup, $matches2);
 											
 		$matches = array_merge($matches1[1], $matches2[1]);
 		$matches = array_unique($matches);
@@ -894,7 +911,10 @@ class OGraphr_Core {
 			$json_query = "mix->cover_urls->" . ETRACKS_IMAGE_SIZE;
 			$etracks_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t 8tracks: $etracks_thumbnail (ID:$match)\n";
+				if ($etracks_thumbnail)
+					print "\t 8tracks: $etracks_thumbnail (ID:$match)\n";
+				else
+					print "\t 8tracks: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($etracks_thumbnail)) {
@@ -910,9 +930,41 @@ class OGraphr_Core {
 		return $etracks_thumbnails;
 	} // end find_etracks_widgets
 	
+	function find_bambuser_widgets($markup, $api) {
+		// Bambuser embed players
+		preg_match_all( '/static.bambuser.com\/r\/player.swf\?vid=([0-9]+)/i', $markup, $matches);
+											
+		$matches = array_unique($matches[1]);
+
+		// Now if we've found a Bambuser embed URL, let's set the thumbnail URL
+		foreach($matches as $match) {
+			$service = "Bambuser";
+			$json_url = "http://api.bambuser.com/broadcast/$match.json?api_key=$api";
+			$json_query = "result->preview";
+			$bambuser_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
+				if ($bambuser_thumbnail)
+					print "\t Bambuser: $bambuser_thumbnail (ID:$match)\n";
+				else
+					print "\t Bambuser: Error from URL ($json_url)\n";
+			}
+			
+			if (isset($bambuser_thumbnail)) {
+				if ($options['exec_mode'] == 1)  {
+					$exists = $this->remote_exists($bambuser_thumbnail);
+					if($exists) 
+						$bambuser_thumbnails[] = $bambuser_thumbnail;
+				} else {
+					$bambuser_thumbnails[] = $bambuser_thumbnail;
+				}
+			}
+		}
+		return $bambuser_thumbnails;
+	} // end find_bambuser_widgets
+	
 	function find_bandcamp_widgets($markup, $api) {
 		// Standard embed code for albums
-		preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//', $markup, $matches);					
+		preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//i', $markup, $matches);					
 		$matches = array_unique($matches[1]);
 
 		// Now if we've found a Bandcamp ID, let's set the thumbnail URL
@@ -922,7 +974,10 @@ class OGraphr_Core {
 			$json_query = BANDCAMP_IMAGE_SIZE;
 			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Bandcamp album: $bandcamp_thumbnail (ID:$match)\n";
+				if ($bandcamp_thumbnail)
+					print "\t Bandcamp album: $bandcamp_thumbnail (ID:$match)\n";
+				else
+					print "\t Bandcamp album: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($bandcamp_thumbnail)) {
@@ -937,14 +992,17 @@ class OGraphr_Core {
 		}
 
 		// Standard embed code for single tracks
-		preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/track=([0-9]+)\//', $markup, $matches);					
+		preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/track=([0-9]+)\//i', $markup, $matches);					
 		$matches = array_unique($matches[1]);
 
 		// Now if we've found a Bandcamp ID, let's set the thumbnail URL
 		foreach($matches as $match) {
 			$bandcamp_thumbnail = $this->get_bandcamp_parent_thumbnail($match, $bandcamp_api);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Bandcamp track: $bandcamp_thumbnail (ID:$match)\n";
+				if ($bandcamp_thumbnail)
+					print "\t Bandcamp track: $bandcamp_thumbnail (ID:$match)\n";
+				else
+					print "\t Bandcamp track: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($bandcamp_thumbnail)) {
@@ -962,10 +1020,10 @@ class OGraphr_Core {
 		
 	function find_bliptv_widgets($markup) {
 		// Blip.tv iFrame player
-		preg_match_all( '/blip.tv\/play\/([A-Za-z0-9]+)/', $markup, $matches1 );
+		preg_match_all( '/blip.tv\/play\/([A-Za-z0-9]+)/i', $markup, $matches1 );
 	
 		// Blip.tv Flash player
-		preg_match_all( '/a.blip.tv\/api.swf#([A-Za-z0-9%]+)/', $markup, $matches2 );
+		preg_match_all( '/a.blip.tv\/api.swf#([A-Za-z0-9%]+)/i', $markup, $matches2 );
 	
 		$matches = array_merge($matches1[1], $matches2[1]);
 		$matches = array_unique($matches);
@@ -977,7 +1035,10 @@ class OGraphr_Core {
 			$json_query = "Post->thumbnailUrl";
 			$bliptv_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Blip.tv: $bliptv_thumbnail (ID:$match)\n";
+				if ($bliptv_thumbnail)
+					print "\t Blip.tv: $bliptv_thumbnail (ID:$match)\n";
+				else
+					print "\t Blip.tv: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($bliptv_thumbnail)) {
@@ -1001,7 +1062,7 @@ class OGraphr_Core {
 		preg_match_all('#https?://w*.?dailymotion.com/embed/video/([A-Za-z0-9-_]+)#s', $markup, $matches2);
 
 		// Dailymotion shortcode (Viper's Video Quicktags)
-		preg_match_all('/\[dailymotion.*?]https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)\[\/dailymotion]/', $markup, $matches3);
+		preg_match_all('/\[dailymotion.*?]https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)\[\/dailymotion]/i', $markup, $matches3);
 
 		$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
 		$matches = array_unique($matches);
@@ -1013,7 +1074,10 @@ class OGraphr_Core {
 			$json_query = "thumbnail_url";
 			$dailymotion_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Dailymotion: $dailymotion_thumbnail\n";
+				if ($dailymotion_thumbnail)
+					print "\t Dailymotion: $dailymotion_thumbnail\n";
+				else
+					print "\t Dailymotion: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($dailymotion_thumbnail)) {
@@ -1040,7 +1104,10 @@ class OGraphr_Core {
 			$json_query = NULL;
 			$flickr_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Flickr: $flickr_thumbnail (ID:$match)\n";
+				if ($flickr_thumbnail)
+					print "\t Flickr: $flickr_thumbnail (ID:$match)\n";
+				else
+					print "\t Flickr: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($flickr_thumbnail)) {
@@ -1058,7 +1125,7 @@ class OGraphr_Core {
 	
 	function find_hulu_widgets($markup) {
 		// Hulu iFrame player
-		preg_match_all( '/hulu.com\/embed\/([A-Za-z0-9\-_]+)/', $markup, $matches );				
+		preg_match_all( '/hulu.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches );				
 		$matches = array_unique($matches[1]);
 
 		// Now if we've found a Hulu embed URL, let's set the thumbnail URL
@@ -1068,7 +1135,10 @@ class OGraphr_Core {
 			$json_query = "thumbnail_url";
 			$hulu_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Hulu: $hulu_thumbnail (ID:$match)\n";
+				if ($hulu_thumbnail)
+					print "\t Hulu: $hulu_thumbnail (ID:$match)\n";
+				else
+					print "\t Hulu: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($hulu_thumbnail)) {
@@ -1087,7 +1157,7 @@ class OGraphr_Core {
 	function find_justintv_widgets($markup) {
 		// Justin.tv embed player
 		//www.justin.tv/widgets/live_embed_player.swf?channel=securetv
-		preg_match_all( '/justin.tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/', $markup, $matches );		
+		preg_match_all( '/justin.tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/i', $markup, $matches );		
 		$matches = array_unique($matches[1]);
 		
 		// Now if we've found a Justin.tv embed URL, let's set the thumbnail URL
@@ -1097,7 +1167,10 @@ class OGraphr_Core {
 			$json_query = "channel->" . JUSTINTV_IMAGE_SIZE;
 			$justintv_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Justin.tv: $justintv_thumbnail (ID:$match)\n";
+				if ($justintv_thumbnail)
+					print "\t Justin.tv: $justintv_thumbnail (ID:$match)\n";
+				else
+					print "\t Justin.tv: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($justintv_thumbnail)) {
@@ -1115,11 +1188,11 @@ class OGraphr_Core {
 	
 	function find_mixcloud_widgets($markup) {
 		// Standard embed code
-		preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/', $markup, $matches);
+		preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches);
 		$matches = array_unique($matches[1]);
 
 		// Standard embed (API v1, undocumented)
-		// preg_match_all('/feed=http:\/\/www.mixcloud.com\/api\/1\/cloudcast\/([A-Za-z0-9\-_\%\/.]+)/', $markup, $mixcloud_ids);					
+		// preg_match_all('/feed=http:\/\/www.mixcloud.com\/api\/1\/cloudcast\/([A-Za-z0-9\-_\%\/.]+)/i', $markup, $mixcloud_ids);					
 
 		// Now if we've found a Mixcloud ID, let's set the thumbnail URL
 		foreach($matches as $match) {
@@ -1129,7 +1202,10 @@ class OGraphr_Core {
 			$json_query = "pictures->" . MIXCLOUD_IMAGE_SIZE;
 			$mixcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Mixcloud: $mixcloud_thumbnail\n";
+				if ($mixcloud_thumbnail)
+					print "\t Mixcloud: $mixcloud_thumbnail\n";
+				else
+					print "\t Mixcloud: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($mixcloud_thumbnail)) {
@@ -1147,7 +1223,7 @@ class OGraphr_Core {
 
 	function find_official_widgets($markup, $api) {
 		// Official.fm iFrame
-		preg_match_all( '/official.fm\/tracks\/([A-Za-z0-9]+)\?/', $markup, $matches );
+		preg_match_all( '/official.fm\/tracks\/([A-Za-z0-9]+)\?/i', $markup, $matches );
 		$matches = array_unique($matches[1]);
 
 		// Now if we've found a Official.fm embed URL, let's set the thumbnail URL
@@ -1157,7 +1233,10 @@ class OGraphr_Core {
 			$json_query = "thumbnail_url";
 			$official_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Official.fm: $official_thumbnail (ID:$match)\n";
+				if ($official_thumbnail)
+					print "\t Official.fm: $official_thumbnail (ID:$match)\n";
+				else
+					print "\t Official.fm: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($official_thumbnail)) {
@@ -1176,14 +1255,17 @@ class OGraphr_Core {
 	/*	
 	function find_playfm_widgets($markup, $api) {
 		// Play.fm embed
-		preg_match_all( '/playfmWidget.swf\?url=http%3A%2F%2Fwww.play.fm%2Frecordings%2Fflash%2F01%2Frecording%2F([0-9]+)/', $markup, $matches );
+		preg_match_all( '/playfmWidget.swf\?url=http%3A%2F%2Fwww.play.fm%2Frecordings%2Fflash%2F01%2Frecording%2F([0-9]+)/i', $markup, $matches );
 		$matches = array_unique($matches[1]);
 
 		// Now if we've found a Play.fm embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
 			$playfm_thumbnail = $this->get_playfm_thumbnail($match, $api);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Play.fm: $playfm_thumbnail (ID:$match)\n";
+				if ($playfm_thumbnail)
+					print "\t Play.fm: $playfm_thumbnail (ID:$match)\n";
+				else
+					print "\t Play.fm: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($playfm_thumbnail)) {
@@ -1202,10 +1284,10 @@ class OGraphr_Core {
 	
 	function find_soundcloud_widgets($markup, $api) {
 		// Standard embed code for tracks (Flash and HTML5 player)
-		preg_match_all('/api.soundcloud.com%2Ftracks%2F([0-9]+)/', $markup, $matches1);
+		preg_match_all('/api.soundcloud.com%2Ftracks%2F([0-9]+)/i', $markup, $matches1);
 
 		// Shortcode for tracks (Flash and HTML5 player)
-		preg_match_all('/api.soundcloud.com\/tracks\/([0-9]+)/', $markup, $matches2);
+		preg_match_all('/api.soundcloud.com\/tracks\/([0-9]+)/i', $markup, $matches2);
 
 		$matches = array_merge($matches1[1], $matches2[1]);
 		$matches = array_unique($matches);
@@ -1219,7 +1301,11 @@ class OGraphr_Core {
 			$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
 
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t SoundCloud track: $soundcloud_thumbnail (ID:$match)\n";
+				if ($soundcloud_thumbnail)
+					print "\t SoundCloud track: $soundcloud_thumbnail (ID:$match)\n";
+				else
+					print "\t SoundCloud track: Error from URL ($json_url)\n";
+				
 			}
 			
 			if (isset($soundcloud_thumbnail)) {
@@ -1234,10 +1320,10 @@ class OGraphr_Core {
 		}
 
 		// Standard embed code for playlists (Flash and HTML5 player)
-		preg_match_all('/api.soundcloud.com%2Fplaylists%2F([0-9]+)/', $markup, $matches1);
+		preg_match_all('/api.soundcloud.com%2Fplaylists%2F([0-9]+)/i', $markup, $matches1);
 
 		// Shortcode for playlists (Flash and HTML5 player)
-		preg_match_all('/api.soundcloud.com\/playlists\/([0-9]+)/', $markup, $matches2);
+		preg_match_all('/api.soundcloud.com\/playlists\/([0-9]+)/i', $markup, $matches2);
 
 		$matches = array_merge($matches1[1], $matches2[1]);
 		$matches = array_unique($matches);
@@ -1250,7 +1336,10 @@ class OGraphr_Core {
 			$soundcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t SoundCloud playlist: $soundcloud_thumbnail (ID:$match)\n";
+				if ($soundcloud_thumbnail)
+					print "\t SoundCloud playlist: $soundcloud_thumbnail (ID:$match)\n";
+				else
+					print "\t SoundCloud playlist: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($soundcloud_thumbnail)) {
@@ -1268,7 +1357,7 @@ class OGraphr_Core {
 	
 	function find_ustream_widgets($markup, $api) {
 		// Ustream iFrame player
-		preg_match_all( '/ustream.tv\/embed\/recorded\/([0-9]+)/', $markup, $matches );		
+		preg_match_all( '/ustream.tv\/embed\/recorded\/([0-9]+)/i', $markup, $matches );		
 		$matches = array_unique($matches[1]);
 
 		// Now if we've found a Ustream embed URL, let's set the thumbnail URL
@@ -1278,7 +1367,10 @@ class OGraphr_Core {
 			$json_query = "results->imageUrl->" . USTREAM_IMAGE_SIZE;
 			$ustream_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);						
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Ustream: $ustream_thumbnail (ID:$match)\n";
+				if ($ustream_thumbnail)
+					print "\t Ustream: $ustream_thumbnail (ID:$match)\n";
+				else
+					print "\t Ustream: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($ustream_thumbnail)) {
@@ -1295,7 +1387,7 @@ class OGraphr_Core {
 	} // end find_ustream_widgets
 	
 	function find_viddler_widgets($markup, $api) {
-		preg_match_all( '/viddler.com\/embed\/([A-Za-z0-9]+)/', $markup, $matches );
+		preg_match_all( '/viddler.com\/embed\/([A-Za-z0-9]+)/i', $markup, $matches );
 
 		// Now if we've found a Viddler embed URL, let's set the thumbnail URL
 		foreach($matches[1] as $match) {
@@ -1304,7 +1396,10 @@ class OGraphr_Core {
 			$json_query = "video->thumbnail_url";
 			$viddler_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Viddler: $viddler_thumbnail (ID:$match)\n";
+				if ($viddler_thumbnail)
+					print "\t Viddler: $viddler_thumbnail (ID:$match)\n";
+				else
+					print "\t Viddler: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($viddler_thumbnail)) {
@@ -1328,7 +1423,7 @@ class OGraphr_Core {
 		preg_match_all('#https?://player.vimeo.com/video/([0-9]+)#s', $markup, $matches2);
 
 		// Vimeo shortcode (Viper's Video Quicktags)
-		preg_match_all('/\[vimeo.*?]https?:\/\/w*.?vimeo.com\/([0-9]+)\[\/vimeo]/', $markup, $matches3);
+		preg_match_all('/\[vimeo.*?]https?:\/\/w*.?vimeo.com\/([0-9]+)\[\/vimeo]/i', $markup, $matches3);
 
 		$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
 		$matches = array_unique($matches);
@@ -1337,7 +1432,10 @@ class OGraphr_Core {
 		foreach($matches as $match) {
 			$vimeo_thumbnail = $this->get_vimeo_thumbnail($match, VIMEO_IMAGE_SIZE);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t Vimeo: $vimeo_thumbnail (ID:$match)\n";
+				if ($vimeo_thumbnail)
+					print "\t Vimeo: $vimeo_thumbnail (ID:$match)\n";
+				else
+					print "\t Vimeo: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($vimeo_thumbnail)) {
@@ -1361,7 +1459,7 @@ class OGraphr_Core {
 		preg_match_all('#https?://w*.?youtube.com/embed/([A-Za-z0-9\-_]+)#s', $markup, $matches2);
 
 		// YouTube shortcode (Viper's Video Quicktags)
-		preg_match_all('/\[youtube.*?]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/', $markup, $matches3);
+		preg_match_all('/\[youtube.*?]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/i', $markup, $matches3);
 
 		$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
 		$matches = array_unique($matches);
@@ -1370,7 +1468,10 @@ class OGraphr_Core {
 		foreach($matches as $match) {
 			$youtube_thumbnail = 'http://img.youtube.com/vi/' . $match . '/0.jpg'; // no https connection
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				print "\t YouTube: $youtube_thumbnail (ID:$match)\n";
+				if ($youtube_thumbnail)
+					print "\t YouTube: $youtube_thumbnail (ID:$match)\n";
+				else
+					print "\t YouTube: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($youtube_thumbnail)) {
@@ -1431,6 +1532,12 @@ class OGraphr_Core {
 			// 0.5.6
 			if (version_compare($last_update, "0.5.6") == "<=") {
 				$options['data_expiry'] = "-1";
+				$opt_updated = TRUE;
+			}
+			
+			// 0.5.9
+			if (version_compare($last_update, "0.5.6") == "<=") {
+				$options['enable_bambuser'] = "1";
 				$opt_updated = TRUE;
 			}
 		
