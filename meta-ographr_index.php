@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.5.11
+Version: 0.5.12
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.5.11");
+    define("OGRAPHR_VERSION", "0.5.12");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -367,7 +367,8 @@ class OGraphr_Core {
 				if ($options['filter_gravatar']) { print "\t Avatars are filtered\n"; }
 				if ($options['filter_smilies']) { print "\t Emoticons are filtered \n"; }
 				if ($options['filter_themes']) { print "\t Themes are filtered\n"; }
-				if ($options['google_tags']) { print "\t Google+ Snippets are active\n"; }
+				if ($options['add_google_meta']) { print "\t Google+ Snippets are active\n"; }
+				if ($options['add_image_prop']) { print "\t Schema.org image properties are being added\n"; }
 				
 				if ($options['filter_custom_urls']) {
 					foreach(preg_split("/((\r?\n)|(\n?\r))/", $options['filter_custom_urls']) as $line){
@@ -500,7 +501,7 @@ class OGraphr_Core {
 					// Blog title
 					$title = get_settings('blogname');
 					if($title) {
-						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
+						if (($options['add_google_meta']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
 							print "<meta name=\"title\" content=\"$title\" />\n";
 						print "<meta property=\"og:title\" content=\"$title\" />\n";
 					}
@@ -509,21 +510,21 @@ class OGraphr_Core {
 					$wp_tagline = get_bloginfo('description');
 					$description = str_replace("%tagline%", $wp_tagline, $description);
 					if($description) {
-						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
+						if (($options['add_google_meta']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
 							print "<meta name=\"description\" content=\"$description\" />\n";
 						print "<meta property=\"og:description\" content=\"$description\" />\n";
 					}
 				} else { //single posts
 					if ($options['add_title'] && ($title)) {
 						// Post title
-						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
+						if (($options['add_google_meta']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
 							print "<meta name=\"title\" content=\"$title\" />\n";
 						print "<meta property=\"og:title\" content=\"$title\" />\n"; 
 					}
 					
 					if($options['add_excerpt'] && ($description = wp_strip_all_tags((get_the_excerpt()), true))) {
 						// Post excerpt
-						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
+						if (($options['add_google_meta']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
 							print "<meta name=\"description\" content=\"$description\" />\n";
 						print "<meta property=\"og:description\" content=\"$description\" />\n";
 					}
@@ -1658,10 +1659,12 @@ class OGraphr_Core {
 	function ographr_add_google_snips($content) {
 		
 		global $options;
-		
-		if ($options['add_image_prop']) {
+				
+		if (($options['add_image_prop']) && ( is_single() ) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)) ) {
+			
 			$doc = new DOMDocument();
-			$doc->loadHTML($content);
+			if ($content)
+				$doc->loadHTML($content);
 
 			$imgs = $doc->getElementsByTagName('img');
 			foreach ($imgs as $img) {

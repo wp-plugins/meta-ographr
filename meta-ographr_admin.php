@@ -112,7 +112,7 @@ class OGraphr_Admin_Core {
 							"enable_videoposter" => "1",
 							"enable_jwplayer" => "1",
 							"add_post_thumbnail" => "0",
-							"add_add_google_meta" => "0",
+							"add_google_meta" => "0",
 							"add_image_prop" => "0",
 							"filter_smilies" => "1",
 							"filter_themes" => "0",
