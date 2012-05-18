@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.5.10
+Version: 0.5.11
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.5.10");
+    define("OGRAPHR_VERSION", "0.5.11");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -108,6 +108,7 @@ add_action('save_post', array(&$core,'ographr_save_postmeta'));
 add_action('admin_notices', array(&$core,'ographr_admin_notice'));
 add_action('admin_bar_menu', array(&$core,'ographr_admin_bar'), 150);
 add_filter('plugin_action_links', array(&$core, 'ographr_plugin_action_links'), 10, 2 );
+add_filter('the_content', array(&$core, 'ographr_add_google_snips'));
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -519,7 +520,7 @@ class OGraphr_Core {
 							print "<meta name=\"title\" content=\"$title\" />\n";
 						print "<meta property=\"og:title\" content=\"$title\" />\n"; 
 					}
-									
+					
 					if($options['add_excerpt'] && ($description = wp_strip_all_tags((get_the_excerpt()), true))) {
 						// Post excerpt
 						if (($options['google_tags']) && (preg_match(GOOGLEPLUS_USERAGENT,$user_agent)))
@@ -586,6 +587,7 @@ class OGraphr_Core {
 				}
 
 			}
+
 		} // end of ographr_main_dish	
 		
 		
@@ -825,7 +827,7 @@ class OGraphr_Core {
 		/*
 		// PLAY.FM
 		if($options['enable_playfm']) {
-			$playfm_thumbnails = $this->find_soundcloud_widgets($markup, $options['playfm_api']);
+			$playfm_thumbnails = $this->find_playfm_widgets($markup, $options['playfm_api']);
 			if (isset($playfm_thumbnails)) {	
 				foreach ($playfm_thumbnails as $playfm_thumbnail) {
 					if ($playfm_thumbnail)
@@ -1495,8 +1497,6 @@ class OGraphr_Core {
 		
 		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
 			$core->ographr_self_update();
-
-		//$core->ographr_main_dish();
 	}
 	
 	// upgrades?
@@ -1542,7 +1542,7 @@ class OGraphr_Core {
 			}
 		
 			// version that performed update
-			if ($opt_updated) {
+			if ($opt_updated == TRUE) {
 				$options['last_update'] = OGRAPHR_VERSION;
 				update_option('ographr_options', $options);
 			}
@@ -1653,6 +1653,25 @@ class OGraphr_Core {
 	            $wp_admin_bar->add_menu($menu_item);
 	        }
 	    }	
+	}
+	
+	function ographr_add_google_snips($content) {
+		
+		global $options;
+		
+		if ($options['add_image_prop']) {
+			$doc = new DOMDocument();
+			$doc->loadHTML($content);
+
+			$imgs = $doc->getElementsByTagName('img');
+			foreach ($imgs as $img) {
+				$img->setAttribute('itemprop', 'image');
+			}
+		
+			$content = $doc->saveHTML();
+		}
+		
+		return $content;
 	}
 
 	

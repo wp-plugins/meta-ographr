@@ -630,9 +630,7 @@ class OGraphr_Admin_Core {
 									<td colspan="2">
 										<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Meta-tags (<a href="https://developers.google.com/+/plugins/snippet/" target="_blank">?</a>)</label>
 
-										<?php if (OGRAPHR_BETA == TRUE) { ?>
 										<label><input name="ographr_options[add_image_prop]" type="checkbox" value="1" <?php if (isset($options['add_image_prop'])) { checked('1', $options['add_image_prop']); } ?> /> Image properties (<a href="http://schema.org/docs/gs.html" target="_blank">?</a>)</label>
-										<? } ?>
 									</td>
 								</tr>
 								
