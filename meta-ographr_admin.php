@@ -647,9 +647,9 @@ class OGraphr_Admin_Core {
 
 						</dl>
 
-						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" id="enable_delete" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
+						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" <?php if(!OGRAPHR_DEBUG) print 'id="enable_delete"'; ?> <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
 						
-						<label class="advanced_opt"><input name="ographr_options[delete_postmeta]" type="checkbox" value="1" class="advanced_opt enable_delete" <?php if (isset($options['delete_postmeta'])) { checked('1', $options['delete_postmeta']); } ?> disabled="disabled" /> and delete all indexed data </label>
+						<label class="advanced_opt"><input name="ographr_options[delete_postmeta]" type="checkbox" value="1" class="advanced_opt<?php if(!OGRAPHR_DEBUG) print ' enable_delete'; ?>" <?php if (isset($options['delete_postmeta'])) { checked('1', $options['delete_postmeta']); } ?> <?php if(!OGRAPHR_DEBUG) print 'disabled="disabled"'; ?> /> and delete all indexed data </label>
 						
 						<div class="submit">
 							<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
@@ -786,7 +786,7 @@ class OGraphr_Admin_Core {
 							
 				$("#enable_plugin").click(enable_cb);
 				$("#enable_images").click(enable_images);
-				$("#enable_delete").click(enable_delete);
+				<?php if(!OGRAPHR_DEBUG) print '$("#enable_delete").click(enable_delete);'; ?>
 	
 				$("#enable_expiry input").click( function() {
 				    var val = parseInt( this.value );
@@ -815,13 +815,15 @@ class OGraphr_Admin_Core {
 			}
 		}
 		
-		function enable_delete() {
-			if (this.checked) {
-				$("input.enable_delete").removeAttr("disabled");
-			} else {
-				$("input.enable_delete").attr("disabled", true);
+		<?php if (!OGRAPHR_DEBUG) { ?>
+			function enable_delete() {
+				if (this.checked) {
+					$("input.enable_delete").removeAttr("disabled");
+				} else {
+					$("input.enable_delete").attr("disabled", true);
+				}
 			}
-		}
+		<?php } ?>
 
 	    </script>
 		<?php
