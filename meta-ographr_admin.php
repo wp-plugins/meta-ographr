@@ -141,7 +141,7 @@ class OGraphr_Admin_Core {
 	function ographr_init(){
 		register_setting( 'ographr_plugin_options', 'ographr_options', array($this, 'ographr_validate_options') );
 		
-		global $options;
+		//global $options;
 	}
 
 	// ------------------------------------------------------------------------------
@@ -155,6 +155,7 @@ class OGraphr_Admin_Core {
 	function ographr_add_options_page() {
 		add_options_page('OGraphr Settings', 'OGraphr', 'manage_options', __FILE__, array($this, 'ographr_render_form'));
 	}
+
 
 	// ------------------------------------------------------------------------------
 	// CALLBACK FUNCTION SPECIFIED IN: add_options_page()
@@ -771,26 +772,25 @@ class OGraphr_Admin_Core {
 	//add JQuery to footer
 	function ographr_javascript() {
 		?>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 		<script type="text/javascript">
-		$(document).ready(function() {
-				if (! $("#show_advanced").attr('checked') ) {
-					$('.advanced_opt').hide();
+		jQuery(document).ready(function() {
+				if (! jQuery("#show_advanced").attr('checked') ) {
+					jQuery('.advanced_opt').hide();
 				}
-				$("#show_advanced").click(function(){
-					$(".advanced_opt").fadeToggle('slow');
+				jQuery("#show_advanced").click(function(){
+					jQuery(".advanced_opt").fadeToggle('slow');
 				});
 							
-				$("#enable_plugin").click(enable_cb);
-				$("#enable_images").click(enable_images);
-				<?php if(!OGRAPHR_DEBUG) print '$("#enable_delete").click(enable_delete);'; ?>
+				jQuery("#enable_plugin").click(enable_cb);
+				jQuery("#enable_images").click(enable_images);
+				<?php if(!OGRAPHR_DEBUG) print 'jQuery("#enable_delete").click(enable_delete);'; ?>
 	
-				$("#enable_expiry input").click( function() {
+				jQuery("#enable_expiry input").click( function() {
 				    var val = parseInt( this.value );
 				    if ( val === 1 ) {
-				        $("select.no_expiry").removeAttr('disabled');
+				        jQuery("select.no_expiry").removeAttr('disabled');
 				    } else {
-				        $("select.no_expiry").attr( 'disabled', 'disabled' );
+				        jQuery("select.no_expiry").attr( 'disabled', 'disabled' );
 				    }
 				});
 				
@@ -798,26 +798,26 @@ class OGraphr_Admin_Core {
 	
 		function enable_cb() {
 			if (this.checked) {
-				$("input.enable_triggers").removeAttr("disabled");
+				jQuery("input.enable_triggers").removeAttr("disabled");
 			} else {
-				$("input.enable_triggers").attr("disabled", true);
+				jQuery("input.enable_triggers").attr("disabled", true);
 			}
 		}
 		
 		function enable_images() {
 			if (this.checked) {
-				$("input.disable_filters, textarea.disable_filters").removeAttr("disabled");
+				jQuery("input.disable_filters, textarea.disable_filters").removeAttr("disabled");
 			} else {
-				$("input.disable_filters, textarea.disable_filters").attr("disabled", true);
+				jQuery("input.disable_filters, textarea.disable_filters").attr("disabled", true);
 			}
 		}
 		
 		<?php if (!OGRAPHR_DEBUG) { ?>
 			function enable_delete() {
 				if (this.checked) {
-					$("input.enable_delete").removeAttr("disabled");
+					jQuery("input.enable_delete").removeAttr("disabled");
 				} else {
-					$("input.enable_delete").attr("disabled", true);
+					jQuery("input.enable_delete").attr("disabled", true);
 				}
 			}
 		<?php } ?>
