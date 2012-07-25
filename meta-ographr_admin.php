@@ -18,6 +18,7 @@
 */
 
 $admin_core = new OGraphr_Admin_Core();
+$options = get_option('ographr_options');
 
 // ------------------------------------------------------------------------
 // REGISTER HOOKS & CALLBACK FUNCTIONS:
@@ -64,8 +65,6 @@ class OGraphr_Admin_Core {
 								'posts_total' => $published,
 								'posts_indexed' => '0'
 								);
-		$stats = serialize($stats);
-		//$stats = base64_encode(serialize($stats));
 		update_option('ographr_data', $stats);
 	}
 
@@ -150,11 +149,15 @@ class OGraphr_Admin_Core {
 
 	// Init plugin options to white list our options
 	function ographr_init(){
+		
+		global $options;
+		
 		// 0.6
 		wp_register_style( 'OGraphr_Stylesheet', plugins_url('/inc/style.css', __FILE__) );
 		wp_register_script( 'OGraphr_JScript', plugins_url('/inc/scripts.js', __FILE__) );
-				
-		if (OGRAPHR_BETA == TRUE) {
+		
+		
+		if ($options['add_graph']) {
 			wp_register_style( 'JQPlot_Stylesheet', plugins_url('/inc/jquery.jqplot.min.css', __FILE__) );
 			wp_register_script( 'JQPlot_Core', plugins_url('/inc/jquery.jqplot.min.js', __FILE__) );
 			wp_register_script( 'JQPlot_highlighter', plugins_url('/inc/jqplot.highlighter.min.js', __FILE__) );
@@ -162,8 +165,7 @@ class OGraphr_Admin_Core {
 		}		
 		
 		register_setting( 'ographr_plugin_options', 'ographr_options', array($this, 'ographr_validate_options') );
-		
-		//global $options;
+
 	}
 
 	// ------------------------------------------------------------------------------
@@ -192,10 +194,13 @@ class OGraphr_Admin_Core {
 	       /*
 	        * It will be called only on your plugin admin page, enqueue our stylesheet here
 	        */
+	
+	global $options;
+	
 			wp_enqueue_style( 'OGraphr_Stylesheet' );
 			wp_enqueue_script( 'OGraphr_JScript' );
 		
-			if (OGRAPHR_BETA == TRUE) {
+			if ($options['add_graph']) {
 				wp_enqueue_style( 'JQPlot_Stylesheet' );
 				wp_enqueue_script( 'JQPlot_Core' );
 				wp_enqueue_script( 'JQPlot_highlighter' );
@@ -225,7 +230,7 @@ class OGraphr_Admin_Core {
 
 			<form method="post" action="options.php">
 				<?php settings_fields('ographr_plugin_options'); ?>
-				<?php $options = get_option('ographr_options'); ?>
+				<?php global $options; // = get_option('ographr_options'); ?>
 
 				<br/><label><input name="ographr_options[advanced_opt]" type="checkbox" value="1" id="show_advanced" <?php if (isset($options['advanced_opt'])) { checked('1', $options['advanced_opt']); }  ?> /> Show advanced options </label>
 
@@ -688,7 +693,7 @@ class OGraphr_Admin_Core {
 									<td colspan="2">
 										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>&nbsp;
 										
-										<label><input name="ographr_options[add_graph]" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); } if(!OGRAPHR_BETA) print 'disabled="disabled"'; ?>/> Add statistics graph</label>&nbsp;
+										<label><input name="ographr_options[add_graph]" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); } ?>/> Add statistics graph</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -777,7 +782,7 @@ class OGraphr_Admin_Core {
 									}
 									
 								?>
-							<?php if ((OGRAPHR_BETA == TRUE) && ($options['exec_mode'] == 1) && ($options['add_graph'] == 1)) { ?>								
+							<?php if ( ($options['advanced_opt']) && ($options['exec_mode'] == 1) && ($options['add_graph']) ) { ?>								
 								<div id="chartdiv" style="height:110px;width:100%; "></div>
 							<?php } ?>
 							<p style="font-size:8pt;">
@@ -826,8 +831,10 @@ class OGraphr_Admin_Core {
 
 	//add JQuery to footer
 	function ographr_javascript() {
-	
-		if (OGRAPHR_BETA == TRUE) {
+		
+		global $options;
+		
+		if ($options['add_graph']) {
 			$stats = get_option('ographr_data');
 			if(empty($stats)) {
 				$published = wp_count_posts();
@@ -839,12 +846,7 @@ class OGraphr_Admin_Core {
 										'posts_total' => $published,
 										'posts_indexed' => '0'
 										);
-			} else {
-				$stats = unserialize($stats);
-				//$stats = unserialize(base64_decode($stats));
 			}
-			
-			//var_dump($stats);
 				
 			foreach($stats as $key => $value) {
 				$posts_total = "$posts_total, ['$key', $value[posts_total]]";
@@ -855,11 +857,6 @@ class OGraphr_Admin_Core {
 				$posts_indexed = "$posts_indexed, ['$key', $value[posts_indexed]]";
 			}
 			$posts_indexed = substr($posts_indexed, 2);	
-			
-			if (OGRAPHR_DEBUG == TRUE ) {
-				print "<!--xx $posts_total -->\n";
-				print "<!--xx $posts_indexed -->\n";
-			}
 		?>
 	
 		<script type="text/javascript">

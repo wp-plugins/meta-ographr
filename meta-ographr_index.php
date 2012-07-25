@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.6
+Version: 0.6.1
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,15 +28,15 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6");
+    define("OGRAPHR_VERSION", "0.6.1");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
 	define("OGRAPHR_BETA", FALSE);
 	// replace default description with user agent in use
 	define("OGRAPHR_UATEST", FALSE);
-	// specify timeout for all cURL instances
-	define("OGRAPHR_TIMEOUT", 10);
+	// specify timeout for all cURL instances (http://googlecode.blogspot.co.at/2012/01/lets-make-tcp-faster.html)
+	define("OGRAPHR_TIMEOUT", 1000);
 
 // 8TRACKS
 	// no need to change this unless you want to use your own 8tracks API key (-> http://8tracks.com/developers/new)
@@ -105,6 +105,7 @@ $core = new OGraphr_Core();
 add_action('init', array(&$core,'ographr_core_init'));
 add_action('wp_head', array(&$core,'ographr_main_dish'));
 add_action('save_post', array(&$core,'ographr_save_postmeta'));
+add_action('delete_post', array(&$core,'ographr_delete_stats'));
 add_action('admin_notices', array(&$core,'ographr_admin_notice'));
 add_action('admin_bar_menu', array(&$core,'ographr_admin_bar'), 150);
 add_filter('plugin_action_links', array(&$core, 'ographr_plugin_action_links'), 10, 2 );
@@ -455,7 +456,7 @@ class OGraphr_Core {
 							update_post_meta($post_id, 'ographr_urls', $thumbnails_db);
 							$indexed = date("U"); // Y-m-d H:i:s
 							update_post_meta($post_id, 'ographr_indexed', $indexed);
-							// 0.6
+							// 0.6 double check
 							$this->ographr_save_stats();
 						}
 					}
@@ -1662,7 +1663,7 @@ class OGraphr_Core {
 	
 	// 0.6
 	function ographr_save_stats() {
-				
+		
 		$stats = get_option('ographr_data');
 		
 		if(!$stats) {
@@ -1672,9 +1673,6 @@ class OGraphr_Core {
 									'posts_total' => '0',
 									'posts_indexed' => '0'
 									);
-		} else {
-			$stats = unserialize($stats);
-			//$stats = unserialize(base64_decode($stats));
 		}
 		
 		// create function!
@@ -1682,18 +1680,39 @@ class OGraphr_Core {
 		$posts_published = $posts_published->publish;
 		$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
 		$myposts = get_posts( $args );
-		$posts_harvested = count($myposts);
+		$posts_indexed = count($myposts);
 			
 		$today = date("Y-m-d");
 	
 		$stats[$today] = array(
 								'posts_total' => $posts_published,
-								'posts_indexed' => $posts_harvested
+								'posts_indexed' => $posts_indexed
 								);
 
-		$stats = serialize($stats);
-		//$stats = base64_encode(serialize($stats)); 
 		update_option('ographr_data', $stats);
+	}
+	
+	// 0.6
+	function ographr_delete_stats() {
+		
+		$stats = get_option('ographr_data');
+		
+		if($stats) {
+			$posts_published = wp_count_posts();
+			$posts_published = $posts_published->publish;
+			$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
+			$myposts = get_posts( $args );
+			$posts_indexed = count($myposts) - 1;
+
+			$today = date("Y-m-d");
+
+			$stats[$today] = array(
+									'posts_total' => $posts_published,
+									'posts_indexed' => $posts_indexed
+									);
+
+			update_option('ographr_data', $stats);
+		}
 	}
 	
 	
