@@ -863,8 +863,8 @@ class OGraphr_Admin_Core {
 					
 			function render_stats() {
 
-				var line1=[<? print $posts_indexed; ?>];
-				var line2=[<? print $posts_total; ?>];
+				var line1=[<? print $posts_total; ?>];
+				var line2=[<? print $posts_indexed; ?>];
 				  var plot1 = jQuery.jqplot('chartdiv', [line1, line2], {
 					series:[{color:'#bd8cbf'},{color:'#8560a8'}],
 					axesDefaults: {
@@ -876,11 +876,14 @@ class OGraphr_Admin_Core {
 					seriesDefaults: {
 						lineWidth: '1.5',
 						showMarker: true,
+						fill: true,
+						fillAlpha: 0.9,
 						markerOptions: {
-							size:4,
+							size:5,
+							color: "#ed1c24",
 						},
 						rendererOptions: {
-							smooth: true,}
+							smooth: false,}
 						},
 					grid: {
 			            drawBorder: false,
@@ -891,6 +894,8 @@ class OGraphr_Admin_Core {
 					axes:{
 				        xaxis:{
 				          renderer:jQuery.jqplot.DateAxisRenderer,
+				          tickInterval:'1 day',
+				          min: <? print '"' . date("F j, Y", strtotime(array_shift(array_keys($stats))) ) . '"'; ?>,
 				          tickOptions:{
 				            formatString:'%b&nbsp;%#d'
 				          }		
