@@ -11,6 +11,7 @@
 					
 				jQuery("#enable_plugin").click(enable_cb);
 				jQuery("#enable_images").click(enable_images);
+				jQuery("#enable_graph").click(enable_graph);
 				jQuery("#enable_delete").click(enable_delete);
 
 				jQuery("#enable_expiry input").click( function() {
@@ -39,6 +40,14 @@
 				jQuery("input.disable_filters, textarea.disable_filters").removeAttr("disabled");
 			} else {
 				jQuery("input.disable_filters, textarea.disable_filters").attr("disabled", true);
+			}
+		}
+		
+		function enable_graph() {
+			if (this.checked) {
+				jQuery("input.disable_graph").removeAttr("disabled");
+			} else {
+				jQuery("input.disable_graph").attr("disabled", true);
 			}
 		}
 	

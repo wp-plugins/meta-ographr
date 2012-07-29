@@ -98,6 +98,8 @@ class OGraphr_Admin_Core {
 							"not_always" => "0",
 							"add_adminbar" => "0",
 							"add_graph" => "0",
+							"fill_curves" => "0",
+							"smooth_curves" => "1",
 							"add_comment" => "1",
 							"add_title" => "1",
 							"add_excerpt" => "1",
@@ -109,6 +111,7 @@ class OGraphr_Admin_Core {
 							"enable_dailymotion" => "1",
 							"enable_flickr" => "1",
 							"enable_hulu" => "1",
+							"enable_internetarchive" => "1",
 							"enable_justintv" => "1",
 							"enable_livestream" => "1",
 							"enable_mixcloud" => "1",
@@ -315,6 +318,8 @@ class OGraphr_Admin_Core {
 									<label><input name="ographr_options[enable_flickr]" type="checkbox" value="1" <?php if (isset($options['enable_flickr'])) { checked('1', $options['enable_flickr']); } ?> />&nbsp;Flickr</label>&nbsp;
 
 									<label><input name="ographr_options[enable_hulu]" type="checkbox" value="1" <?php if (isset($options['enable_hulu'])) { checked('1', $options['enable_hulu']); } ?> />&nbsp;Hulu</label>&nbsp;
+									
+									<label><input name="ographr_options[enable_internetarchive]" type="checkbox" value="1" <?php if ((isset($options['enable_internetarchive'])) && ($options['enable_internetarchive'])) { checked('1', $options['enable_internetarchive']); } ?> />&nbsp;Internet Archive</label>&nbsp;
 							
 									<label><input name="ographr_options[enable_justintv]" type="checkbox" value="1" <?php if (isset($options['enable_justintv'])) { checked('1', $options['enable_justintv']); } ?> />&nbsp;Justin.tv</label>&nbsp;
 									
@@ -651,6 +656,9 @@ class OGraphr_Admin_Core {
 								<td colspan="2">
 									<select name='ographr_options[data_expiry]' class="no_expiry" <?php if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?> >
 										<option value='-1' <?php selected('-1', $options['data_expiry']); ?> >never</option>
+										<?php if(OGRAPHR_DEBUG) { ?>
+											<option value='1' <?php selected('1', $options['data_expiry']); ?> >after 1 day</option>
+										<?php } ?>
 										<option value='30' <?php selected('30', $options['data_expiry']); ?> >after 30 days</option>
 										<option value='60' <?php selected('60', $options['data_expiry']); ?> >after 60 days</option>
 										<option value='90' <?php selected('90', $options['data_expiry']); ?> >after 90 days</option>
@@ -693,7 +701,17 @@ class OGraphr_Admin_Core {
 									<td colspan="2">
 										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>&nbsp;
 										
-										<label><input name="ographr_options[add_graph]" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); } ?>/> Add statistics graph</label>&nbsp;
+										<label><input name="ographr_options[add_graph]" id="enable_graph" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); } ?>/> Add visual graph</label>&nbsp;
+									</td>
+								</tr>
+								
+								<!-- STATISTICS -->
+								<tr valign="center"> 
+									<th align="left" scope="row"><label>Visual Graph:</label></th> 
+									<td colspan="2">
+										<label><input name="ographr_options[fill_curves]" class="disable_graph" type="checkbox" value="1" <?php if (isset($options['fill_curves'])) { checked('1', $options['fill_curves']); } ?>/> Fill curves</label>&nbsp;
+										
+										<label><input name="ographr_options[smooth_curves]" class="disable_graph" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); } ?> /> Smooth curves</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -856,7 +874,7 @@ class OGraphr_Admin_Core {
 			foreach($stats as $key => $value) {
 				$posts_indexed = "$posts_indexed, ['$key', $value[posts_indexed]]";
 			}
-			$posts_indexed = substr($posts_indexed, 2);	
+			$posts_indexed = substr($posts_indexed, 2);
 		?>
 	
 		<script type="text/javascript">
@@ -876,14 +894,15 @@ class OGraphr_Admin_Core {
 					seriesDefaults: {
 						lineWidth: '1.5',
 						showMarker: true,
-						fill: true,
+						fill: <? if ($options['fill_curves']) { print "true"; } else { print "false"; } ?>,
 						fillAlpha: 0.9,
 						markerOptions: {
 							size:5,
-							color: "#ed1c24",
+						 	<?php if ($options['fill_curves']) { print 'color: "#ed1c24",'; } ?>
 						},
 						rendererOptions: {
-							smooth: false,}
+							smooth: <? if ($options['smooth_curves']) { print "true"; } else { print "false"; } ?>,
+							}
 						},
 					grid: {
 			            drawBorder: false,

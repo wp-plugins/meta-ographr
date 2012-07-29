@@ -1,9 +1,9 @@
 === OGraphr ===
 Contributors: yathosho
-Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,schema,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,8tracks,bambuser
+Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,schema,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,8tracks,bambuser
 Requires at least: 3.0
 Tested up to: 3.3.2
-Stable tag: 0.6.2
+Stable tag: 0.6.3
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -20,6 +20,7 @@ Currently, these widgets are supported:
 *  DailyMotion
 *  Flickr videos
 *  Hulu
+*  Internet Archive
 *  Justin.tv
 *  Livestream
 *  Mixcloud
@@ -77,6 +78,10 @@ Depending on the amount of embed codes in your site, retrieving images and other
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.6.3 =
+* added support for Internet Archive
+* added options for visual graph
 
 = 0.6.2 =
 * improved stats visualization

@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.6.2
+Version: 0.6.3
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.2");
+    define("OGRAPHR_VERSION", "0.6.3");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -798,6 +798,17 @@ class OGraphr_Core {
 			}
 		}
 		
+		// INTERNET ARCHIVE
+		if($options['enable_internetarchive']) {					
+			$internetarchive_thumbnails = $this->find_internetarchive_widgets($markup);
+			if (isset($internetarchive_thumbnails)) {			
+				foreach ($internetarchive_thumbnails as $internetarchive_thumbnail) {
+					if ($internetarchive_thumbnail)
+						$thumbnails[] = $internetarchive_thumbnail;
+				}
+			}
+		}
+		
 		// JUSTIN.TV	
 		if($options['enable_justintv']) {					
 			$justintv_thumbnails = $this->find_justintv_widgets($markup);
@@ -949,6 +960,7 @@ class OGraphr_Core {
 		}
 		return $etracks_thumbnails;
 	} // end find_etracks_widgets
+	
 	
 	function find_bambuser_widgets($markup, $api) {
 		// Bambuser embed players
@@ -1173,6 +1185,38 @@ class OGraphr_Core {
 		}
 		return $hulu_thumbnails;
 	} // end find_hulu_widgets
+	
+	function find_internetarchive_widgets($markup) {
+		// Internet Archive iFrame players
+		preg_match_all( '/archive.org\/embed\/([A-Za-z0-9]+)/i', $markup, $matches);
+											
+		$matches = array_unique($matches[1]);
+
+		// Now if we've found a Internet Archive embed URL, let's set the thumbnail URL
+		foreach($matches as $match) {
+			$service = "Internet Archive";
+			$json_url = "http://archive.org/details/$match&output=json";
+			$json_query = "misc->image";
+			$internetarchive_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
+				if ($internetarchive_thumbnail)
+					print "\t Archive.org: $internetarchive_thumbnail (ID:$match)\n";
+				else
+					print "\t Archive.org: Error from URL ($json_url)\n";
+			}
+			
+			if (isset($internetarchive_thumbnail)) {
+				if ($options['exec_mode'] == 1)  {
+					$exists = $this->remote_exists($internetarchive_thumbnail);
+					if($exists) 
+						$internetarchive_thumbnails[] = $internetarchive_thumbnail;
+				} else {
+					$internetarchive_thumbnails[] = $internetarchive_thumbnail;
+				}
+			}
+		}
+		return $internetarchive_thumbnails;
+	} // end find_internetarchive_widgets
 	
 	function find_justintv_widgets($markup) {
 		// Justin.tv embed player
