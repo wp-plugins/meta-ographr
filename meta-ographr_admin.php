@@ -403,11 +403,11 @@ class OGraphr_Admin_Core {
 								<tr valign="center"> 
 									<th align="left" width="140px" scope="row"><label>Filters:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); } ?> /> Exclude avatars </label>&nbsp;
+										<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?>/> Exclude avatars </label>&nbsp;
 										
-										<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); } ?> /> Exclude emoticons </label>&nbsp;
+										<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude emoticons </label>&nbsp;
 										
-										<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); } ?> /> Exclude themes </label>&nbsp;
+										<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude themes </label>&nbsp;
 									</td> 
 										
 								</tr>
@@ -709,9 +709,9 @@ class OGraphr_Admin_Core {
 								<tr valign="center"> 
 									<th align="left" scope="row"><label>Visual Graph:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[fill_curves]" class="disable_graph" type="checkbox" value="1" <?php if (isset($options['fill_curves'])) { checked('1', $options['fill_curves']); } ?>/> Fill curves</label>&nbsp;
+										<label><input name="ographr_options[fill_curves]" class="disable_graph" type="checkbox" value="1" <?php if (isset($options['fill_curves'])) { checked('1', $options['fill_curves']); }; if(!$options['add_graph']) print 'disabled="disabled"'; ?>/> Fill curves</label>&nbsp;
 										
-										<label><input name="ographr_options[smooth_curves]" class="disable_graph" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); } ?> /> Smooth curves</label>&nbsp;
+										<label><input name="ographr_options[smooth_curves]" class="disable_graph" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); }; if(!$options['add_graph']) print 'disabled="disabled"'; ?> /> Smooth curves</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -768,49 +768,51 @@ class OGraphr_Admin_Core {
 
 						</dl>
 						
-						<dl class="advanced_opt">
-							<dt><h4>Statistics</h4></dt>
-							<dd>
-								<?php
-									global $post;
-									$posts_published = wp_count_posts();
-									$posts_published = $posts_published->publish;
-									$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
-									$myposts = get_posts( $args );
-									$posts_harvested = count($myposts);
-									
-									if ($posts_published >= 1 ) {
-										$posts_percent = $posts_harvested * 100 / $posts_published;
-										$posts_percent = round($posts_percent, 1);
-									} else {
-										$posts_percent = 0;
-									}
-									
-									$pages_published = wp_count_posts('page');
-									$pages_published = $pages_published->publish;
-									$args = array( 'number' => $pages_published, 'meta_key' => 'ographr_urls' );
-									$mypages = get_pages( $args );
-									$pages_harvested = count($mypages);
-									
-									if ($pages_published >= 1 ) {
-										$pages_percent = $pages_harvested * 100 / $pages_published;
-										$pages_percent = round($pages_percent, 1);
-									} else {
-										$pages_percent = 0;
-									}
-									
-								?>
-							<?php if ( ($options['advanced_opt']) && ($options['exec_mode'] == 1) && ($options['add_graph']) ) { ?>								
-								<div id="chartdiv" style="height:110px;width:100%; "></div>
-							<?php } ?>
-							<p style="font-size:8pt;">
-								<? print "Posts indexed: $posts_harvested / $posts_published <span style=\"color:#999;\">&nbsp;$posts_percent%</span>"; ?><br/>
-								<? print "Pages indexed: $pages_harvested / $pages_published <span style=\"color:#999;\">&nbsp;$pages_percent%</span>"; ?>
-							</p>
-							
-							</dd>
+						<?php if ($options['add_graph']) { ?>
+							<dl>
+								<dt><h4>Statistics</h4></dt>
+								<dd>
+									<?php
+										global $post;
+										$posts_published = wp_count_posts();
+										$posts_published = $posts_published->publish;
+										$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
+										$myposts = get_posts( $args );
+										$posts_harvested = count($myposts);
+										
+										if ($posts_published >= 1 ) {
+											$posts_percent = $posts_harvested * 100 / $posts_published;
+											$posts_percent = round($posts_percent, 1);
+										} else {
+											$posts_percent = 0;
+										}
+										
+										$pages_published = wp_count_posts('page');
+										$pages_published = $pages_published->publish;
+										$args = array( 'number' => $pages_published, 'meta_key' => 'ographr_urls' );
+										$mypages = get_pages( $args );
+										$pages_harvested = count($mypages);
+										
+										if ($pages_published >= 1 ) {
+											$pages_percent = $pages_harvested * 100 / $pages_published;
+											$pages_percent = round($pages_percent, 1);
+										} else {
+											$pages_percent = 0;
+										}
+										
+									?>
+								<?php if ( ($options['exec_mode'] == 1) && ($options['add_graph']) ) { ?>								
+									<div id="chartdiv" style="height:110px;width:100%; "></div>
+								<?php } ?>
+								<p style="font-size:8pt;">
+									<? print "Posts indexed: $posts_harvested / $posts_published <span style=\"color:#999;\">&nbsp;$posts_percent%</span>"; ?><br/>
+									<? print "Pages indexed: $pages_harvested / $pages_published <span style=\"color:#999;\">&nbsp;$pages_percent%</span>"; ?>
+								</p>
+								
+								</dd>
 
-						</dl>
+							</dl>
+						<?php } ?>
 						<!-- *********************** END: Sidebar ************************ -->
 						</td> <!-- [right] -->
 
