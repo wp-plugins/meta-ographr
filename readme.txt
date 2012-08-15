@@ -3,7 +3,7 @@ Contributors: yathosho
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,schema,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,8tracks,bambuser
 Requires at least: 3.0
 Tested up to: 3.3.2
-Stable tag: 0.6.4
+Stable tag: 0.6.5
 
 This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
 
@@ -78,6 +78,10 @@ Depending on the amount of embed codes in your site, retrieving images and other
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.6.5 =
+* visual graph scales better over time (there's room for improvement)
+* fixed bug in conditional checkbox states
 
 = 0.6.4 =
 * visual graph can be enabled on standard options page
@@ -336,6 +340,9 @@ Depending on the amount of embed codes in your site, retrieving images and other
 * first release
 
 == Upgrade Notice ==
+
+= 0.6 =
+Due to the ongoing Official.tv make-over, API requests will not work for an undisclosed time
 
 = 0.5 =
 Review your settings!

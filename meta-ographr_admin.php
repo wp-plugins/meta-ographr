@@ -701,7 +701,7 @@ class OGraphr_Admin_Core {
 									<td colspan="2">
 										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>&nbsp;
 										
-										<label><input name="ographr_options[add_graph]" id="enable_graph" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); } ?>/> Add visual graph</label>&nbsp;
+										<label><input name="ographr_options[add_graph]" id="enable_graph" class="no_expiry" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); }; if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?>/> Add visual graph</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -709,9 +709,9 @@ class OGraphr_Admin_Core {
 								<tr valign="center"> 
 									<th align="left" scope="row"><label>Visual Graph:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[fill_curves]" class="disable_graph" type="checkbox" value="1" <?php if (isset($options['fill_curves'])) { checked('1', $options['fill_curves']); }; if(!$options['add_graph']) print 'disabled="disabled"'; ?>/> Fill curves</label>&nbsp;
+										<label><input name="ographr_options[fill_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['fill_curves'])) { checked('1', $options['fill_curves']); }; if((!$options['add_graph']) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?>/> Fill curves</label>&nbsp;
 										
-										<label><input name="ographr_options[smooth_curves]" class="disable_graph" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); }; if(!$options['add_graph']) print 'disabled="disabled"'; ?> /> Smooth curves</label>&nbsp;
+										<label><input name="ographr_options[smooth_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); }; if((!$options['add_graph']) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?> /> Smooth curves</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -915,7 +915,7 @@ class OGraphr_Admin_Core {
 					axes:{
 				        xaxis:{
 				          renderer:jQuery.jqplot.DateAxisRenderer,
-				          tickInterval:'1 day',
+				          tickInterval:'<?php if (count($stats) > 90 ) { print "1 month"; } else if (count($stats) > 20 ) { print "1 week"; } else { print "1 day"; } ?>',
 				          min: <? print '"' . date("F j, Y", strtotime(array_shift(array_keys($stats))) ) . '"'; ?>,
 				          tickOptions:{
 				            formatString:'%b&nbsp;%#d'

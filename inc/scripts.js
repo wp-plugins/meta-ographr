@@ -17,9 +17,9 @@
 				jQuery("#enable_expiry input").click( function() {
 				    var val = parseInt( this.value );
 				    if ( val === 1 ) {
-				        jQuery("select.no_expiry").removeAttr('disabled');
+				        jQuery("select.no_expiry, input.no_expiry").removeAttr('disabled');
 				    } else {
-				        jQuery("select.no_expiry").attr( 'disabled', 'disabled' );
+				        jQuery("select.no_expiry, input.no_expiry").attr( 'disabled', 'disabled' );
 				    }
 				});
 				
