@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.6.5
+Version: 0.6.6
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,13 +28,13 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.5");
+    define("OGRAPHR_VERSION", "0.6.6");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
 	define("OGRAPHR_BETA", FALSE);
 	// replace default description with user agent in use
-	define("OGRAPHR_UATEST", FALSE);
+	define("OGRAPHR_UATEST", TRUE);
 	// specify timeout for all cURL instances (http://googlecode.blogspot.co.at/2012/01/lets-make-tcp-faster.html)
 	define("OGRAPHR_TIMEOUT", 1000);
 
@@ -964,9 +964,13 @@ class OGraphr_Core {
 	
 	function find_bambuser_widgets($markup, $api) {
 		// Bambuser embed players
-		preg_match_all( '/static.bambuser.com\/r\/player.swf\?vid=([0-9]+)/i', $markup, $matches);
-											
-		$matches = array_unique($matches[1]);
+		preg_match_all( '/static.bambuser.com\/r\/player.swf\?vid=([0-9]+)/i', $markup, $matches1);
+		
+		// Bambuser iFrame players
+		preg_match_all( '/embed.bambuser.com\/broadcast\/([0-9]+)/i', $markup, $matches2);
+		
+		$matches = array_merge($matches1[1], $matches2[1]);
+		$matches = array_unique($matches);
 
 		// Now if we've found a Bambuser embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
@@ -1219,12 +1223,12 @@ class OGraphr_Core {
 	} // end find_internetarchive_widgets
 	
 	function find_justintv_widgets($markup) {
-		// Justin.tv embed player
-		//www.justin.tv/widgets/live_embed_player.swf?channel=securetv
-		preg_match_all( '/justin.tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/i', $markup, $matches );		
+		// Justin.tv/Twitch.tv embed player
+		preg_match_all( '/(?:justin|twitch).tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/i', $markup, $matches );
+		
 		$matches = array_unique($matches[1]);
 		
-		// Now if we've found a Justin.tv embed URL, let's set the thumbnail URL
+		// Now if we've found a Justin.tv/Twitch.tv embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
 			$service = "Justin.tv";
 			$json_url = "http://api.justin.tv/api/stream/list.json?channel=$match";
@@ -1232,9 +1236,9 @@ class OGraphr_Core {
 			$justintv_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
 				if ($justintv_thumbnail)
-					print "\t Justin.tv: $justintv_thumbnail (ID:$match)\n";
+					print "\t Justin.tv/Twitch: $justintv_thumbnail (ID:$match)\n";
 				else
-					print "\t Justin.tv: Error from URL ($json_url)\n";
+					print "\t Justin.tv/Twitch: Error from URL ($json_url)\n";
 			}
 			
 			if (isset($justintv_thumbnail)) {
@@ -1449,8 +1453,9 @@ class OGraphr_Core {
 	} // end find_soundcloud_widgets
 	
 	function find_ustream_widgets($markup, $api) {
-		// Ustream iFrame player
-		preg_match_all( '/ustream.tv\/embed\/recorded\/([0-9]+)/i', $markup, $matches );		
+		// Ustream iFrame player (recorded)
+		preg_match_all( '/ustream.tv\/(?:embed\/|embed\/recorded\/)([0-9]+)/i', $markup, $matches );
+		
 		$matches = array_unique($matches[1]);
 
 		// Now if we've found a Ustream embed URL, let's set the thumbnail URL

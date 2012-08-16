@@ -47,6 +47,17 @@ class OGraphr_Admin_Core {
 		delete_option('ographr_options');
 	}
 	
+	function date_diff($date1, $date2) { 
+		$current = $date1; 
+		$datetime2 = date_create($date2); 
+		$count = 0; 
+		while(date_create($current) < $datetime2){ 
+			$current = gmdate("Y-m-d", strtotime("+1 day", strtotime($current))); 
+			$count++; 
+		} 
+		return $count; 
+	} 
+	
 	function ographr_delete_postmeta() {
 		
 		$published = wp_count_posts();
@@ -877,6 +888,13 @@ class OGraphr_Admin_Core {
 				$posts_indexed = "$posts_indexed, ['$key', $value[posts_indexed]]";
 			}
 			$posts_indexed = substr($posts_indexed, 2);
+			
+			// scale grid
+			$first_day = array_shift(array_keys($stats));
+			$today = strtotime("today");
+			$last_day = date("Y-m-d", $today);
+			$interval = $this->date_diff($first_day, $last_day);
+			var_dump($interval);
 		?>
 	
 		<script type="text/javascript">
@@ -915,7 +933,7 @@ class OGraphr_Admin_Core {
 					axes:{
 				        xaxis:{
 				          renderer:jQuery.jqplot.DateAxisRenderer,
-				          tickInterval:'<?php if (count($stats) > 90 ) { print "1 month"; } else if (count($stats) > 20 ) { print "1 week"; } else { print "1 day"; } ?>',
+				          tickInterval:'<?php if ($interval > 720 ) { print "1 year"; } else if ($interval > 90 ) { print "1 month"; } else if ($interval > 21 ) { print "1 week"; } else { print "1 day"; } ?>',
 				          min: <? print '"' . date("F j, Y", strtotime(array_shift(array_keys($stats))) ) . '"'; ?>,
 				          tickOptions:{
 				            formatString:'%b&nbsp;%#d'

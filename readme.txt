@@ -1,11 +1,11 @@
 === OGraphr ===
 Contributors: yathosho
-Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,schema,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,8tracks,bambuser
+Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,schema,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser
 Requires at least: 3.0
-Tested up to: 3.3.2
-Stable tag: 0.6.5
+Tested up to: 3.4.1
+Stable tag: 0.6.6
 
-This retrieves the artwork of embedded audio and video players widget and embeds it into Facebook-compatible metatags.
+Retrieves the images of embedded audio/video player widgets and embeds it as metatags compatible with Facebook, Google+ and other social media sites.
 
 == Description ==
 
@@ -21,7 +21,7 @@ Currently, these widgets are supported:
 *  Flickr videos
 *  Hulu
 *  Internet Archive
-*  Justin.tv
+*  Justin.tv/Twitch.tv
 *  Livestream
 *  Mixcloud
 *  Official.fm
@@ -78,6 +78,12 @@ Depending on the amount of embed codes in your site, retrieving images and other
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.6.6 =
+* added support for Bambuser iFrame players
+* extended Justin.tv support to Twitch.tv domain
+* improved Ustream support to work with both live and recorded streams
+* improved scaling of visual graph
 
 = 0.6.5 =
 * visual graph scales better over time (there's room for improvement)
