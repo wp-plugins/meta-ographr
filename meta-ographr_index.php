@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.6.6.1
+Version: 0.6.7
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.6.1");
+    define("OGRAPHR_VERSION", "0.6.7");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -38,6 +38,10 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 	// specify timeout for all cURL instances (http://googlecode.blogspot.co.at/2012/01/lets-make-tcp-faster.html)
 	define("OGRAPHR_TIMEOUT", 1000);
 
+// ATTACHMENT IMAGE
+	// default image size (thumbnail, medium, large, full)
+	define("ATTACHMENT_IMAGE_SIZE", "medium");
+	
 // 8TRACKS
 	// no need to change this unless you want to use your own 8tracks API key (-> http://8tracks.com/developers/new)
 	define("ETRACKS_API_KEY", "e310c354bf4633de8dca0e7fb0a3a23fcc1614fe");
@@ -139,12 +143,34 @@ class OGraphr_Core {
 
 	// Featured Image (http://codex.wordpress.org/Post_Thumbnails)
 	function get_featured_img() {
-		global $post, $posts;
+		global $post;
+		
 		if (has_post_thumbnail( $post->ID )) {
 			$image = wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ), 'single-post-thumbnail' );
 			return $image[0];
 	  	}
 	}
+	
+	// Attachement Images
+	function get_attached_img() {
+		global $post;
+		
+		$args = array(
+			'post_type' => 'attachment',
+			'numberposts' => -1,
+			'post_status' => null,
+			'post_parent' => $post->ID
+		);
+
+		$attachments = get_posts( $args );
+		if ( $attachments ) {
+			foreach ( $attachments as $attachment ) {
+				$images[] = wp_get_attachment_image_src( $attachment->ID, ATTACHMENT_IMAGE_SIZE );
+			}
+			return $images;
+		}
+	}
+
 
 	// Get JSON Thumbnail
 	function get_json_thumbnail($service, $json_url, $json_query) {
@@ -296,7 +322,7 @@ class OGraphr_Core {
 		if ((!$enable_plugin_on_front = $options['enable_plugin_on_front']) && (!is_single()) && (!is_page())) {
 			return;
 		}
-		
+			
 		$user_agent = $_SERVER['HTTP_USER_AGENT'];
 		$digg_ua = $options['digg_ua'];
 		$facebook_ua = $options['facebook_ua'];
@@ -397,7 +423,7 @@ class OGraphr_Core {
 				if ($web_thumb) { print "\t Default Thumbnail: $web_thumb\n"; }
 			}
 			
-			// GO!
+			// Let's get started!
 			if (($enable_triggers_on_front = $options['enable_triggers_on_front']) || (is_single()) || (is_page())) {
 				
 				// Did we retrieve those images before and did they expire?
@@ -461,16 +487,13 @@ class OGraphr_Core {
 						}
 					}
 				}
-				
-				
-				if(OGRAPHR_DEBUG == TRUE) {	
-					print "\n"; // an empty line!
-				}			
+		
 		}
 				// close debugger tag
 				if(OGRAPHR_DEBUG == TRUE) {	
 					$e_time = microtime();
 					$time = $e_time - $s_time;
+					print "\n"; // an empty line!
 					print "\t Processed in " . abs($time) . " seconds\n";
 					print "-->\n";
 				}
@@ -497,8 +520,6 @@ class OGraphr_Core {
 				}
 				$site_name = str_replace("%sitename%", $wp_name, $site_name);
 				$site_name = str_replace("%siteurl%", $wp_url, $site_name);
-				
-				//$title = $user_agent;
 			
 				if (($options['website_description']) && (is_front_page())) {
 					// Blog title
@@ -570,7 +591,7 @@ class OGraphr_Core {
 				} else if ($thumbnails) { // investigate?
 					foreach ($thumbnails as $thumbnail) {
 						if ($thumbnail) {
-							//$thumbnail = preg_replace('/\?([A-Za-z0-9_-]+)\Z/', '', $thumbnail); // remove suffix
+							$thumbnail = preg_replace('/\?([A-Za-z0-9_-]+)\Z/', '', $thumbnail); // remove suffix
 							print "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
 						}
 					}
@@ -601,7 +622,7 @@ class OGraphr_Core {
 	function get_widget_thumbnails($markup) {		
 		
 		global $options;
-		
+			
 		// Get images in post
 		if ($options['add_post_images']) {
 			preg_match_all('/<img.+?src=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
@@ -669,7 +690,7 @@ class OGraphr_Core {
 			foreach($matches[1] as $match) {
 				$match = preg_replace('/^\/\/+?/', 'http://', $match); // fix Viddler thumbnail URL
 			  	if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-					print "\t HTML5 video poster: $match\n";
+					print "\t Video poster: $match\n";
 				}
 			
 				if (isset($match)) {
@@ -687,14 +708,34 @@ class OGraphr_Core {
 		// Get featured image
 		if (($options['add_post_thumbnail']) && ( function_exists( 'has_post_thumbnail' )) ){ 
 			$website_thumbnail = $this->get_featured_img();
-
+			
 			if (isset($website_thumbnail)) {
 				if ($options['exec_mode'] == 1)  {
 					$exists = $this->remote_exists($website_thumbnail);
 					if(($exists) && (!$website_thumbnail))
+						if (OGRAPHR_DEBUG == TRUE) {
+							print "\t Post thumbnail: $website_thumbnail\n";
+						}
 						$thumbnails[] = $website_thumbnail;
-				} else {
+				} else { // not sure why, think i read remote_exists is slow
+					if (OGRAPHR_DEBUG == TRUE) {
+						print "\t Post thumbnail: $website_thumbnail\n";
+					}
 					$thumbnails[] = $website_thumbnail;
+				}
+			}
+		}
+
+		// Get attachment images
+		if ($options['add_attached_image']) {
+			$attached_thumbnails = $this->get_attached_img();
+
+			if (isset($attached_thumbnails)) {
+			foreach ($attached_thumbnails as $attached_thumbnail) {
+				if (OGRAPHR_DEBUG == TRUE) {
+						print "\t Attached image: $attached_thumbnail[0]\n";
+					}
+					$thumbnails[] = $attached_thumbnail[0];
 				}
 			}
 		}
@@ -702,11 +743,11 @@ class OGraphr_Core {
 		
 		// JWPlayer
 		if($options['enable_jwplayer']) {
-			preg_match_all('/jwplayer\(.*?(?:image:[\s]*?)["\']([a-zA-Z0-9_\-\.]+)["\'].*?\)/smi', $markup, $matches);
-		
+			preg_match_all('/jwplayer\(.*?(?:image:[\s]*?)[\'"]([^\'"]+)[\'"].*?\)/smi', $markup, $matches);
+			
 			foreach($matches[1] as $match) {
 				if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-					print "\t JWPlayer image: $match\n";
+					print "\t JWPlayer: $match\n";
 				}
 			
 				if (isset($match)) {

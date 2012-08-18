@@ -10,6 +10,7 @@
 				});
 					
 				jQuery("#enable_plugin").click(enable_cb);
+				jQuery("#attached_image").click(disable_post_thumbnail);
 				jQuery("#enable_images").click(enable_images);
 				jQuery("#enable_graph").click(enable_graph);
 				jQuery("#enable_delete").click(enable_delete);
@@ -32,6 +33,14 @@
 				jQuery("input.enable_triggers").removeAttr("disabled");
 			} else {
 				jQuery("input.enable_triggers").attr("disabled", true);
+			}
+		}
+
+		function disable_post_thumbnail() {
+			if (this.checked) {
+				jQuery("input.post_thumbnail").attr("disabled", true);
+			} else {
+				jQuery("input.post_thumbnail").removeAttr("disabled");
 			}
 		}
 	

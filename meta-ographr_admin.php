@@ -135,6 +135,7 @@ class OGraphr_Admin_Core {
 							"add_post_images" => "1",
 							"enable_videoposter" => "1",
 							"enable_jwplayer" => "1",
+							"add_attached_image" => "1",
 							"add_post_thumbnail" => "0",
 							"add_google_meta" => "0",
 							"add_image_prop" => "0",
@@ -427,7 +428,7 @@ class OGraphr_Admin_Core {
 								<tr valign="top"> 
 									<th align="left" width="140px" scope="row"><label>Custom URLs:</label></th> 
 									<td colspan="2"><textarea name="ographr_options[filter_custom_urls]" cols="76%" rows="4" class="disable_filters"><?php echo $options['filter_custom_urls']; ?></textarea><br/>
-										<small><strong>Beta:</strong> You can enter filenames and URLs (e.g. <em><? echo 'http://' . $wp_url . '/wp-content'; ?></em>) to the filter-list above</small></td> 
+										<small>You can enter filenames and URLs (e.g. <em><? echo 'http://' . $wp_url . '/wp-content'; ?></em>) to the filter-list above</small></td> 
 								</tr>
 							
 								<!-- LIMIT ACCESS -->
@@ -692,7 +693,9 @@ class OGraphr_Admin_Core {
 
 										<label><input name="ographr_options[add_post_images]" type="checkbox" id="enable_images" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
 
-										<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); } ?> /> Post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label>&nbsp;
+										<label><input name="ographr_options[add_attached_image]" type="checkbox" value="1" id="attached_image" <?php if (isset($options['add_attached_image'])) { checked('1', $options['add_attached_image']); } ?> /> Attached images </label>&nbsp;
+										
+										<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" class="post_thumbnail" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); }; if ($options['add_attached_image']) { print 'disabled="disabled"'; } ?> /> Post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label>&nbsp;
 									</td>
 								</tr>
 							
