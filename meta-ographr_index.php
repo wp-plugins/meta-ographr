@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.6.7
+Version: 0.6.8
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.7");
+    define("OGRAPHR_VERSION", "0.6.8");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -67,8 +67,10 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 	define("MIXCLOUD_IMAGE_SIZE", "large");
 
 // OFFICIAL.FM
-	// no need to change this unless you want to use your own Official.fm API key (-> http://official.fm/developers/manage#register)
-	define("OFFICIAL_API_KEY", "yv4Aj7p3y5bYIhy3kd6X");
+	// no need to change this unless you want to use your own Official.fm API key (-> http://official.fm/developers)
+	define("OFFICIAL_API_KEY", "V3ESSBCbGcgPc51sLkxSHf67OQV6eBIN");
+	// default artwork size (tiny=40x40, small=120x120, medium=300x300, large=600x600)
+	define("OFFICIAL_IMAGE_SIZE", "medium");
 
 // PLAY.FM
 	// no need to change this unless you want to use your own Play.fm API key (-> http://www.play.fm/api/account)
@@ -125,7 +127,7 @@ $options = get_option('ographr_options');
 if (!$options['etracks_api']) { $options['etracks_api'] = ETRACKS_API_KEY; $etracks_api = $options['etracks_api']; }
 if (!$options['bambuser_api']) { $options['bambuser_api'] = BAMBUSER_API_KEY; $bambuser_api = $options['bambuser_api']; }
 if (!$options['flickr_api']) { $options['flickr_api'] = FLICKR_API_KEY; $flickr_api = $options['flickr_api']; }
-if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
+//if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
 if (OGRAPHR_BETA == TRUE )
 	if (!$options['playfm_api']) { $options['playfm_api'] = PLAYFM_API_KEY; $playfm_api = $options['playfm_api']; }
 if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
@@ -410,7 +412,7 @@ class OGraphr_Core {
 					if ($bambuser_api = $options['bambuser_api']) { print "\t Bambuser API key: $bambuser_api\n"; }
 					if ($bandcamp_api = $options['bandcamp_api']) { print "\t Bandcamp API key: $bandcamp_api\n"; }
 					if ($flickr_api = $options['flickr_api']) { print "\t Flickr API key: $flickr_api\n"; }
-					if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
+					//if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
 					if (OGRAPHR_BETA == TRUE )
 						if ($playfm_api = $options['playfm_api']) { print "\t Play.fm API key: $playfm_api\n"; }
 					if ($soundcloud_api = $options['soundcloud_api']) { print "\t SoundCloud API key: $soundcloud_api\n"; }
@@ -885,7 +887,7 @@ class OGraphr_Core {
 			
 		// OFFICIAL.TV
 		if($options['enable_official']) {
-			$official_thumbnails = $this->find_official_widgets($markup, $options['official_api']);
+			$official_thumbnails = $this->find_official_widgets($markup);
 			if (isset($official_thumbnails)) {	
 				foreach ($official_thumbnails as $official_thumbnail) {
 					if ($official_thumbnail)
@@ -1358,16 +1360,16 @@ class OGraphr_Core {
 		return $mixcloud_thumbnails;
 	} // end find_mixcloud_widgets
 
-	function find_official_widgets($markup, $api) {
+	function find_official_widgets($markup) {
 		// Official.fm iFrame
-		preg_match_all( '/official.fm\/tracks\/([A-Za-z0-9]+)\?/i', $markup, $matches );
+		preg_match_all( '/official.fm%2F%2Ffeed%2Ftracks%2F([A-Za-z0-9]+)/i', $markup, $matches );
 		$matches = array_unique($matches[1]);
 
 		// Now if we've found a Official.fm embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
 			$service = "Official.fm";
-			$json_url = "http://official.fm/services/oembed.json?url=http://official.fm/tracks/$match&size=large&key=$api";
-			$json_query = "thumbnail_url";
+			$json_url = "http://api.official.fm/tracks/$match?fields=cover&api_version=2";
+			$json_query = "track->cover->urls->" . OFFICIAL_IMAGE_SIZE;
 			$official_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
 				if ($official_thumbnail)
@@ -1649,8 +1651,6 @@ class OGraphr_Core {
 				$options['exec_mode'] = "1";
 				if ($options[‘flickr_api’] == FLICKR_API_KEY)
 					$options[‘flickr_api’] = "";
-				if ($options[‘official_api’] == OFFICIAL_API_KEY)
-					$options[‘official_api’] = "";
 				if ($options[‘soundcloud_api’] == SOUNDCLOUD_API_KEY)
 					$options[‘soundcloud_api’] = "";
 				if ($options[‘ustream_api’] == USTREAM_API_KEY)

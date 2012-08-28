@@ -497,13 +497,6 @@ class OGraphr_Admin_Core {
 							<td><small>(optional)</small></td>
 							</tr>
 						
-							<!-- OFFICIAL.FM -->	
-							<tr valign="center" class="advanced_opt"> 
-							<th align="left" width="140px" scope="row"><label>Official.fm:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[official_api]" value="<?php if (($options['official_api'] != OFFICIAL_API_KEY) && ($options['official_api'])) { echo $options['official_api']; } ?>" /></td> 
-							<td><small>(optional)</small></td>
-							</tr>
-						
 							<?php if (OGRAPHR_BETA == TRUE) { ?>	
 								<tr valign="center" class="advanced_opt"> 
 								<th align="left" width="140px" scope="row"><label>Play.fm:</label></th> 
@@ -852,7 +845,6 @@ class OGraphr_Admin_Core {
 		$input['bambuser_api'] =  htmlentities($input['bambuser_api']);
 		$input['bandcamp_api'] =  htmlentities($input['bandcamp_api']);
 		$input['flickr_api'] =  htmlentities($input['flickr_api']);
-		$input['official_api'] =  htmlentities($input['official_api']);
 		$input['soundcloud_api'] =  htmlentities($input['soundcloud_api']);
 		$input['ustream_api'] =  htmlentities($input['ustream_api']);
 		$input['viddler_api'] =  htmlentities($input['viddler_api']);
@@ -897,7 +889,6 @@ class OGraphr_Admin_Core {
 			$today = strtotime("today");
 			$last_day = date("Y-m-d", $today);
 			$interval = $this->date_diff($first_day, $last_day);
-			var_dump($interval);
 		?>
 	
 		<script type="text/javascript">
@@ -920,7 +911,7 @@ class OGraphr_Admin_Core {
 						fill: <? if ($options['fill_curves']) { print "true"; } else { print "false"; } ?>,
 						fillAlpha: 0.9,
 						markerOptions: {
-							size:5,
+							size:<?php if ($interval >= 40) { print 0; } else { print 5; } ?>,
 						 	<?php if ($options['fill_curves']) { print 'color: "#ed1c24",'; } ?>
 						},
 						rendererOptions: {

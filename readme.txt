@@ -3,7 +3,7 @@ Contributors: yathosho
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,schema,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser
 Requires at least: 3.0
 Tested up to: 3.4.1
-Stable tag: 0.6.7
+Stable tag: 0.6.8
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as metatags compatible with Facebook, Google+ and other social media sites.
 
@@ -78,6 +78,11 @@ Depending on the amount of embed codes in your site, retrieving images and other
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.6.8 =
+* added support for new Official.fm (API v2)
+* improved scaling of visual graph
+* removed code leftovers on admin page
 
 = 0.6.7 =
 * added support for attached images
