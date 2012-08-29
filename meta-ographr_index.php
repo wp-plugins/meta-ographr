@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for videos (YouTube, Vimeo, Dailymotion, Hulu, Blip.tv) and music players (SoundCloud, Mixcloud, Bandcamp, Official.fm) and adds their thumbnails as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink.
-Version: 0.6.8
+Version: 0.6.9
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.8");
+    define("OGRAPHR_VERSION", "0.6.9");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -127,6 +127,8 @@ $options = get_option('ographr_options');
 if (!$options['etracks_api']) { $options['etracks_api'] = ETRACKS_API_KEY; $etracks_api = $options['etracks_api']; }
 if (!$options['bambuser_api']) { $options['bambuser_api'] = BAMBUSER_API_KEY; $bambuser_api = $options['bambuser_api']; }
 if (!$options['flickr_api']) { $options['flickr_api'] = FLICKR_API_KEY; $flickr_api = $options['flickr_api']; }
+if (!$options['myvideo_dev_api']) { $myvideo_dev_api = $options['myvideo_dev_api']; }
+if (!$options['myvideo_web_api']) { $myvideo_web_api = $options['myvideo_web_api']; }
 //if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
 if (OGRAPHR_BETA == TRUE )
 	if (!$options['playfm_api']) { $options['playfm_api'] = PLAYFM_API_KEY; $playfm_api = $options['playfm_api']; }
@@ -412,6 +414,8 @@ class OGraphr_Core {
 					if ($bambuser_api = $options['bambuser_api']) { print "\t Bambuser API key: $bambuser_api\n"; }
 					if ($bandcamp_api = $options['bandcamp_api']) { print "\t Bandcamp API key: $bandcamp_api\n"; }
 					if ($flickr_api = $options['flickr_api']) { print "\t Flickr API key: $flickr_api\n"; }
+					if ($myvideo_dev_api = $options['myvideo_dev_api']) { print "\t MyVideo Developer key: $myvideo_dev_api\n"; }
+					if ($myvideo_web_api = $options['myvideo_web_api']) { print "\t MyVideo Website key: $myvideo_web_api\n"; }
 					//if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
 					if (OGRAPHR_BETA == TRUE )
 						if ($playfm_api = $options['playfm_api']) { print "\t Play.fm API key: $playfm_api\n"; }
@@ -593,17 +597,21 @@ class OGraphr_Core {
 				} else if ($thumbnails) { // investigate?
 					foreach ($thumbnails as $thumbnail) {
 						if ($thumbnail) {
-							$thumbnail = preg_replace('/\?([A-Za-z0-9_-]+)\Z/', '', $thumbnail); // remove suffix
+							//$thumbnail = preg_replace('/(?!.+\.(gif|jpe|jpeg|jpg|png))((\?|&).*\Z)/i', '', $thumbnail); // remove
+							//$thumbnail = preg_replace('/\?([A-Za-z0-9_-]+)\Z/', '', $thumbnail); // remove suffix
 							print "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
 						}
 					}
 				}
 				
+				// Add image-type if only one image has been found
 				if ($total_img == 1) {
-					$ext = pathinfo($thumbnail, PATHINFO_EXTENSION);
+					$ext = preg_replace('/(?!.*\.(gif|jpe|jpeg|jpg|png))(\?|&).*\Z/i', '', $thumbnail); // remove suffix (need improvement)
+					$ext = pathinfo($ext, PATHINFO_EXTENSION);
 					if (($ext == "jpg") || ($ext == "jpe"))
 						$ext = "jpeg";
-					print "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
+					if (($ext == "gif") || ($ext == "jpeg") || ($ext == "png"))
+						print "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
 				}
 			
 				// Add Facebook ID
@@ -883,6 +891,17 @@ class OGraphr_Core {
 						$thumbnails[] = $mixcloud_thumbnail;
 				}
 			}
+		}
+		
+		// MYVIDEO	
+		if($options['enable_myvideo']) {					
+			$myvideo_thumbnails = $this->find_myvideo_widgets($markup, $options['myvideo_dev_api'], $options['myvideo_web_api']);
+			if (isset($myvideo_thumbnails)) {			
+				foreach ($myvideo_thumbnails as $myvideo_thumbnail) {
+					if ($myvideo_thumbnail)
+						$thumbnails[] = $myvideo_thumbnail;
+				}
+			}
 		}	
 			
 		// OFFICIAL.TV
@@ -908,6 +927,17 @@ class OGraphr_Core {
 			}
 		}
 		*/
+		
+		// RDIO
+		if($options['enable_rdio']) {
+			$rdio_thumbnails = $this->find_rdio_widgets($markup);
+			if (isset($rdio_thumbnails)) {	
+				foreach ($rdio_thumbnails as $rdio_thumbnail) {
+					if ($rdio_thumbnail)
+						$thumbnails[] = $rdio_thumbnail;
+				}
+			}
+		}
 	
 		// SOUNDCLOUD
 		if($options['enable_soundcloud']) {
@@ -1359,6 +1389,42 @@ class OGraphr_Core {
 		}
 		return $mixcloud_thumbnails;
 	} // end find_mixcloud_widgets
+	
+	function find_myvideo_widgets($markup, $dev_id, $website_id) {
+		// Standard embed code
+		preg_match_all('/myvideo.(?:at|be|ch|de|nl|ro)\/movie\/([0-9]+)/i', $markup, $matches1);
+		
+		// iFrame embed code
+		preg_match_all('/myvideo.(?:at|be|ch|de|nl|ro)\/embed\/([0-9]+)/i', $markup, $matches2);
+		
+		$matches = array_merge($matches1[1], $matches2[1]);
+		$matches = array_unique($matches);
+
+		// Now if we've found a MyVideo ID, let's set the thumbnail URL
+		foreach($matches as $match) {
+			$service = "MyVideo";
+			$json_url = "https://api.myvideo.de/prod/mobile/api2_rest.php?method=myvideo.videos.get_details&dev_id=$dev_id&website_id=$website_id&movie_id=$match&o_format=json";
+			$json_query = "response->myvideo->movie->movie_thumbnail";
+			$myvideo_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
+				if ($myvideo_thumbnail)
+					print "\t MyVideo: $myvideo_thumbnail\n";
+				else
+					print "\t MyVideo: Error from URL ($json_url)\n";
+			}
+			
+			if (isset($myvideo_thumbnail)) {
+				if ($options['exec_mode'] == 1)  {
+					$exists = $this->remote_exists($myvideo_thumbnail);
+					if($exists) 
+						$myvideo_thumbnails[] = $myvideo_thumbnail;
+				} else {
+					$myvideo_thumbnails[] = $myvideo_thumbnail;
+				}
+			}
+		}
+		return $myvideo_thumbnails;
+	} // end find_myvideo_widgets
 
 	function find_official_widgets($markup) {
 		// Official.fm iFrame
@@ -1420,6 +1486,37 @@ class OGraphr_Core {
 		return $playfm_thumbnails;
 	} // end of find_playfm_widgets
 	*/
+	
+	function find_rdio_widgets($markup) {
+		// Rdio iFrame
+		preg_match_all( '/rd.io\/i\/([A-Za-z0-9]+)/i', $markup, $matches );
+		$matches = array_unique($matches[1]);
+
+		// Now if we've found a Rdio embed URL, let's set the thumbnail URL
+		foreach($matches as $match) {
+			$service = "Rdio";
+			$json_url = "http://www.rdio.com/api/oembed/?format=json&url=http://rd.io/x/$match";
+			$json_query = "thumbnail_url";
+			$rdio_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
+				if ($rdio_thumbnail)
+					print "\t Rdio: $rdio_thumbnail (ID:$match)\n";
+				else
+					print "\t Rdio: Error from URL ($json_url)\n";
+			}
+			
+			if (isset($rdio_thumbnail)) {
+				if ($options['exec_mode'] == 1)  {
+					$exists = $this->remote_exists($rdio_thumbnail);
+					if($exists) 
+						$rdio_thumbnails[] = $rdio_thumbnail;
+				} else {
+					$rdio_thumbnails[] = $rdio_thumbnail;
+				}
+			}
+		}
+		return $rdio_thumbnails;
+	} // end find_rdio_widgets
 	
 	function find_soundcloud_widgets($markup, $api) {
 		// Standard embed code for tracks (Flash and HTML5 player)

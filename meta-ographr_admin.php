@@ -126,7 +126,9 @@ class OGraphr_Admin_Core {
 							"enable_justintv" => "1",
 							"enable_livestream" => "1",
 							"enable_mixcloud" => "1",
+							"enable_myvideo" => "0",
 							"enable_official" => "1",
+							"enable_rdio" => "1",
 							"enable_soundcloud" => "1",
 							"enable_ustream" => "1",
 							"enable_viddler" => "0",
@@ -320,13 +322,14 @@ class OGraphr_Admin_Core {
 								<td colspan="2">								
 									<label><input name="ographr_options[enable_eight_tracks]" type="checkbox" value="1" <?php if ((isset($options['enable_eight_tracks'])) && ($options['enable_eight_tracks'])) { checked('1', $options['enable_eight_tracks']); } ?> />&nbsp;8tracks</label>&nbsp;
 							
-									<label><input name="ographr_options[enable_bambuser]" type="checkbox" value="1" <?php if ((isset($options['enable_bambuser'])) && ($options['enable_bambuser'])) { checked('1', $options['enable_bambuser']); } ?> />&nbsp;Bambuser</label>&nbsp;
+									<label><input name="ographr_options[enable_bambuser]" type="checkbox" value="1" <?php if ((isset($options['enable_bambuser'])) && ($options['bambuser_api'])) { checked('1', $options['enable_bambuser']); } ?> />&nbsp;Bambuser</label>&nbsp;
 							
 									<label><input name="ographr_options[enable_bandcamp]" type="checkbox" value="1" <?php if ((isset($options['enable_bandcamp'])) && ($options['bandcamp_api'])) { checked('1', $options['enable_bandcamp']); } ?> />&nbsp;Bandcamp</label>&nbsp;
 							
 									<label><input name="ographr_options[enable_bliptv]" type="checkbox" value="1" <?php if (isset($options['enable_bliptv'])) { checked('1', $options['enable_bliptv']); } ?> />&nbsp;Blip.tv</label>&nbsp;
 
 									<label><input name="ographr_options[enable_dailymotion]" type="checkbox" value="1" <?php if (isset($options['enable_dailymotion'])) { checked('1', $options['enable_dailymotion']); } ?> />&nbsp;Dailymotion</label>&nbsp;
+									
 									<label><input name="ographr_options[enable_flickr]" type="checkbox" value="1" <?php if (isset($options['enable_flickr'])) { checked('1', $options['enable_flickr']); } ?> />&nbsp;Flickr</label>&nbsp;
 
 									<label><input name="ographr_options[enable_hulu]" type="checkbox" value="1" <?php if (isset($options['enable_hulu'])) { checked('1', $options['enable_hulu']); } ?> />&nbsp;Hulu</label>&nbsp;
@@ -338,12 +341,16 @@ class OGraphr_Admin_Core {
 									<label><input name="ographr_options[enable_livestream]" type="checkbox" value="1" <?php if (isset($options['enable_livestream'])) { checked('1', $options['enable_livestream']); } ?> />&nbsp;Livestream</label>&nbsp;
 							
 									<label><input name="ographr_options[enable_mixcloud]" type="checkbox" value="1" <?php if (isset($options['enable_mixcloud'])) { checked('1', $options['enable_mixcloud']); } ?> />&nbsp;Mixcloud</label>&nbsp;
+									
+									<label><input name="ographr_options[enable_myvideo]" type="checkbox" value="1" <?php if ((isset($options['enable_myvideo'])) && ($options['myvideo_dev_api']) && ($options['myvideo_web_api'])) { checked('1', $options['enable_myvideo']); } ?> />&nbsp;MyVideo</label>&nbsp;
 							
 									<label><input name="ographr_options[enable_official]" type="checkbox" value="1" <?php if (isset($options['enable_official'])) { checked('1', $options['enable_official']); } ?> />&nbsp;Official.fm</label>&nbsp;
 							
 									<?php if (OGRAPHR_BETA == TRUE) { ?>
 										<label><input name="ographr_options[enable_playfm]" type="checkbox" value="1" <?php if ((isset($options['enable_playfm'])) && ($options['enable_playfm'])) { checked('1', $options['enable_playfm']); } ?> disabled="disabled" />&nbsp;Play.fm</label>&nbsp;
 									<? } ?>
+									
+									<label><input name="ographr_options[enable_rdio]" type="checkbox" value="1" <?php if (isset($options['enable_rdio'])) { checked('1', $options['enable_rdio']); } ?> />&nbsp;Rdio</label>&nbsp;
 							
 									<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> />&nbsp;SoundCloud</label>&nbsp;
 							
@@ -356,6 +363,8 @@ class OGraphr_Admin_Core {
 									<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> />&nbsp;YouTube</label>
 							
 								<? if((!$options['bandcamp_api']) && ($options['enable_bandcamp'])) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
+								<? if((!$options['myvideo_dev_api']) && ($options['enable_myvideo'])) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_developer_key" style="color:red;">Developer API key</a></span>';} ?>
+								<? if((!$options['myvideo_web_api']) && ($options['enable_myvideo'])) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_website_key" style="color:red;">Website API key</a></span>';} ?>
 								<? if((!$options['viddler_api']) && ($options['enable_viddler'])) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 							</tr>
 							
@@ -463,7 +472,7 @@ class OGraphr_Admin_Core {
 							<dt><h3>API Keys</h3></dt>
 							<dd>
 							<p>
-								Bandcamp offers only limited access to their API and in any case you have to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. To support <em>legacy</em> Viddler widgets you will have to provide a valid <a href="http://developers.viddler.com/">API key</a>, whereas new embed codes use HTML5-compliant poster images and will work without one.
+								Bandcamp offers only limited access to their API and in any case you have to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. MyVideo not only requires a developer key, but you also need to <a href="http://myvideo.de/API" target="_blank">register</a> your blog in order to get access to their API. To support <em>legacy</em> Viddler widgets you will have to provide a valid <a href="http://developers.viddler.com/">API key</a>, whereas new embed codes use HTML5-compliant poster images and will work without one.
 							</p>
 							<p class="advanced_opt">All other services will work without providing an API key. However, if you prefer using your own ones, you can enter them below.</p>
 							<table width="100%" cellspacing="2" cellpadding="5"> 
@@ -496,8 +505,24 @@ class OGraphr_Admin_Core {
 							<td width="30px"><input type="text" size="75" name="ographr_options[flickr_api]" value="<?php if (($options['flickr_api'] != FLICKR_API_KEY) && ($options['flickr_api'])) { echo $options['flickr_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
+							
+							<!-- MYVIDEO DEVELOPER -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label><a name="myvideo_developer_key" id="myvideo_developer_key"></a>MyVideo (Developer):</label></th> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[myvideo_dev_api]" value="<?php if ($options['myvideo_dev_api']) { echo $options['myvideo_dev_api']; } ?>" /></td> 
+							<td><small>(<strong>required</strong>)</small></td>
+							</tr>
+							
+							<!-- MYVIDEO WEBSITE -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label><a name="myvideo_website_key" id="myvideo_website_key"></a>MyVideo (Website):</label></th> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[myvideo_web_api]" value="<?php if ($options['myvideo_web_api']) { echo $options['myvideo_web_api']; } ?>" /></td> 
+							<td><small>(<strong>required</strong>)</small></td>
+							</tr>
 						
+							
 							<?php if (OGRAPHR_BETA == TRUE) { ?>	
+								<!-- PLAY.FM -->	
 								<tr valign="center" class="advanced_opt"> 
 								<th align="left" width="140px" scope="row"><label>Play.fm:</label></th> 
 								<td width="30px"><input type="text" size="75" name="ographr_options[playfm_api]" value="<?php if (($options['playfm_api'] != PLAYFM_API_KEY) && ($options['playfm_api'])) { echo $options['playfm_api']; } ?>" disabled="disabled" /></td>
@@ -845,6 +870,8 @@ class OGraphr_Admin_Core {
 		$input['bambuser_api'] =  htmlentities($input['bambuser_api']);
 		$input['bandcamp_api'] =  htmlentities($input['bandcamp_api']);
 		$input['flickr_api'] =  htmlentities($input['flickr_api']);
+		$input['myvideo_dev_api'] =  htmlentities($input['myvideo_dev_api']);
+		$input['myvideo_web_api'] =  htmlentities($input['myvideo_web_api']);
 		$input['soundcloud_api'] =  htmlentities($input['soundcloud_api']);
 		$input['ustream_api'] =  htmlentities($input['ustream_api']);
 		$input['viddler_api'] =  htmlentities($input['viddler_api']);
@@ -911,7 +938,7 @@ class OGraphr_Admin_Core {
 						fill: <? if ($options['fill_curves']) { print "true"; } else { print "false"; } ?>,
 						fillAlpha: 0.9,
 						markerOptions: {
-							size:<?php if ($interval >= 40) { print 0; } else { print 5; } ?>,
+							size:<?php if ($interval >= 35) { print 0; } else { print 5; } ?>,
 						 	<?php if ($options['fill_curves']) { print 'color: "#ed1c24",'; } ?>
 						},
 						rendererOptions: {

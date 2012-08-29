@@ -1,9 +1,9 @@
 === OGraphr ===
 Contributors: yathosho
-Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,schema,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser
+Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,schema,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio
 Requires at least: 3.0
 Tested up to: 3.4.1
-Stable tag: 0.6.8
+Stable tag: 0.6.9
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as metatags compatible with Facebook, Google+ and other social media sites.
 
@@ -24,7 +24,9 @@ Currently, these widgets are supported:
 *  Justin.tv/Twitch.tv
 *  Livestream
 *  Mixcloud
+*  MyVideo
 *  Official.fm
+*  Rdio
 *  SoundCloud
 *  Ustream
 *  Viddler
@@ -59,7 +61,7 @@ Facebook caches previously submitted links for an undisclosed time. If your page
 
 Bandcamp is rather restrictive with access to their API, usually only allowing access to owners of material hosted on their platform. In order to get an API key, you have to apply via email.
 
-= Why do I need a Viddler API key? =
+= Do I really need a Viddler API key? =
 
 You probably don't. All new Viddler players use HTML5-compliant poster images and these can be detected without making an API call. It's only old "Legacy" players rely on Viddler's API and you need a valid developer key to access it.
 
@@ -78,6 +80,12 @@ Depending on the amount of embed codes in your site, retrieving images and other
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.6.9 =
+* added support for MyVideo and Rdio
+* modified visual graph
+* improved suffix removal
+* fixed image-type detection
 
 = 0.6.8 =
 * added support for new Official.fm (API v2)
