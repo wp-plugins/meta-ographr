@@ -3,7 +3,7 @@ Contributors: yathosho
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio
 Requires at least: 3.0
 Tested up to: 3.4.1
-Stable tag: 0.6.10
+Stable tag: 0.6.11
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as metatags compatible with Facebook, Google+ and other social media sites.
 
@@ -80,6 +80,11 @@ Depending on the amount of embed codes in your site, retrieving images and other
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.6.11 =
+* added support for BMP (in all unlikeliness) and WebP images
+* fixed bug when retrieving attached image
+* removed suffix removal
 
 = 0.6.10 =
 * added support for blog language (og:locale)

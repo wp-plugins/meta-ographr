@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social websites can use these to style shared or "liked" articles.
-Version: 0.6.10
+Version: 0.6.11
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.10");
+    define("OGRAPHR_VERSION", "0.6.11");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -158,19 +158,22 @@ class OGraphr_Core {
 	function get_attached_img() {
 		global $post;
 		
-		$args = array(
-			'post_type' => 'attachment',
-			'numberposts' => -1,
-			'post_status' => null,
-			'post_parent' => $post->ID
-		);
+		if (!empty($post->ID)) {
+		
+			$args = array(
+				'post_type' => 'attachment',
+				'numberposts' => -1,
+				'post_status' => null,
+				'post_parent' => $post->ID
+			);
 
-		$attachments = get_posts( $args );
-		if ( $attachments ) {
-			foreach ( $attachments as $attachment ) {
-				$images[] = wp_get_attachment_image_src( $attachment->ID, ATTACHMENT_IMAGE_SIZE );
+			$attachments = get_posts( $args );
+			if ( $attachments ) {
+				foreach ( $attachments as $attachment ) {
+					$images[] = wp_get_attachment_image_src( $attachment->ID, ATTACHMENT_IMAGE_SIZE );
+				}
+				return $images;
 			}
-			return $images;
 		}
 	}
 
@@ -601,8 +604,6 @@ class OGraphr_Core {
 				} else if ($thumbnails) { // investigate?
 					foreach ($thumbnails as $thumbnail) {
 						if ($thumbnail) {
-							//$thumbnail = preg_replace('/(?!.+\.(gif|jpe|jpeg|jpg|png))((\?|&).*\Z)/i', '', $thumbnail); // remove
-							//$thumbnail = preg_replace('/\?([A-Za-z0-9_-]+)\Z/', '', $thumbnail); // remove suffix
 							print "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
 						}
 					}
@@ -610,11 +611,11 @@ class OGraphr_Core {
 				
 				// Add image-type if only one image has been found
 				if ($total_img == 1) {
-					$ext = preg_replace('/(?!.*\.(gif|jpe|jpeg|jpg|png))(\?|&).*\Z/i', '', $thumbnail); // remove suffix (need improvement)
+					$ext = preg_replace('/(?!.*\.(bmp|gif|jpe|jpeg|jpg|png|webp))(\?|&).*\Z/i', '', $thumbnail); // remove suffix (might need improvement)
 					$ext = pathinfo($ext, PATHINFO_EXTENSION);
 					if (($ext == "jpg") || ($ext == "jpe"))
 						$ext = "jpeg";
-					if (($ext == "gif") || ($ext == "jpeg") || ($ext == "png"))
+					if (($ext == "bmp") || ($ext == "gif") || ($ext == "jpeg") || ($ext == "png") || ($ext == "webp"))
 						print "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
 				}
 			
@@ -1539,7 +1540,6 @@ class OGraphr_Core {
 			$json_query = "artwork_url";
 			$soundcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
-			$soundcloud_thumbnail = preg_replace('/\?([A-Za-z0-9_-]+)\Z/', '', $soundcloud_thumbnail); // remove suffix
 
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
 				if ($soundcloud_thumbnail)
@@ -1837,7 +1837,6 @@ class OGraphr_Core {
 		if (is_array($widget_thumbnails))
 			foreach($widget_thumbnails as $widget_thumbnail)
 				$widget_thumbnail =  htmlentities($widget_thumbnail);
-				//$widget_thumbnail = preg_replace('/\?([A-Za-z0-9_-]+)\Z/', '', $widget_thumbnail); // remove suffix
 				
 		if(!(empty($widget_thumbnails))) {
 
