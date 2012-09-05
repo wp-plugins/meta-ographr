@@ -18,7 +18,7 @@
 */
 
 $admin_core = new OGraphr_Admin_Core();
-$options = get_option('ographr_options');
+//$options = get_option('ographr_options');
 
 // ------------------------------------------------------------------------
 // REGISTER HOOKS & CALLBACK FUNCTIONS:
@@ -103,62 +103,9 @@ class OGraphr_Admin_Core {
 			else
 				$tmp_locale = "_none";
 			
-			delete_option('ographr_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
-			$arr = array(	"exec_mode" => "1",
-							"data_expiry" => "-1",
-							"advanced_opt" => "0",
-							"website_title" => "%postname%",
-							"website_thumbnail" => "",
-							"enable_plugin_on_front" => "1",
-							"enable_triggers_on_front" => "0",
-							"website_description" => "",
-							"not_always" => "0",
-							"add_adminbar" => "0",
-							"add_graph" => "0",
-							"fill_curves" => "0",
-							"smooth_curves" => "1",
-							"add_comment" => "1",
-							"add_title" => "1",
-							"add_excerpt" => "1",
-							"locale" => $tmp_locale,
-							"add_permalink" => "1",
-							"enable_eight_tracks" => "1",
-							"enable_bambuser" => "1",
-							"enable_bandcamp" => "0",
-							"enable_bliptv" => "1",
-							"enable_dailymotion" => "1",
-							"enable_flickr" => "1",
-							"enable_hulu" => "1",
-							"enable_internetarchive" => "1",
-							"enable_justintv" => "1",
-							"enable_livestream" => "1",
-							"enable_mixcloud" => "1",
-							"enable_myvideo" => "0",
-							"enable_official" => "1",
-							"enable_rdio" => "1",
-							"enable_soundcloud" => "1",
-							"enable_ustream" => "1",
-							"enable_viddler" => "0",
-							"enable_vimeo" => "1",
-							"enable_youtube" => "1",
-							"add_post_images" => "1",
-							"enable_videoposter" => "1",
-							"enable_jwplayer" => "1",
-							"add_attached_image" => "1",
-							"add_post_thumbnail" => "0",
-							"add_google_meta" => "0",
-							"filter_smilies" => "1",
-							"filter_themes" => "0",
-							"filter_gravatar" => "1",
-							"facebook_ua" => "0",
-							"gplus_ua" => "0",
-							"linkedin_ua" => "0",
-							"digg_ua" => "0",
-							"fb_site_name" => "%sitename%",
-							"fb_type" => "_none"
-			);
-		
-			update_option('ographr_options', $arr);
+			OGraphr_Core::ographr_set_defaults();
+			
+			$options = get_option('ographr_options');
 		}
 	}
 
@@ -173,7 +120,8 @@ class OGraphr_Admin_Core {
 	// Init plugin options to white list our options
 	function ographr_init(){
 		
-		global $options;
+		//global $options;
+		$options = get_option('ographr_options');
 		
 		// 0.6
 		wp_register_style( 'OGraphr_Stylesheet', plugins_url('/inc/style.min.css', __FILE__) );
@@ -218,7 +166,8 @@ class OGraphr_Admin_Core {
 	        * It will be called only on your plugin admin page, enqueue our stylesheet here
 	        */
 	
-			global $options;
+			//global $options;
+			$options = get_option('ographr_options');
 	
 			wp_enqueue_style( 'OGraphr_Stylesheet' );
 			wp_enqueue_script( 'OGraphr_JScript' );
@@ -253,7 +202,7 @@ class OGraphr_Admin_Core {
 
 			<form method="post" action="options.php">
 				<?php settings_fields('ographr_plugin_options'); ?>
-				<?php global $options; // = get_option('ographr_options'); ?>
+				<?php $options = get_option('ographr_options'); ?>
 
 				<br/><label><input name="ographr_options[advanced_opt]" type="checkbox" value="1" id="show_advanced" <?php if (isset($options['advanced_opt'])) { checked('1', $options['advanced_opt']); }  ?> /> Show advanced options </label>
 
@@ -1054,7 +1003,8 @@ class OGraphr_Admin_Core {
 	//add JQuery to footer
 	function ographr_javascript() {
 		
-		global $options;
+		//global $options;
+		$options = get_option('ographr_options');
 		
 		if ($options['add_graph']) {
 			$stats = get_option('ographr_data');

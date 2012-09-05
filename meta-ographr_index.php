@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social websites can use these to style shared or "liked" articles.
-Version: 0.6.11
+Version: 0.6.12
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.11");
+    define("OGRAPHR_VERSION", "0.6.12");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -115,6 +115,7 @@ add_action('delete_post', array(&$core,'ographr_delete_stats'));
 add_action('admin_notices', array(&$core,'ographr_admin_notice'));
 add_action('admin_bar_menu', array(&$core,'ographr_admin_bar'), 150);
 add_filter('plugin_action_links', array(&$core, 'ographr_plugin_action_links'), 10, 2 );
+register_activation_hook( __FILE__, array(&$core, 'ographr_activate') );
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -134,7 +135,74 @@ if (OGRAPHR_BETA == TRUE )
 if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
 
-class OGraphr_Core {	
+class OGraphr_Core {
+	
+	// Define default option settings
+	function ographr_set_defaults() {
+
+			// Set default locale to Wordpress language
+			if (WPLANG)
+				$tmp_locale = WPLANG;
+			else
+				$tmp_locale = "_none";
+			
+			delete_option('ographr_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
+			$arr = array(	"exec_mode" => "1",
+							"data_expiry" => "-1",
+							"advanced_opt" => "0",
+							"website_title" => "%postname%",
+							"website_thumbnail" => "",
+							"enable_plugin_on_front" => "1",
+							"enable_triggers_on_front" => "0",
+							"website_description" => "",
+							"not_always" => "0",
+							"add_adminbar" => "0",
+							"add_graph" => "0",
+							"fill_curves" => "0",
+							"smooth_curves" => "1",
+							"add_comment" => "1",
+							"add_title" => "1",
+							"add_excerpt" => "1",
+							"locale" => $tmp_locale,
+							"add_permalink" => "1",
+							"enable_eight_tracks" => "1",
+							"enable_bambuser" => "1",
+							"enable_bandcamp" => "0",
+							"enable_bliptv" => "1",
+							"enable_dailymotion" => "1",
+							"enable_flickr" => "1",
+							"enable_hulu" => "1",
+							"enable_internetarchive" => "1",
+							"enable_justintv" => "1",
+							"enable_livestream" => "1",
+							"enable_mixcloud" => "1",
+							"enable_myvideo" => "0",
+							"enable_official" => "1",
+							"enable_rdio" => "1",
+							"enable_soundcloud" => "1",
+							"enable_ustream" => "1",
+							"enable_viddler" => "0",
+							"enable_vimeo" => "1",
+							"enable_youtube" => "1",
+							"add_post_images" => "1",
+							"enable_videoposter" => "1",
+							"enable_jwplayer" => "1",
+							"add_attached_image" => "1",
+							"add_post_thumbnail" => "0",
+							"add_google_meta" => "0",
+							"filter_smilies" => "1",
+							"filter_themes" => "0",
+							"filter_gravatar" => "1",
+							"facebook_ua" => "0",
+							"gplus_ua" => "0",
+							"linkedin_ua" => "0",
+							"digg_ua" => "0",
+							"fb_site_name" => "%sitename%",
+							"fb_type" => "_none"
+			);
+		
+			update_option('ographr_options', $arr);
+	}
 	
 	function remote_exists($path){
 		//return (@fopen($path,"r")==true);
