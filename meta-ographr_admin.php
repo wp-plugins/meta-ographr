@@ -34,7 +34,7 @@ add_action('admin_init', array(&$admin_core, 'ographr_init') );
 add_action('admin_menu', array(&$admin_core, 'ographr_add_options_page') );
 add_action('admin_footer', array(&$admin_core, 'ographr_javascript') );
 
-class OGraphr_Admin_Core {
+class OGraphr_Admin_Core extends OGraphr_Core {
 	// --------------------------------------------------------------------------------------
 	// CALLBACK FUNCTION FOR: register_uninstall_hook(__FILE__, 'ographr_delete_plugin_options')
 	// --------------------------------------------------------------------------------------
@@ -43,11 +43,11 @@ class OGraphr_Admin_Core {
 	// --------------------------------------------------------------------------------------
 
 	// Delete options table entries ONLY when plugin deactivated AND deleted
-	function ographr_delete_plugin_options() {
+	public function ographr_delete_plugin_options() {
 		delete_option('ographr_options');
 	}
 	
-	function date_diff($date1, $date2) { 
+	public function date_diff($date1, $date2) { 
 		$current = $date1; 
 		$datetime2 = date_create($date2); 
 		$count = 0; 
@@ -58,7 +58,7 @@ class OGraphr_Admin_Core {
 		return $count; 
 	} 
 	
-	function ographr_delete_postmeta() {
+	public function ographr_delete_postmeta() {
 		
 		$published = wp_count_posts();
 		$published = $published->publish;
@@ -90,7 +90,7 @@ class OGraphr_Admin_Core {
 	// ------------------------------------------------------------------------------
 
 	// Define default option settings
-	function ographr_restore_defaults() {
+	public function ographr_restore_defaults() {
 		$tmp = get_option('ographr_options');
 	    if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
 		
@@ -103,7 +103,8 @@ class OGraphr_Admin_Core {
 			else
 				$tmp_locale = "_none";
 			
-			OGraphr_Core::ographr_set_defaults();
+			//OGraphr_Core::ographr_set_defaults();
+			$this->ographr_set_defaults();
 			
 			$options = get_option('ographr_options');
 		}
@@ -118,7 +119,7 @@ class OGraphr_Admin_Core {
 	// ------------------------------------------------------------------------------
 
 	// Init plugin options to white list our options
-	function ographr_init(){
+	public function ographr_init(){
 		
 		//global $options;
 		$options = get_option('ographr_options');
@@ -147,7 +148,7 @@ class OGraphr_Admin_Core {
 	// ------------------------------------------------------------------------------
 
 	// Add menu page
-	function ographr_add_options_page() {
+	public function ographr_add_options_page() {
 		//add_options_page('OGraphr Settings', 'OGraphr', 'manage_options', __FILE__, array($this, 'ographr_render_form'));
 		
 		// 0.6
@@ -161,7 +162,7 @@ class OGraphr_Admin_Core {
 		add_action( 'admin_print_styles-' . $page, array($this, 'my_plugin_admin_styles') );
 	}
 	
-	function my_plugin_admin_styles() {
+	public function my_plugin_admin_styles() {
 	       /*
 	        * It will be called only on your plugin admin page, enqueue our stylesheet here
 	        */
@@ -191,7 +192,7 @@ class OGraphr_Admin_Core {
 	// ------------------------------------------------------------------------------
 
 	// Render the Plugin options form
-	function ographr_render_form() {
+	public function ographr_render_form() {
 		$this->ographr_restore_defaults();
 		?>
 		<div class="wrap">
@@ -244,7 +245,8 @@ class OGraphr_Admin_Core {
 								<td colspan="2"><small><code>%screenshot%</code> &#8211; your theme's default screenshot
 								<?php
 								$theme_path = get_bloginfo('template_url');
-								$result = OGraphr_Core::remote_exists($theme_path . '/screenshot.png');
+								//$result = OGraphr_Core::remote_exists($theme_path . '/screenshot.png');
+								$result = $this->remote_exists($theme_path . '/screenshot.png');
 								if ($result) {
 									print '(<a href="' . $theme_path . '/screenshot.png" target="_blank">preview</a>)';
 								} else {
@@ -305,6 +307,8 @@ class OGraphr_Admin_Core {
 									<? } ?>
 									
 									<label><input name="ographr_options[enable_rdio]" type="checkbox" value="1" <?php if (isset($options['enable_rdio'])) { checked('1', $options['enable_rdio']); } ?> />&nbsp;Rdio</label>&nbsp;
+									
+									<label><input name="ographr_options[enable_socialcam]" type="checkbox" value="1" <?php if ((isset($options['enable_socialcam'])) && ($options['socialcam_api'])) { checked('1', $options['enable_socialcam']); } ?> />&nbsp;Socialcam</label>&nbsp;
 							
 									<label><input name="ographr_options[enable_soundcloud]" type="checkbox" value="1" <?php if (isset($options['enable_soundcloud'])) { checked('1', $options['enable_soundcloud']); } ?> />&nbsp;SoundCloud</label>&nbsp;
 							
@@ -319,6 +323,7 @@ class OGraphr_Admin_Core {
 								<? if((!$options['bandcamp_api']) && ($options['enable_bandcamp'])) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
 								<? if((!$options['myvideo_dev_api']) && ($options['enable_myvideo'])) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_developer_key" style="color:red;">Developer API key</a></span>';} ?>
 								<? if((!$options['myvideo_web_api']) && ($options['enable_myvideo'])) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_website_key" style="color:red;">Website API key</a></span>';} ?>
+								<? if((!$options['socialcam_api']) && ($options['enable_socialcam'])) { echo '<br/><span style="color:red;font-size:x-small;">Socialcam requires a valid <a href="#socialcam_api_key" style="color:red;">API key</a></span>';} ?></td> 
 								<? if((!$options['viddler_api']) && ($options['enable_viddler'])) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 							</tr>
 							
@@ -482,6 +487,13 @@ class OGraphr_Admin_Core {
 								<td width="30px"><input type="text" size="75" name="ographr_options[playfm_api]" value="<?php if (($options['playfm_api'] != PLAYFM_API_KEY) && ($options['playfm_api'])) { echo $options['playfm_api']; } ?>" disabled="disabled" /></td>
 								<td><small>(optional)</small></td>
 							<? } ?>
+							
+							<!-- SOUNDCLOUD -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label><a name="socialcam_api_key" id="socialcam_api_key"></a>Socialcam:</label></th> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[socialcam_api]" value="<?php if ($options['socialcam_api']) { echo $options['socialcam_api']; } ?>" /></td> 
+							<td><small>(<strong>required</strong>)</small></td>
+							</tr>
 						
 							<!-- SOUNDCLOUD -->	
 							<tr valign="center" class="advanced_opt"> 
@@ -642,6 +654,8 @@ class OGraphr_Admin_Core {
 										<option value='-1' <?php selected('-1', $options['data_expiry']); ?> >never</option>
 										<?php if(OGRAPHR_DEBUG) { ?>
 											<option value='1' <?php selected('1', $options['data_expiry']); ?> >after 1 day</option>
+											<option value='2' <?php selected('2', $options['data_expiry']); ?> >after 2 days</option>
+											<option value='3' <?php selected('3', $options['data_expiry']); ?> >after 3 days</option>
 										<?php } ?>
 										<option value='30' <?php selected('30', $options['data_expiry']); ?> >after 30 days</option>
 										<option value='60' <?php selected('60', $options['data_expiry']); ?> >after 60 days</option>
@@ -667,7 +681,7 @@ class OGraphr_Admin_Core {
 
 										<label><input name="ographr_options[add_attached_image]" type="checkbox" value="1" id="attached_image" <?php if (isset($options['add_attached_image'])) { checked('1', $options['add_attached_image']); } ?> /> Attached images </label>&nbsp;
 										
-										<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" class="post_thumbnail" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); }; if ($options['add_attached_image']) { print 'disabled="disabled"'; } ?> /> Post thumbnail (<a href="http://codex.wordpress.org/Post_Thumbnails" target="_blank">?</a>)</label>&nbsp;
+										<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" class="post_thumbnail" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); }; if ($options['add_attached_image']) { print 'disabled="disabled"'; } ?> /> Post thumbnail <a href="http://codex.wordpress.org/Post_Thumbnails" title="Wordpress Codex: Post Thumbnails" target="_blank" id="help_link">?</a></label>&nbsp;
 									</td>
 								</tr>
 								
@@ -839,9 +853,12 @@ class OGraphr_Admin_Core {
 							
 								<!-- GOOGLE SNIPPETS -->
 								<tr valign="center"> 
-									<th align="left" scope="row"><label>Google+ Snippets:</label></th> 
+									<th align="left" scope="row"><label> Alternative tags:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Meta-tags (<a href="https://developers.google.com/+/plugins/snippet/" target="_blank">?</a>)</label>&nbsp;
+										<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Google+ Meta <a href="https://developers.google.com/+/plugins/snippet/" title="Google+ Documentation: Snippets" target="_blank" id="help_link">?</a></label>&nbsp;
+											
+										<label><input name="ographr_options[add_link_rel]" type="checkbox" value="1" <?php if (isset($options['add_link_rel'])) { checked('1', $options['add_link_rel']); } ?> /> Link Elements <a href="http://developers.whatwg.org/links.html" title="WHATWG: Links" target="_blank" id="help_link">?</a></label>&nbsp;
+											
 									</td>
 								</tr>
 								
@@ -978,7 +995,7 @@ class OGraphr_Admin_Core {
 	}
 
 	// Sanitize and validate input. Accepts an array, return a sanitized array.
-	function ographr_validate_options($input) {
+	public function ographr_validate_options($input) {
 		 // strip html from textboxes
 		$input['website_title'] =  htmlentities($input['website_title']);
 		$input['website_thumbnail'] =  htmlentities($input['website_thumbnail']);
@@ -990,6 +1007,7 @@ class OGraphr_Admin_Core {
 		$input['flickr_api'] =  htmlentities($input['flickr_api']);
 		$input['myvideo_dev_api'] =  htmlentities($input['myvideo_dev_api']);
 		$input['myvideo_web_api'] =  htmlentities($input['myvideo_web_api']);
+		$input['socialcam_api'] =  htmlentities($input['socialcam_api']);
 		$input['soundcloud_api'] =  htmlentities($input['soundcloud_api']);
 		$input['ustream_api'] =  htmlentities($input['ustream_api']);
 		$input['viddler_api'] =  htmlentities($input['viddler_api']);
@@ -1001,7 +1019,7 @@ class OGraphr_Admin_Core {
 	}
 
 	//add JQuery to footer
-	function ographr_javascript() {
+	public function ographr_javascript() {
 		
 		//global $options;
 		$options = get_option('ographr_options');

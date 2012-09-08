@@ -1,9 +1,9 @@
 === OGraphr ===
 Contributors: yathosho
-Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio
+Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.4.1
-Stable tag: 0.6.12
+Stable tag: 0.6.13
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as metatags compatible with Facebook, Google+ and other social media sites.
 
@@ -27,6 +27,7 @@ Currently, these widgets are supported:
 *  MyVideo
 *  Official.fm
 *  Rdio
+*  Socialcam
 *  SoundCloud
 *  Ustream
 *  Viddler
@@ -69,6 +70,16 @@ You probably don't. All new Viddler players use HTML5-compliant poster images an
 
 Depending on the amount of embed codes in your site, retrieving images and other informations can delay the rendering of a page. This can be avoided by retrieving images only once when an article has been published or updated. You can further restrict OGraphr to trigger only when called by Facebook, Google+ or LinkedIn.
 
+= Why are there no Google+ meta-tags in my page source? =
+
+Since Google+ is probably the only site using these meta-tags, they will only be added to the source when a link is posted on a profile. However, you can force displaying these meta-tags when activating OGraphr's debug-mode.
+
+= Is there a good reason to add link elements for thumbnails? =
+
+Probably not. Link elements were a common way to add website thumbnails before Facebook introduced its Open Graph protocol. There might be a couple of sites still retrieving thumbnails through link elements, Digg used to be one of them.
+
+Since Google+ is probably the only site using these meta-tags, they will only be added to the source when a link is posted on a profile. However, you can force displaying these meta-tags when activating OGraphr's debug-mode.
+
 == Screenshots ==
 
 1. a link with a Mixcloud widget added as Facebook status update
@@ -80,6 +91,15 @@ Depending on the amount of embed codes in your site, retrieving images and other
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.6.13 =
+* added support for Socialcam
+* added support for multiple YouTube thumbnails
+* added support for link elements (for legacy purposes)
+* added new expiry options for debug mode
+* added icon on help links
+* fixed bug with attached images
+* restructured code
 
 = 0.6.12 =
 * improved method to set initial options
