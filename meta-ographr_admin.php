@@ -102,8 +102,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 				$tmp_locale = WPLANG;
 			else
 				$tmp_locale = "_none";
-			
-			//OGraphr_Core::ographr_set_defaults();
+				
 			$this->ographr_set_defaults();
 			
 			$options = get_option('ographr_options');
@@ -123,6 +122,11 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		
 		//global $options;
 		$options = get_option('ographr_options');
+		
+		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1) {
+			$core->ographr_self_update();
+			$options = get_option('ographr_options');
+		}
 		
 		// 0.6
 		wp_register_style( 'OGraphr_Stylesheet', plugins_url('/inc/style.min.css', __FILE__) );
@@ -245,7 +249,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<td colspan="2"><small><code>%screenshot%</code> &#8211; your theme's default screenshot
 								<?php
 								$theme_path = get_bloginfo('template_url');
-								//$result = OGraphr_Core::remote_exists($theme_path . '/screenshot.png');
 								$result = $this->remote_exists($theme_path . '/screenshot.png');
 								if ($result) {
 									print '(<a href="' . $theme_path . '/screenshot.png" target="_blank">preview</a>)';
@@ -405,9 +408,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<td colspan="2">
 										
 										<!-- Checkbox -->
-										<label><input name="ographr_options[digg_ua]" type="checkbox" value="1" <?php if (isset($options['digg_ua'])) { checked('1', $options['digg_ua']); } ?> /> Digg </label>&nbsp;
-										
-										<!-- Checkbox -->
 										<label><input name="ographr_options[facebook_ua]" type="checkbox" value="1" <?php if (isset($options['facebook_ua'])) { checked('1', $options['facebook_ua']); } ?> /> Facebook </label>&nbsp;
 										<!-- Checkbox -->
 										<label><input name="ographr_options[gplus_ua]" type="checkbox" value="1" <?php if (isset($options['gplus_ua'])) { checked('1', $options['gplus_ua']); } ?> /> Google+ </label>&nbsp;
@@ -418,7 +418,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							
 								<tr valign="top"> 
 									<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-									<td colspan="2"><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites. Neither Digg nor <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank" >Google+</a> currently use a unique user-agent, hence the detection is inaccurate</a>!</small></td>
+									<td colspan="2"><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites. <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank" >Google+</a> currently does not use a unique user-agent, hence the detection is inaccurate</a>!</small></td>
 								</tr>
 						
 							</tbody></table>			
@@ -857,7 +857,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<td colspan="2">
 										<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Google+ Meta <a href="https://developers.google.com/+/plugins/snippet/" title="Google+ Documentation: Snippets" target="_blank" id="help_link">?</a></label>&nbsp;
 											
-										<label><input name="ographr_options[add_link_rel]" type="checkbox" value="1" <?php if (isset($options['add_link_rel'])) { checked('1', $options['add_link_rel']); } ?> /> Link Elements <a href="http://developers.whatwg.org/links.html" title="WHATWG: Links" target="_blank" id="help_link">?</a></label>&nbsp;
+										<label><input name="ographr_options[add_link_rel]" type="checkbox" value="1" <?php if (isset($options['add_link_rel'])) { checked('1', $options['add_link_rel']); } ?> /> Canonical Link Elements <a href="http://developers.whatwg.org/links.html" title="WHATWG: Links" target="_blank" id="help_link">?</a></label>&nbsp;
 											
 									</td>
 								</tr>
@@ -928,8 +928,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<dd>
 							<p style="font-size:8pt;">If you want to support this plugin, why not buy me a coffee?</p>
 							<ul>
-								<li><strong><a class="lpaypal" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FVPU9H7CMUU6U" target="_blank">Buy coffee!</a></strong></li>
-								<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/ref=cm_sw_r_tw_ws_F5.Hpb18F73RS" target="_blank">Wishful thinking</a></li>
+								<li><strong><a class="lpaypal" href="http://whyeye.org/donate/" target="_blank">Buy coffee!</a></strong></li>
+								<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/" target="_blank">Wishful thinking</a></li>
 							</ul>			
 							</dd>
 

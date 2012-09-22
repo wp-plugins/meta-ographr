@@ -2,8 +2,8 @@
 /*
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
-Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social websites can use these to style shared or "liked" articles.
-Version: 0.6.13
+Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
+Version: 0.6.14
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.13");
+    define("OGRAPHR_VERSION", "0.6.14");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -101,8 +101,6 @@ define("SOCIALCAM_IMAGE_SIZE", "small_thumb");
 	define("JUSTINTV_IMAGE_SIZE", "image_url_large");
 	
 // USER-AGENTS
-	// Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; .NET CLR 1.1.4322; .NET CLR 2.0.50727)
-	define('DIGG_USERAGENT', '/Mozilla\/5\.0 \(compatible; MSIE 8\.0; Windows NT 5\.1; Trident\/4\.0; \.NET CLR 1\.1\.4322; \.NET CLR 2\.0\.50727\)/i');
 	// facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)
 	define('FACEBOOK_USERAGENT', '/facebookexternalhit/i');
 	// Mozilla/5.0 (Windows NT 6.1; rv:6.0) Gecko/20110814 Firefox/6.0
@@ -203,7 +201,6 @@ class OGraphr_Core {
 							"facebook_ua" => "0",
 							"gplus_ua" => "0",
 							"linkedin_ua" => "0",
-							"digg_ua" => "0",
 							"fb_site_name" => "%sitename%",
 							"fb_type" => "_none"
 			);
@@ -405,16 +402,14 @@ class OGraphr_Core {
 		}
 			
 		$user_agent = $_SERVER['HTTP_USER_AGENT'];
-		$digg_ua = $options['digg_ua'];
 		$facebook_ua = $options['facebook_ua'];
 		$gplus_ua = $options['gplus_ua'];
 		$linkedin_ua = $options['linkedin_ua'];
 				
-		if ( ((preg_match(DIGG_USERAGENT, $user_agent)) && ($digg_ua))
-		|| ((preg_match(FACEBOOK_USERAGENT, $user_agent)) && ($facebook_ua))
+		if ( ((preg_match(FACEBOOK_USERAGENT, $user_agent)) && ($facebook_ua))
 		|| ((preg_match(GOOGLEPLUS_USERAGENT,$user_agent)) && ($gplus_ua))
 		|| ((preg_match(LINKEDIN_USERAGENT,$user_agent)) && ($linkedin_ua))
-		|| ((!$digg_ua) && (!$facebook_ua) && (!$gplus_ua) && (!$linkedin_ua))
+		|| ((!$facebook_ua) && (!$gplus_ua) && (!$linkedin_ua))
 		|| (OGRAPHR_DEBUG == TRUE) ) {
 			// Get the post ID if none is provided
 			if($post_id==null OR $post_id=='') $post_id = get_the_ID();
@@ -455,18 +450,17 @@ class OGraphr_Core {
 				if ($options['exec_mode'] == 1) {
 					print "\t Image Retrieval: On-Post\n";
 					if ($options['data_expiry'] == -1) {
-						print "\t Last indexed on " . date('Y-m-d', $last_indexed) . ", never expires\n";
+						print "\t Last indexed on " . date('Y-m-d', $last_indexed) . ", data never expires\n";
 					} else {
-						print "\t Last indexed on " . date('Y-m-d', $last_indexed) . ", expires after " . round($expiry / 86400) ." days\n";
+						print "\t Last indexed on " . date('Y-m-d', $last_indexed) . ", data expires after " . round($expiry / 86400) ." days\n";
 					}
 				} else if ($options['exec_mode'] == 2) {
 					print "\t Image Retrieval: On-View\n";
 				}
 				
 				
-				if (($digg_ua) || ($facebook_ua) || ($gplus_ua) || ($linkedin_ua)) {
+				if (($facebook_ua) || ($gplus_ua) || ($linkedin_ua)) {
 					if ($user_agent) { print "\t User Agent: $user_agent\n"; }
-					if ($digg_ua) { print "\t Limited to Digg User Agent\n"; }
 					if ($facebook_ua) { print "\t Limited to Facebook User Agent\n"; }
 					if ($gplus_ua) { print "\t Limited to Google+ User Agent\n"; }
 					if ($linkedin_ua) { print "\t Limited to LinkedIn User Agent\n"; }
@@ -564,6 +558,7 @@ class OGraphr_Core {
 						if(!(empty($thumbnails))) {
 							$thumbnails_db = serialize($thumbnails);
 							update_post_meta($post_id, 'ographr_urls', $thumbnails_db);
+							
 							$indexed = date("U"); // Y-m-d H:i:s
 							update_post_meta($post_id, 'ographr_indexed', $indexed);
 							// 0.6 double check
@@ -593,12 +588,10 @@ class OGraphr_Core {
 				$wp_title = get_the_title();
 				$wp_name = get_bloginfo('name');
 				$wp_url = get_option('home');
-				//$wp_author = get_the_author_meta('display_name'); // inside of loop!
 				$wp_url = preg_replace('/https?:\/\//', NULL, $wp_url);
 				$title = str_replace("%postname%", $wp_title, $title);
 				$title = str_replace("%sitename%", $wp_name, $title);
 				$title = str_replace("%siteurl%", $wp_url, $title);
-				//$title = str_replace("%author%", $wp_author, $title); // inside of loop!
 				if (!$title) {
 					$title = $wp_title;
 				}
@@ -1888,8 +1881,8 @@ class OGraphr_Core {
 		global $core;
 		global $options;
 		
-		//if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
-		//	$core->ographr_self_update();
+		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
+			$core->ographr_self_update();
 	}
 	
 	// upgrades? currently not in use
@@ -1927,8 +1920,26 @@ class OGraphr_Core {
 			}
 			
 			// 0.5.9
-			if (version_compare($last_update, "0.5.6") == "<=") {
+			if (version_compare($last_update, "0.5.10") == "<") {
 				$options['enable_bambuser'] = "1";
+				$opt_updated = TRUE;
+			}
+			
+			// 0.6
+			if (version_compare($last_update, "0.6") == "<") {
+				$options['enable_livestream'] = "1";
+				$opt_updated = TRUE;
+			}
+			
+			// 0.6.3
+			if (version_compare($last_update, "0.6.3") == "<") {
+				$options['enable_internetarchive'] = "1";
+				$opt_updated = TRUE;
+			}
+			
+			// 0.6.9
+			if (version_compare($last_update, "0.6.9") == "<") {
+				$options['enable_rdio'] = "1";
 				$opt_updated = TRUE;
 			}
 		
@@ -1992,16 +2003,14 @@ class OGraphr_Core {
 				$widget_thumbnail =  htmlentities($widget_thumbnail);
 				
 		if(!(empty($widget_thumbnails))) {
-
 			$widget_thumbnails = serialize($widget_thumbnails);
 			update_post_meta($post_id, 'ographr_urls', $widget_thumbnails);
-		
+			
 			$indexed = date("U"); //Y-m-d H:i:s
 			update_post_meta($post_id, 'ographr_indexed', $indexed);
 			// 0.6
 			$this->ographr_save_stats();
 		}
-
 	}
 	
 	// 0.6
@@ -2018,7 +2027,7 @@ class OGraphr_Core {
 									);
 		}
 		
-		// create function!
+		// create function?
 		$posts_published = wp_count_posts();
 		$posts_published = $posts_published->publish;
 		$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
@@ -2045,7 +2054,7 @@ class OGraphr_Core {
 			$posts_published = $posts_published->publish;
 			$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
 			$myposts = get_posts( $args );
-			$posts_indexed = count($myposts) - 1;
+			$posts_indexed = count($myposts) - 1;  // line differs from ograhr_save_stats!
 
 			$today = date("Y-m-d");
 

@@ -1,11 +1,12 @@
 === OGraphr ===
 Contributors: yathosho
+Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
-Tested up to: 3.4.1
-Stable tag: 0.6.13
+Tested up to: 3.4.2
+Stable tag: 0.6.14
 
-Retrieves the images of audio/video player widgets in your posts and embeds them as metatags compatible with Facebook, Google+ and other social media sites.
+Retrieves the images of audio/video player widgets in your posts and embeds them as metatags compatible with Facebook, Google+ and other social networks.
 
 == Description ==
 
@@ -36,7 +37,7 @@ Currently, these widgets are supported:
 *  JWPlayer
 *  Standard HTML5 video-tags
 
-OpenGraph tags will be used by social-media sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you should find this plug-in useful.
+OpenGraph tags will be used by social network sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you should find this plug-in useful.
 
 == Installation ==
 
@@ -50,9 +51,9 @@ OpenGraph tags will be used by social-media sites such as Facebook or Google+ to
 
 The [Open Graph protocol](http://ogp.me/ "Open Graph protocol") enables any web page to become a rich object in a social graph. For instance, this is used on Facebook to allow any web page to have the same functionality as any other object on Facebook. The OGraphr plugin for Wordpress detects images from popular media players and adds them, alongside other information, to the metadata of your page.
 
-= I don't use social media, why would I use this? =
+= I don't use social networks, why would I use this? =
 
-People share links with their friends on social media sites whether you like it or not. This plug-in gives you some control over how your content is presented on platforms such as Facebook and Google+. Displaying cover artwork or video snapshots with your link usually looks nicer and attracts the attention of potential visitors.
+People share links with their friends on social network sites whether you like it or not. This plug-in gives you some control over how your content is presented on platforms such as Facebook and Google+. Displaying cover artwork or video snapshots with your link usually looks nicer and attracts the attention of potential visitors.
 
 = Why doesn't Facebook display the cover artwork? =
 
@@ -78,8 +79,6 @@ Since Google+ is probably the only site using these meta-tags, they will only be
 
 Probably not. Link elements were a common way to add website thumbnails before Facebook introduced its Open Graph protocol. There might be a couple of sites still retrieving thumbnails through link elements, Digg used to be one of them.
 
-Since Google+ is probably the only site using these meta-tags, they will only be added to the source when a link is posted on a profile. However, you can force displaying these meta-tags when activating OGraphr's debug-mode.
-
 == Screenshots ==
 
 1. a link with a Mixcloud widget added as Facebook status update
@@ -91,6 +90,11 @@ Since Google+ is probably the only site using these meta-tags, they will only be
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.6.14 =
+* improved update function
+* removed support for Digg user-agent
+* modified dialogs
 
 = 0.6.13 =
 * added support for Socialcam
