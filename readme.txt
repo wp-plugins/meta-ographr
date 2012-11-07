@@ -1,18 +1,18 @@
 === OGraphr ===
 Contributors: yathosho
 Donate link: http://whyeye.org/donate
-Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
+Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.4.2
-Stable tag: 0.6.14
+Stable tag: 0.7
 
-Retrieves the images of audio/video player widgets in your posts and embeds them as metatags compatible with Facebook, Google+ and other social networks.
+Retrieves the images of audio/video player widgets in your posts and embeds them as metatags compatible with Facebook, and other social networks.
 
 == Description ==
 
-This plugin adds several OpenGraph meta-tags to the header of your theme. These include site name, a description (the excerpt of a post), the permalink, and images for embedded media widgets. The images will be retrieved from the audio player embedded in your post ("cover artwork") or snapshots from embedded videos.
+This plugin adds several Open Graph meta-tags to the header of your theme. These include site name, a description (the excerpt of a post), the permalink, and images for embedded media widgets. The images will be retrieved from the audio player embedded in your post ("cover artwork") or snapshots from embedded videos. The plugin also supports other types of meta-tags, such as Google+ Snippets, Twitter Cards (beta) and Canonical Links.
 
-Currently, these widgets are supported:
+Currently, these media widgets are supported:
 
 *  8tracks
 *  Bambuser
@@ -37,7 +37,7 @@ Currently, these widgets are supported:
 *  JWPlayer
 *  Standard HTML5 video-tags
 
-OpenGraph tags will be used by social network sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you should find this plug-in useful.
+Open Graph tags will be used by social network sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you should find this plug-in useful.
 
 == Installation ==
 
@@ -69,7 +69,7 @@ You probably don't. All new Viddler players use HTML5-compliant poster images an
 
 = What about site performance? =
 
-Depending on the amount of embed codes in your site, retrieving images and other informations can delay the rendering of a page. This can be avoided by retrieving images only once when an article has been published or updated. You can further restrict OGraphr to trigger only when called by Facebook, Google+ or LinkedIn.
+Depending on the amount of embed codes in your site, retrieving images and other informations can delay the rendering of a page. This can be avoided by retrieving images only once when an article has been published or updated. You can further restrict OGraphr to trigger only when called by Facebook, Google+, LinkedIn or Twitter.
 
 = Why are there no Google+ meta-tags in my page source? =
 
@@ -78,6 +78,10 @@ Since Google+ is probably the only site using these meta-tags, they will only be
 = Is there a good reason to add link elements for thumbnails? =
 
 Probably not. Link elements were a common way to add website thumbnails before Facebook introduced its Open Graph protocol. There might be a couple of sites still retrieving thumbnails through link elements, Digg used to be one of them.
+
+= How can I use new features marked as beta? =
+`
+As beta features can be unstable, they can only be enabled through the plugin's source. Open the file `meta-ographr_index.php` and set `OGRAPHR_BETA to `TRUE`. Note that with each new version, you have to re-enable this setting.
 
 == Screenshots ==
 
@@ -90,6 +94,19 @@ Probably not. Link elements were a common way to add website thumbnails before F
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.7 =
+* β: added support for Twitter Cards
+* added support for Twitter user-agent
+* added alternative/cURL-fallback method for JSON retrieval (new default)
+* added support for further Open Graph tags
+* added option to display Open Graph tags on Facebook only
+* improved metatag ordering and output
+* improved scaling of visual graph
+* modified option page order
+* removed function to retrieve Bandcamp artwork
+* reduced number of warnings in wp_debug
+* fixed debug output for Vimeo and YouTube
 
 = 0.6.14 =
 * improved update function

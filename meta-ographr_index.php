@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.6.14
+Version: 0.7
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,15 +28,17 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.6.14");
+    define("OGRAPHR_VERSION", "0.7");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
 	define("OGRAPHR_BETA", FALSE);
 	// replace default description with user agent in use
 	define("OGRAPHR_UATEST", FALSE);
-	// specify timeout for all cURL instances (http://googlecode.blogspot.co.at/2012/01/lets-make-tcp-faster.html)
-	define("OGRAPHR_TIMEOUT", 1000);
+	// use HTTP API instead of cURL
+	define("OGRAPHR_USECURL", FALSE);
+	// specify timeout for all HTTP requests (default is 1 second, http://googlecode.blogspot.co.at/2012/01/lets-make-tcp-faster.html)
+	define("OGRAPHR_TIMEOUT", 1);
 
 // ATTACHMENT IMAGE
 	// default image size (thumbnail, medium, large, full)
@@ -77,8 +79,8 @@ Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
 	define("PLAYFM_API_KEY", "e5821e991f3b7bc982c3:109a0ca3bc");
 
 // SOCIALCAM
-// default artwork size (main_thumb, small_thumb)
-define("SOCIALCAM_IMAGE_SIZE", "small_thumb");
+	// default artwork size (main_thumb, small_thumb)
+	define("SOCIALCAM_IMAGE_SIZE", "small_thumb");
 
 // SOUNDCLOUD
 	// no need to change this unless you want to use your own SoundCloud API key (-> http://soundcloud.com/you/apps)
@@ -107,6 +109,8 @@ define("SOCIALCAM_IMAGE_SIZE", "small_thumb");
 	define('GOOGLEPLUS_USERAGENT', '/Mozilla\/5\.0 \(Windows NT 6\.1; rv:6\.0\) Gecko\/20110814 Firefox/i');
 	// LinkedInBot/1.0 (compatible; Mozilla/5.0; Jakarta Commons-HttpClient/3.1 +http://www.linkedin.com)
 	define('LINKEDIN_USERAGENT', '/LinkedInBot/i');
+	// Twitterbot
+	define('TWITTER_USERAGENT', '/Twitterbot/i');
 	
 $core = new OGraphr_Core();
 
@@ -193,6 +197,7 @@ class OGraphr_Core {
 							"enable_jwplayer" => "1",
 							"add_attached_image" => "1",
 							"add_post_thumbnail" => "0",
+							"add_twitter_meta" => "1",
 							"add_google_meta" => "0",
 							"add_link_rel" => "0",
 							"filter_smilies" => "1",
@@ -201,8 +206,15 @@ class OGraphr_Core {
 							"facebook_ua" => "0",
 							"gplus_ua" => "0",
 							"linkedin_ua" => "0",
+							"twitter_ua" => "0",
+							"limit_opengraph" => "0",
 							"fb_site_name" => "%sitename%",
-							"fb_type" => "_none"
+							"fb_type" => "_none",
+							"add_author" => "0",
+							"add_section" => "0",
+							"add_tags" => "0",
+							"add_pubtime" => "0",
+							"add_modtime" => "0"
 			);
 		
 			update_option('ographr_options', $arr);
@@ -210,9 +222,9 @@ class OGraphr_Core {
 	
 	public function remote_exists($path){
 		//return (@fopen($path,"r")==true);
-		$response = wp_remote_head($path, array('timeout' => 1, 'compress' => TRUE, 'decompress' => TRUE));
+		$response = wp_remote_head($path, array('timeout' => OGRAPHR_TIMEOUT, 'compress' => TRUE, 'decompress' => TRUE));
 		if (!is_wp_error($response)) {
-			return ($response[response][code]==200);
+			return ($response['response']['code']==200);
 		}
 	}
 
@@ -252,83 +264,85 @@ class OGraphr_Core {
 
 	// Get JSON Thumbnail
 	public function get_json_thumbnail($service, $json_url, $json_query) {
-		if (!function_exists('curl_init')) {
-			return null;
+		if ((!function_exists('curl_init')) || (!OGRAPHR_USECURL)) {
+			$output = wp_remote_retrieve_body( wp_remote_get($json_url, array('timeout' => OGRAPHR_TIMEOUT)) );
 		} else {
 			//print "\t $service Query URL: $json_url\n";
 			$ch = curl_init();
+			$timeout = OGRAPHR_TIMEOUT * 1000;
 			curl_setopt($ch, CURLOPT_URL, $json_url);
 			curl_setopt($ch, CURLOPT_HEADER, 0);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-			curl_setopt($ch, CURLOPT_TIMEOUT, OGRAPHR_TIMEOUT);
+			curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
 			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
 			$output = curl_exec($ch);
-			
-			// special treatment
-			if ($service == "Blip.tv") {
-				$output = preg_match('/(?:blip_ws_results\(\[)(.*)(?:\]\);)/smi', $output, $match); // fix Blip.tv JSON file
-				$output = $match[1];
-			}
-			
-			$output = json_decode($output);
-			
-			// special treatment
-			if ($service == "Justin.tv") {
-				$output = $output[0];
-			} else if ($service == "Flickr") {
-				$ispublic = $output->photo->visibility->ispublic;
-				if ($ispublic == 1) {
-					$id = $output->photo->id;
-					$server = $output->photo->server;
-					$secret = $output->photo->secret;
-					$farm = $output->photo->farm;
-					$output = "http://farm" . $farm . ".staticflickr.com/" . $server . "/" . $id . "_" . $secret . "_" . FLICKR_IMAGE_SIZE . ".jpg";
-					//$exists = $this->remote_exists($output);
-					//if($exists) {
-						return $output;
-					//}
-				} else {
-					return;
-				}
-			}
-			
-			$json_keys = explode('->', $json_query);
-			foreach($json_keys as $json_key) {
-				$output = $output->$json_key;
-			}			
-			
 			if (curl_error($ch) != null) {
 				return;
 			}
 			curl_close($ch); // Moved here to allow curl_error() operation above. Was previously below curl_exec() call.
-			//$exists = $this->remote_exists($output);
-			//if($exists) {
-				return $output;
-			//}
 		}
+		
+		// special treatment
+		if ($service == "Blip.tv") {
+			$output = preg_match('/(?:blip_ws_results\(\[)(.*)(?:\]\);)/smi', $output, $match); // fix Blip.tv JSON file
+			$output = $match[1];
+		}
+		
+		$output = json_decode($output);
+		
+		// special treatment
+		if ($service == "Justin.tv") {
+			$output = $output[0];
+		} else if ($service == "Flickr") {
+			$ispublic = $output->photo->visibility->ispublic;
+			if ($ispublic == 1) {
+				$id = $output->photo->id;
+				$server = $output->photo->server;
+				$secret = $output->photo->secret;
+				$farm = $output->photo->farm;
+				$output = "http://farm" . $farm . ".staticflickr.com/" . $server . "/" . $id . "_" . $secret . "_" . FLICKR_IMAGE_SIZE . ".jpg";
+				//$exists = $this->remote_exists($output);
+				//if($exists) {
+					return $output;
+				//}
+			} else {
+				return;
+			}
+		}
+		
+		$json_keys = explode('->', $json_query);
+		foreach($json_keys as $json_key) {
+			$output = $output->$json_key;
+		}			
+
+		return $output;
+
 	}
 		
 	// Get Vimeo Thumbnail
 	public function get_vimeo_thumbnail($id, $image_size = 'large') {
-		if (!function_exists('curl_init')) {
-			return null;
+		$videoinfo_url = "http://vimeo.com/api/v2/video/$id.php";
+		
+		if ((!function_exists('curl_init')) || (!OGRAPHR_USECURL)) {
+			$output = unserialize(wp_remote_retrieve_body( wp_remote_get($videoinfo_url, array('timeout' => 1)) ) );
 		} else {
 			$ch = curl_init();
-			$videoinfo_url = "http://vimeo.com/api/v2/video/$id.php";
+			$timeout = OGRAPHR_TIMEOUT * 1000;
 			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
 			curl_setopt($ch, CURLOPT_HEADER, 0);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, OGRAPHR_TIMEOUT);
+			curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
 			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
 			$output = unserialize(curl_exec($ch));
-			$output = $output[0]['thumbnail_' . $image_size];
 			if (curl_error($ch) != null) {
 				return;
 			}
 			curl_close($ch);
-			return $output;
 		}
+		
+		$output = $output[0]['thumbnail_' . $image_size];	
+		return $output;
 	}
 	
 	/*
@@ -345,46 +359,6 @@ class OGraphr_Core {
 		}
 	}
 	*/
-	
-	// Get Bandcamp Parent Thumbnail
-	public function get_bandcamp_parent_thumbnail($id, $api_key = BANDCAMP_API_KEY, $image_size = 'large_art_url') {
-		if (!function_exists('curl_init')) {
-			return null;
-		} else {
-			$ch = curl_init();
-			$videoinfo_url = "http://api.bandcamp.com/api/track/1/info?key=$api_key&track_id=$id";
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, OGRAPHR_TIMEOUT);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->album_id;
-			if (curl_error($ch) != null) {
-				return;
-			}
-			curl_close($ch);
-			
-			// once more time for the album
-			$ch = curl_init();
-			$videoinfo_url = "http://api.bandcamp.com/api/album/2/info?key=$api_key&album_id=$output";
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, OGRAPHR_TIMEOUT);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			$output = json_decode($output);
-			$output = $output->$image_size;
-			if (curl_error($ch) != null) {
-				return;
-			}
-			curl_close($ch);
-			
-			return $output;
-		}
-	}
 
 	//
 	// The Main Dish
@@ -396,20 +370,27 @@ class OGraphr_Core {
 		}
 	
 		global $options;
+		global $post;
 		
 		if ((!$enable_plugin_on_front = $options['enable_plugin_on_front']) && (!is_single()) && (!is_page())) {
 			return;
 		}
 			
 		$user_agent = $_SERVER['HTTP_USER_AGENT'];
-		$facebook_ua = $options['facebook_ua'];
-		$gplus_ua = $options['gplus_ua'];
-		$linkedin_ua = $options['linkedin_ua'];
+		if (isset($options['facebook_ua'])) 
+			$facebook_ua = $options['facebook_ua'];
+		if (isset($options['gplus_ua'])) 
+			$gplus_ua = $options['gplus_ua'];
+		if (isset($options['linkedin_ua'])) 
+			$linkedin_ua = $options['linkedin_ua'];
+		if (isset($options['twitter_ua'])) 
+			$twitter_ua = $options['twitter_ua'];
 				
 		if ( ((preg_match(FACEBOOK_USERAGENT, $user_agent)) && ($facebook_ua))
-		|| ((preg_match(GOOGLEPLUS_USERAGENT,$user_agent)) && ($gplus_ua))
-		|| ((preg_match(LINKEDIN_USERAGENT,$user_agent)) && ($linkedin_ua))
-		|| ((!$facebook_ua) && (!$gplus_ua) && (!$linkedin_ua))
+		|| ((preg_match(GOOGLEPLUS_USERAGENT, $user_agent)) && ($gplus_ua))
+		|| ((preg_match(LINKEDIN_USERAGENT, $user_agent)) && ($linkedin_ua))
+		|| ((preg_match(TWITTER_USERAGENT, $user_agent)) && ($twitter_ua))
+		|| ((!isset($facebook_ua)) && (!isset($gplus_ua)) && (!isset($linkedin_ua)) && (!isset($twitter_ua)))
 		|| (OGRAPHR_DEBUG == TRUE) ) {
 			// Get the post ID if none is provided
 			if($post_id==null OR $post_id=='') $post_id = get_the_ID();
@@ -436,7 +417,9 @@ class OGraphr_Core {
 				$last_indexed = 1336082400; // 2012-05-04 00:00:00 CET
 			
 			$interval = $today - $last_indexed;
-			$expiry = $options['data_expiry'];
+			$expiry = NULL; // suppress warnings
+			if (isset($options['data_expiry']))
+				$expiry = $options['data_expiry'];
 			if (($expiry) && ($expiry != "-1")) {
 				$expiry = $expiry * 86400;
 			} else {
@@ -458,19 +441,26 @@ class OGraphr_Core {
 					print "\t Image Retrieval: On-View\n";
 				}
 				
+				if( (function_exists('curl_init')) && (!OGRAPHR_USECURL) ){
+					print "\t cURL function exists, disabled by user\n";
+				} else if (function_exists('curl_init')) {
+					print "\t cURL function exists\n";
+				} else {
+					print "\t cURL function missing\n";
+				}				
 				
-				if (($facebook_ua) || ($gplus_ua) || ($linkedin_ua)) {
-					if ($user_agent) { print "\t User Agent: $user_agent\n"; }
-					if ($facebook_ua) { print "\t Limited to Facebook User Agent\n"; }
-					if ($gplus_ua) { print "\t Limited to Google+ User Agent\n"; }
-					if ($linkedin_ua) { print "\t Limited to LinkedIn User Agent\n"; }
-				}
+				if (isset($user_agent)) { print "\t User Agent: $user_agent\n"; }
+				if (isset($facebook_ua)) { print "\t Limited to Facebook User Agent\n"; }
+				if (isset($gplus_ua)) { print "\t Limited to Google+ User Agent\n"; }
+				if (isset($linkedin_ua)) { print "\t Limited to LinkedIn User Agent\n"; }
+				if (isset($twitter_ua)) { print "\t Limited to Twitter User Agent\n"; }
 				
-				if ($options['filter_gravatar']) { print "\t Avatars are filtered\n"; }
-				if ($options['filter_smilies']) { print "\t Emoticons are filtered \n"; }
-				if ($options['filter_themes']) { print "\t Themes are filtered\n"; }
-				if ($options['add_google_meta']) { print "\t Google+ Meta Descriptions are enabled\n"; }
-				if ($options['add_link_rel']) { print "\t Link Elements are enabled\n"; }
+				if (isset($options['filter_gravatar'])) { print "\t Avatars are filtered\n"; }
+				if (isset($options['filter_smilies'])) { print "\t Emoticons are filtered \n"; }
+				if (isset($options['filter_themes'])) { print "\t Themes are filtered\n"; }
+				if (isset($options['add_twitter_meta'])) { print "\t Twitter Cards are enabled\n"; }
+				if (isset($options['add_google_meta'])) { print "\t Google+ Meta Descriptions are enabled\n"; }
+				if (isset($options['add_link_rel'])) { print "\t Link Elements are enabled\n"; }
 				
 				if ($options['filter_custom_urls']) {
 					foreach(preg_split("/((\r?\n)|(\n?\r))/", $options['filter_custom_urls']) as $line){
@@ -511,7 +501,7 @@ class OGraphr_Core {
 					
 					if (is_array($meta_values))
 						foreach($meta_values as $meta_value)
-							$meta_value =  htmlentities($meta_value);
+							$meta_value = htmlentities($meta_value);
 				}
 
 				if ((is_array($meta_values)) && (is_array($thumbnails)) && ($expiry >= $interval) ) {
@@ -553,7 +543,7 @@ class OGraphr_Core {
 						
 						if (is_array($thumbnails))
 							foreach($thumbnails as $thumbnail)
-								$thumbnail =  htmlentities($thumbnail);
+								$thumbnail = htmlentities($thumbnail);
 						
 						if(!(empty($thumbnails))) {
 							$thumbnails_db = serialize($thumbnails);
@@ -597,30 +587,141 @@ class OGraphr_Core {
 				}
 				$site_name = str_replace("%sitename%", $wp_name, $site_name);
 				$site_name = str_replace("%siteurl%", $wp_url, $site_name);
-			
-				if (($options['website_description']) && (is_front_page())) {
+
+				#0.7				
+				$add_author = $options['add_author'];
+				$add_section = $options['add_section'];
+				$add_tags = $options['add_tags'];
+				$add_pubtime = $options['add_pubtime'];
+				$add_modtime = $options['add_modtime'];
+				//$twitter_creator_name = $options['twitter_creator_name'];
+
+				// suppress warnings
+				$article_meta = NULL;
+				$opengraph_meta = NULL;
+				$google_meta = NULL;
+				$twitter_meta = NULL;
+				$link_rel = NULL;
+
+				// only enter the loop if required!			
+				if ( (isset($add_author)) || (isset($add_section)) || (isset($add_tags)) || (isset($add_pubtime)) || (isset($add_modtime)) ) {
+
+					if ((have_posts()) && (is_single())) {
+						while (have_posts()) : the_post();
+
+							if (isset($add_author)) {
+								$author_id=$post->post_author;
+								$wp_author_link = get_author_posts_url($author_id);
+								$article_meta = $article_meta . "<meta property=\"article:author\" content=\"$wp_author_link\" />\n";
+							}							
+
+							if (isset($add_section)) {
+								$wp_categories = get_the_category();
+								if ($wp_categories) {
+								  foreach($wp_categories as $category) {
+									$article_meta = $article_meta . "<meta property=\"article:section\" content=\"$category->name\" />\n";
+								  }
+								}
+							}
+
+							if (isset($add_tags)) {
+								$wp_tags = get_the_tags();
+								if ($wp_tags) {
+								  foreach($wp_tags as $tag) {
+									$article_meta = $article_meta . "<meta property=\"article:tag\" content=\"$tag->name\" />\n";
+								  }
+								}
+							}
+
+							if (isset($add_pubtime)) {
+								$wp_published = get_the_date('Y-m-d');
+								$article_meta = $article_meta . "<meta property=\"article:published_time\" content=\"$wp_published\" />\n";
+							}							
+
+							if (isset($add_modtime)) {
+								$wp_modified = get_the_modified_date('Y-m-d');
+								$article_meta = $article_meta . "<meta property=\"article:modified_time\" content=\"$wp_modified\" />\n";
+							}
+							
+							/*
+							if (isset($twitter_creator_name)) {
+								$wp_author = get_the_author();
+								$author = str_replace("%author%", $wp_author, $twitter_creator_name);
+							}
+							*/
+
+							/* custom excerpt
+							$excerpt = get_the_content();
+							$excerpt = preg_replace(" (\[.*?\])",'',$excerpt);
+							$excerpt = strip_shortcodes($excerpt);
+							$excerpt = strip_tags($excerpt);
+							$excerpt = substr($excerpt, 0, 300);
+							$excerpt = substr($excerpt, 0, strripos($excerpt, " "));
+							$excerpt = trim(preg_replace( '/\s+/', ' ', $excerpt));
+
+							var_dump($excerpt);
+							*/
+
+						endwhile;
+					}
+				}
+					
+				#0.7
+				if (isset($options['add_twitter_meta'])) {
+					
+					// get values
+					//$twitter_site_name = $options['twitter_site_name'];
+					//$twitter_site_name = str_replace("%sitename%", $wp_name, $twitter_site_name);
+					$twitter_site_user = $options['twitter_site_user'];
+					$twitter_author_user = $options['twitter_author_user'];
+
+					// type of twitter card
+					$twitter_meta = $twitter_meta . "<meta property=\"twitter:card\" content=\"summary\" />\n";
+
+					// twitter site name
+					if (strlen($twitter_site_user) > 1) {
+						//$twitter_meta = $twitter_meta . "<meta property=\"twitter:site\" content=\"$twitter_site_name\" />\n";
+						$twitter_meta = $twitter_meta . "<meta property=\"twitter:site\" content=\"$twitter_site_user\" />\n";
+					}
+
+					if (is_single()) {
+						if (strlen($twitter_author_user) > 1) {
+							//$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator\" content=\"$author\" />\n";
+							$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator\" content=\"$twitter_author_user\" />\n";
+						}
+					}
+					
+				}
+	
+				if ((isset($options['website_description'])) && (is_front_page())) {
 					// Blog title
-					$title = get_settings('blogname');
+					$title = get_option('blogname');
 					if($title) {
-						if (($options['add_google_meta']) && ((preg_match(GOOGLEPLUS_USERAGENT,$user_agent)) || (OGRAPHR_DEBUG)) )
-							print "<meta name=\"title\" content=\"$title\" />\n";
-						print "<meta property=\"og:title\" content=\"$title\" />\n";
+						if (isset($options['add_google_meta']))
+							$google_meta = $google_meta . "<meta name=\"title\" content=\"$title\" />\n";
+						if (isset($options['add_twitter_meta']))
+							$twitter_meta = $twitter_meta . "<meta property=\"twitter:title\" content=\"$title\" />\n";
+						$opengraph_meta = $opengraph_meta . "<meta property=\"og:title\" content=\"$title\" />\n";
 					}
 					// Add custom description
 					$description = $options['website_description'];
 					$wp_tagline = get_bloginfo('description');
 					$description = str_replace("%tagline%", $wp_tagline, $description);
 					if($description) {
-						if (($options['add_google_meta']) && ((preg_match(GOOGLEPLUS_USERAGENT,$user_agent)) || (OGRAPHR_DEBUG)) )
-							print "<meta name=\"description\" content=\"$description\" />\n";
-						print "<meta property=\"og:description\" content=\"$description\" />\n";
+						if (isset($options['add_google_meta']))
+							$google_meta = $google_meta . "<meta name=\"description\" content=\"$description\" />\n";
+						if (isset($options['add_twitter_meta']))
+							$twitter_meta = $twitter_meta . "<meta property=\"twitter:description\" content=\"$description\" />\n";
+						$opengraph_meta = $opengraph_meta . "<meta property=\"og:description\" content=\"$description\" />\n";
 					}
 				} else { //single posts
 					if ($options['add_title'] && ($title)) {
 						// Post title
-						if (($options['add_google_meta']) && ((preg_match(GOOGLEPLUS_USERAGENT,$user_agent)) || (OGRAPHR_DEBUG)) )
-							print "<meta name=\"title\" content=\"$title\" />\n";
-						print "<meta property=\"og:title\" content=\"$title\" />\n"; 
+						if (isset($options['add_google_meta']))
+							$google_meta = $google_meta . "<meta name=\"title\" content=\"$title\" />\n";
+						if (isset($options['add_twitter_meta']))
+							$twitter_meta = $twitter_meta . "<meta property=\"twitter:title\" content=\"$title\" />\n";
+						$opengraph_meta = $opengraph_meta . "<meta property=\"og:title\" content=\"$title\" />\n"; 
 					}
 					
 					if($options['add_excerpt'] && ($description = wp_strip_all_tags((get_the_excerpt()), true))) {
@@ -628,35 +729,41 @@ class OGraphr_Core {
 						if (OGRAPHR_UATEST == TRUE) {
 							$description = $user_agent;
 						}
-						if ( ($options['add_google_meta']) && ((preg_match(GOOGLEPLUS_USERAGENT,$user_agent)) || (OGRAPHR_DEBUG)) )
-							print "<meta name=\"description\" content=\"$description\" />\n";
-						print "<meta property=\"og:description\" content=\"$description\" />\n";
+						if (isset($options['add_google_meta']))
+							$google_meta = $google_meta . "<meta name=\"description\" content=\"$description\" />\n";
+						if (isset($options['add_twitter_meta']))
+							$twitter_meta = $twitter_meta . "<meta property=\"twitter:description\" content=\"$description\" />\n";
+						$opengraph_meta = $opengraph_meta . "<meta property=\"og:description\" content=\"$description\" />\n";
 					}
 				}
 		
 				// Add permalink
 				if (($options['add_permalink']) && (is_front_page()) && ($link = get_option('home'))) {
 					print "<meta property=\"og:url\" content=\"$link\" />\n";
+					if (isset($options['add_twitter_meta']))
+						$twitter_meta = $twitter_meta . "<meta property=\"twitter:url\" content=\"$link\" />\n";
 				} else {
-					if($options['add_permalink'] && ($link = get_permalink())) {
-						print "<meta property=\"og:url\" content=\"$link\" />\n";
+					if(isset($options['add_permalink']) && ($link = get_permalink())) {
+						$opengraph_meta = $opengraph_meta . "<meta property=\"og:url\" content=\"$link\" />\n";
+						if (isset($options['add_twitter_meta']))
+							$twitter_meta = $twitter_meta . "<meta property=\"twitter:url\" content=\"$link\" />\n";
 					}
 				}
 			
 				// Add site name
 				if ($site_name) {
-					print "<meta property=\"og:site_name\" content=\"$site_name\" />\n";
+					$opengraph_meta = $opengraph_meta . "<meta property=\"og:site_name\" content=\"$site_name\" />\n";
 				}
 				
 				// Add locale
 				$locale = $options['locale'];
 				if (($locale) && ($locale != "_none")) {
-					print "<meta property=\"og:locale\" content=\"$locale\" />\n";
+					$opengraph_meta = $opengraph_meta . "<meta property=\"og:locale\" content=\"$locale\" />\n";
 				}
 			
 				// Add type
 				if (($type = $options['fb_type']) && ($type != '_none')) {
-					print "<meta property=\"og:type\" content=\"$type\" />\n";
+					$opengraph_meta = $opengraph_meta . "<meta property=\"og:type\" content=\"$type\" />\n";
 				}
 		
 				// Add thumbnails
@@ -667,14 +774,18 @@ class OGraphr_Core {
 					
 				if (($total_img == 0) && ($web_thumb)) {
 					print "<meta property=\"og:image\" content=\"$web_thumb\" />\n";
+					if (isset($options['add_twitter_meta']))
+						$twitter_meta = $twitter_meta . "<meta property=\"twitter:image\" content=\"$web_thumb\" />\n";
 					$ext = pathinfo($web_thumb, PATHINFO_EXTENSION);
 					if (($ext == "jpg") || ($ext == "jpe"))
 						$ext = "jpeg";
-					print "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
+					$opengraph_meta = $opengraph_meta . "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
 				} else if ($thumbnails) { // investigate?
 					foreach ($thumbnails as $thumbnail) {
 						if ($thumbnail) {
-							print "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
+							$opengraph_meta = $opengraph_meta . "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
+							if (isset($options['add_twitter_meta']))
+								$twitter_meta = $twitter_meta . "<meta property=\"twitter:image\" content=\"$thumbnail\" />\n";
 						}
 					}
 				}
@@ -686,26 +797,27 @@ class OGraphr_Core {
 					if (($ext == "jpg") || ($ext == "jpe"))
 						$ext = "jpeg";
 					if (($ext == "bmp") || ($ext == "gif") || ($ext == "jpeg") || ($ext == "png") || ($ext == "webp"))
-						print "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
+						$opengraph_meta = $opengraph_meta . "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
 				}
+						
 			
 				// Add Facebook ID
 				if ($fb_admins = $options['fb_admins']) {
-					print "<meta property=\"fb:admins\" content=\"$fb_admins\" />\n";
+					$opengraph_meta = $opengraph_meta . "<meta property=\"fb:admins\" content=\"$fb_admins\" />\n";
 				}
 
 				// Add Facebook Application ID
 				if ($fb_app_id = $options['fb_app_id']) {
-					print "<meta property=\"fb:app_id\" content=\"$fb_app_id\" />\n";
+					$opengraph_meta = $opengraph_meta . "<meta property=\"fb:app_id\" content=\"$fb_app_id\" />\n";
 				}
 				
 				// Add Link elements
-				if ($options['add_link_rel']) {
+				if (isset($options['add_link_rel'])) {
 					if (($total_img == 0) && ($web_thumb)) {
 						$ext = pathinfo($web_thumb, PATHINFO_EXTENSION);
 						if (($ext == "jpg") || ($ext == "jpe"))
 							$ext = "jpeg";
-						print "<link rel=\"image_src\" type=\"image/$ext\" href=\"$web_thumb\" />\n";
+						$link_rel = "<link rel=\"image_src\" type=\"image/$ext\" href=\"$web_thumb\" />\n";
 					} else if ($thumbnails) { // investigate?
 						foreach ($thumbnails as $thumbnail) {
 							if ($thumbnail) {
@@ -714,11 +826,24 @@ class OGraphr_Core {
 								if (($ext == "jpg") || ($ext == "jpe"))
 									$ext = "jpeg";
 								if (($ext == "bmp") || ($ext == "gif") || ($ext == "jpeg") || ($ext == "png") || ($ext == "webp"))
-									print "<link rel=\"image_src\" type=\"image/$ext\" href=\"$thumbnail\" />\n";
+									$link_rel = $link_rel . "<link rel=\"image_src\" type=\"image/$ext\" href=\"$thumbnail\" />\n";
 							}
 						}
 					}
 				}
+				
+				#0.7
+				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || (OGRAPHR_DEBUG) || (!isset($options['limit_opengraph'])) ) {
+					print $opengraph_meta;
+					print $article_meta;
+				}
+				
+				if ((isset($options['add_twitter_meta'])) && ((preg_match(TWITTER_USERAGENT, $user_agent)) || (OGRAPHR_DEBUG)))
+					print $twitter_meta;
+				if ((isset($options['add_google_meta'])) && ((preg_match(GOOGLEPLUS_USERAGENT, $user_agent)) || (OGRAPHR_DEBUG)))
+					print $google_meta;
+				if (isset($options['add_link_rel']))
+					print $link_rel;
 
 			}
 
@@ -730,7 +855,7 @@ class OGraphr_Core {
 		global $options;
 			
 		// Get images in post
-		if ($options['add_post_images']) {
+		if  (isset($options['add_post_images'])) {
 			preg_match_all('/<img.+?src=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
 			foreach($matches[1] as $match) {
 			  	if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
@@ -744,14 +869,14 @@ class OGraphr_Core {
 			
 				// filter Wordpress smilies
 				preg_match('/\/wp-includes\/images\/smilies\/icon_.+/i', $match, $filter);
-				if ((!$options['filter_smilies']) || (!$filter[0])) {
+				if ((!isset($options['filter_smilies'])) || (!$filter[0])) {
 					//$thumbnails[] = $match;
 					$no_smilies = TRUE;
 				}
 			
 				// filter Wordpress theme images
 				preg_match('/\/wp-content\/themes\//i', $match, $filter);
-				if ((!$options['filter_themes']) || (!$filter[0])) {
+				if ((!isset($options['filter_themes'])) || (!$filter[0])) {
 					//$thumbnails[] = $match;
 					$no_themes = TRUE;
 				}
@@ -759,7 +884,7 @@ class OGraphr_Core {
 				// filter Gravatar
 				$pattern = '/https?:\/\/w*.?gravatar.com\/avatar\/.*/i';
 				preg_match($pattern, $match, $filter);
-				if ((!$options['filter_gravatar']) || (!$filter[0])) {
+				if ((!isset($options['filter_gravatar'])) || (!$filter[0])) {
 					//$thumbnails[] = $match;
 					$no_gravatar = TRUE;
 				}
@@ -791,7 +916,7 @@ class OGraphr_Core {
 		}
 		
 		// Get video poster
-		if($options['enable_videoposter']) {
+		if (isset($options['enable_videoposter'])) {
 			preg_match_all('/<video.+?poster=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
 			foreach($matches[1] as $match) {
 				$match = preg_replace('/^\/\/+?/', 'http://', $match); // fix Viddler thumbnail URL
@@ -812,7 +937,7 @@ class OGraphr_Core {
 		}
 
 		// Get featured image
-		if (($options['add_post_thumbnail']) && ( function_exists( 'has_post_thumbnail' )) ){ 
+		if ( (isset($options['add_post_thumbnail'])) && ( function_exists( 'has_post_thumbnail' )) ){ 
 			$website_thumbnail = $this->get_featured_img();
 			
 			if (isset($website_thumbnail)) {
@@ -833,7 +958,7 @@ class OGraphr_Core {
 		}
 
 		// Get attachment images
-		if ($options['add_attached_image']) {
+		if  (isset($options['add_attached_image'])) {
 			$attached_thumbnails = $this->get_attached_img();
 
 			if (isset($attached_thumbnails)) {
@@ -849,7 +974,7 @@ class OGraphr_Core {
 		
 		
 		// JWPlayer
-		if($options['enable_jwplayer']) {
+		if (isset($options['enable_jwplayer'])) {
 			preg_match_all('/jwplayer\(.*?(?:image:[\s]*?)[\'"]([^\'"]+)[\'"].*?\)/smi', $markup, $matches);
 			
 			foreach($matches[1] as $match) {
@@ -870,7 +995,7 @@ class OGraphr_Core {
 		}
 		
 		// 8TRACKS
-		if($options['enable_eight_tracks']) {					
+		if (isset($options['enable_eight_tracks'])) {					
 			$etracks_thumbnails = $this->find_etracks_widgets($markup);
 			if (isset($etracks_thumbnails)) {			
 				foreach ($etracks_thumbnails as $etracks_thumbnail) {
@@ -881,7 +1006,7 @@ class OGraphr_Core {
 		}
 		
 		// BAMBUSER
-		if($options['enable_bambuser']) {					
+		if (isset($options['enable_bambuser'])) {					
 			$bambuser_thumbnails = $this->find_bambuser_widgets($markup, $options['bambuser_api']);
 			if (isset($bambuser_thumbnails)) {			
 				foreach ($bambuser_thumbnails as $bambuser_thumbnail) {
@@ -892,7 +1017,7 @@ class OGraphr_Core {
 		}	
 			
 		// BANDCAMP
-		if($options['enable_bandcamp']) {					
+		if (isset($options['enable_bandcamp'])) {					
 			$bandcamp_thumbnails = $this->find_bandcamp_widgets($markup, $options['bandcamp_api']);
 			if (isset($bandcamp_thumbnails)) {			
 				foreach ($bandcamp_thumbnails as $bandcamp_thumbnail) {
@@ -903,7 +1028,7 @@ class OGraphr_Core {
 		}
 							
 		// BLIP.TV
-		if($options['enable_bliptv']) {					
+		if (isset($options['enable_bliptv'])) {					
 			$bliptv_thumbnails = $this->find_bliptv_widgets($markup);
 			if (isset($bliptv_thumbnails)) {			
 				foreach ($bliptv_thumbnails as $bliptv_thumbnail) {
@@ -914,7 +1039,7 @@ class OGraphr_Core {
 		}
 			
 		// DAILYMOTION
-		if($options['enable_dailymotion']) {					
+		if (isset($options['enable_dailymotion'])) {					
 			$dailymotion_thumbnails = $this->find_dailymotion_widgets($markup);
 			if (isset($dailymotion_thumbnails)) {			
 				foreach ($dailymotion_thumbnails as $dailymotion_thumbnail) {
@@ -925,7 +1050,7 @@ class OGraphr_Core {
 		}
 		
 		// FLICKR
-		if($options['enable_flickr']) {					
+		if (isset($options['enable_flickr'])) {					
 			$flickr_thumbnails = $this->find_flickr_widgets($markup, $options['flickr_api']);
 			if (isset($flickr_thumbnails)) {			
 				foreach ($flickr_thumbnails as $flickr_thumbnail) {
@@ -936,7 +1061,7 @@ class OGraphr_Core {
 		}
 		
 		// HULU	
-		if($options['enable_hulu']) {					
+		if (isset($options['enable_hulu'])) {					
 			$hulu_thumbnails = $this->find_hulu_widgets($markup);
 			if (isset($hulu_thumbnails)) {			
 				foreach ($hulu_thumbnails as $hulu_thumbnail) {
@@ -947,7 +1072,7 @@ class OGraphr_Core {
 		}
 		
 		// INTERNET ARCHIVE
-		if($options['enable_internetarchive']) {					
+		if (isset($options['enable_internetarchive'])) {					
 			$internetarchive_thumbnails = $this->find_internetarchive_widgets($markup);
 			if (isset($internetarchive_thumbnails)) {			
 				foreach ($internetarchive_thumbnails as $internetarchive_thumbnail) {
@@ -958,7 +1083,7 @@ class OGraphr_Core {
 		}
 		
 		// JUSTIN.TV	
-		if($options['enable_justintv']) {					
+		if (isset($options['enable_justintv'])) {					
 			$justintv_thumbnails = $this->find_justintv_widgets($markup);
 			if (isset($justintv_thumbnails)) {			
 				foreach ($justintv_thumbnails as $justintv_thumbnail) {
@@ -969,7 +1094,7 @@ class OGraphr_Core {
 		}
 		
 		// LIVESTREAM	
-		if($options['enable_livestream']) {					
+		if (isset($options['enable_livestream'])) {					
 			$livestream_thumbnails = $this->find_livestream_widgets($markup);
 			if (isset($livestream_thumbnails)) {			
 				foreach ($livestream_thumbnails as $livestream_thumbnail) {
@@ -980,7 +1105,7 @@ class OGraphr_Core {
 		}
 		
 		// MIXCLOUD	
-		if($options['enable_mixcloud']) {					
+		if (isset($options['enable_mixcloud'])) {					
 			$mixcloud_thumbnails = $this->find_mixcloud_widgets($markup);
 			if (isset($mixcloud_thumbnails)) {			
 				foreach ($mixcloud_thumbnails as $mixcloud_thumbnail) {
@@ -991,7 +1116,7 @@ class OGraphr_Core {
 		}
 		
 		// MYVIDEO	
-		if($options['enable_myvideo']) {					
+		if (isset($options['enable_myvideo'])) {					
 			$myvideo_thumbnails = $this->find_myvideo_widgets($markup, $options['myvideo_dev_api'], $options['myvideo_web_api']);
 			if (isset($myvideo_thumbnails)) {			
 				foreach ($myvideo_thumbnails as $myvideo_thumbnail) {
@@ -1002,7 +1127,7 @@ class OGraphr_Core {
 		}	
 			
 		// OFFICIAL.TV
-		if($options['enable_official']) {
+		if (isset($options['enable_official'])) {
 			$official_thumbnails = $this->find_official_widgets($markup);
 			if (isset($official_thumbnails)) {	
 				foreach ($official_thumbnails as $official_thumbnail) {
@@ -1014,7 +1139,7 @@ class OGraphr_Core {
 	
 		/*
 		// PLAY.FM
-		if($options['enable_playfm']) {
+		if (isset($options['enable_playfm'])) {
 			$playfm_thumbnails = $this->find_playfm_widgets($markup, $options['playfm_api']);
 			if (isset($playfm_thumbnails)) {	
 				foreach ($playfm_thumbnails as $playfm_thumbnail) {
@@ -1026,7 +1151,7 @@ class OGraphr_Core {
 		*/
 		
 		// RDIO
-		if($options['enable_rdio']) {
+		if (isset($options['enable_rdio'])) {
 			$rdio_thumbnails = $this->find_rdio_widgets($markup);
 			if (isset($rdio_thumbnails)) {	
 				foreach ($rdio_thumbnails as $rdio_thumbnail) {
@@ -1037,7 +1162,7 @@ class OGraphr_Core {
 		}
 		
 		// SOCIALCAM
-		if($options['enable_socialcam']) {
+		if (isset($options['enable_socialcam'])) {
 			$socialcam_thumbnails = $this->find_socialcam_widgets($markup, $options['socialcam_api']);
 			if (isset($socialcam_thumbnails)) {	
 				foreach ($socialcam_thumbnails as $socialcam_thumbnail) {
@@ -1048,7 +1173,7 @@ class OGraphr_Core {
 		}
 	
 		// SOUNDCLOUD
-		if($options['enable_soundcloud']) {
+		if (isset($options['enable_soundcloud'])) {
 			$soundcloud_thumbnails = $this->find_soundcloud_widgets($markup, $options['soundcloud_api']);
 			if (isset($soundcloud_thumbnails)) {	
 				foreach ($soundcloud_thumbnails as $soundcloud_thumbnail) {
@@ -1059,7 +1184,7 @@ class OGraphr_Core {
 		}					
 
 		// USTREAM	
-		if($options['enable_ustream']) {
+		if (isset($options['enable_ustream'])) {
 			$ustream_thumbnails = $this->find_ustream_widgets($markup, $options['ustream_api']);
 			if (isset($ustream_thumbnails)) {
 				foreach ($ustream_thumbnails as $ustream_thumbnail) {
@@ -1070,7 +1195,7 @@ class OGraphr_Core {
 		}
 
 		// VIDDLER
-		if($options['enable_viddler']) {
+		if (isset($options['enable_viddler'])) {
 			$viddler_thumbnails = $this->find_viddler_widgets($markup, $options['viddler_api']);
 			if (isset($viddler_thumbnails)) {
 				foreach ($viddler_thumbnails as $viddler_thumbnail) {
@@ -1081,7 +1206,7 @@ class OGraphr_Core {
 		}					
 	
 		// VIMEO
-		if($options['enable_vimeo']) {
+		if (isset($options['enable_vimeo'])) {
 			$vimeo_thumbnails = $this->find_vimeo_widgets($markup);
 			if (isset($vimeo_thumbnails)) {
 				foreach ($vimeo_thumbnails as $vimeo_thumbnail) {
@@ -1092,7 +1217,7 @@ class OGraphr_Core {
 		}					
 
 		// YOUTUBE
-		if($options['enable_youtube']) {
+		if (isset($options['enable_youtube'])) {
 			$youtube_thumbnails = $this->find_youtube_widgets($markup);
 			if (isset($youtube_thumbnails)) {
 				foreach ($youtube_thumbnails as $youtube_thumbnail) {
@@ -1107,6 +1232,8 @@ class OGraphr_Core {
 		
 	
 	public function find_etracks_widgets($markup) {
+		global $options;
+
 		// 8tracks iFrame and embed players
 		preg_match_all( '/8tracks.com\/mixes\/([0-9]+)\/player/i', $markup, $matches1 );
 							
@@ -1139,11 +1266,15 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $etracks_thumbnails;
+
+		if (isset($etracks_thumbnails))
+			return $etracks_thumbnails;
 	} // end find_etracks_widgets
 	
 	
 	public function find_bambuser_widgets($markup, $api) {
+		global $options;
+
 		// Bambuser embed players
 		preg_match_all( '/static.bambuser.com\/r\/player.swf\?vid=([0-9]+)/i', $markup, $matches1);
 		
@@ -1176,10 +1307,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $bambuser_thumbnails;
+
+		if (isset($bambuser_thumbnails))
+			return $bambuser_thumbnails;
 	} // end find_bambuser_widgets
 	
 	public function find_bandcamp_widgets($markup, $api) {
+		global $options;
+
 		// Standard embed code for albums
 		preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//i', $markup, $matches);					
 		$matches = array_unique($matches[1]);
@@ -1214,7 +1349,17 @@ class OGraphr_Core {
 
 		// Now if we've found a Bandcamp ID, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$bandcamp_thumbnail = $this->get_bandcamp_parent_thumbnail($match, $bandcamp_api);
+			//$bandcamp_thumbnail = $this->get_bandcamp_parent_thumbnail($match, $bandcamp_api);
+			// get parent album id
+			$service = "Bandcamp";
+			$json_url = "http://api.bandcamp.com/api/track/1/info?key=$api&track_id=$match";
+			$json_query = "album_id";
+			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+			// get album artwork
+			$json_url = "http://api.bandcamp.com/api/album/2/info?key=$api&album_id=$bandcamp_thumbnail";
+			$json_query = BANDCAMP_IMAGE_SIZE;
+			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+			
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
 				if ($bandcamp_thumbnail)
 					print "\t Bandcamp track: $bandcamp_thumbnail (ID:$match)\n";
@@ -1232,10 +1377,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $bandcamp_thumbnails;
+
+		if (isset($bandcamp_thumbnails))
+			return $bandcamp_thumbnails;
 	} // end find_bandcamp_widgets
 		
 	public function find_bliptv_widgets($markup) {
+		global $options;
+
 		// Blip.tv iFrame player
 		preg_match_all( '/blip.tv\/play\/([A-Za-z0-9]+)/i', $markup, $matches1 );
 	
@@ -1268,10 +1417,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $bliptv_thumbnails;
+
+		if (isset($bliptv_thumbnails))
+			return $bliptv_thumbnails;
 	} // end find_bliptv_widgets
-	
+
 	public function find_dailymotion_widgets($markup) {
+		global $options;
+
 		// Dailymotion Flash player
 		preg_match_all('#<object[^>]+>.+?https?://w*.?dailymotion.com/swf/video/([A-Za-z0-9-_]+).+?</object>#s', $markup, $matches1);
 
@@ -1307,10 +1460,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $dailymotion_thumbnails;
+		
+		if (isset($dailymotion_thumbnails))
+			return $dailymotion_thumbnails;
 	} //end find_dailymotion_widgets
 
 	public function find_flickr_widgets($markup, $api) {
+		global $options;
+
 		preg_match_all('/<object.*?data=\"http:\/\/www.flickr.com\/apps\/video\/stewart.swf\?.*?>(.*?photo_id=([0-9]+).*?)<\/object>/smi', $markup, $matches);
 		$matches = $matches[2];
 	
@@ -1337,10 +1494,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $flickr_thumbnails;
+
+		if (isset($flickr_thumbnails))
+			return $flickr_thumbnails;
 	} // end find_flickr_widgets
 	
 	public function find_hulu_widgets($markup) {
+		global $options;
+
 		// Hulu iFrame player
 		preg_match_all( '/hulu.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches );				
 		$matches = array_unique($matches[1]);
@@ -1368,10 +1529,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $hulu_thumbnails;
+		
+		if (isset($hulu_thumbnails))
+			return $hulu_thumbnails;
 	} // end find_hulu_widgets
 	
 	public function find_internetarchive_widgets($markup) {
+		global $options;
+
 		// Internet Archive iFrame players
 		preg_match_all( '/archive.org\/embed\/([A-Za-z0-9]+)/i', $markup, $matches);
 											
@@ -1400,10 +1565,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $internetarchive_thumbnails;
+
+		if (isset($internetarchive_thumbnails))
+			return $internetarchive_thumbnails;
 	} // end find_internetarchive_widgets
 	
 	public function find_justintv_widgets($markup) {
+		global $options;
+
 		// Justin.tv/Twitch.tv embed player
 		preg_match_all( '/(?:justin|twitch).tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/i', $markup, $matches );
 		
@@ -1432,10 +1601,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $justintv_thumbnails;
+
+		if (isset($justintv_thumbnails))
+			return $justintv_thumbnails;
 	} //end find_justintv_widgets
 	
 	public function find_livestream_widgets($markup) {
+		global $options;
+
 		// Standard embed code
 		preg_match_all('/cdn.livestream.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches);
 		$matches = array_unique($matches[1]);
@@ -1460,10 +1633,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $livestream_thumbnails;
+
+		if (isset($livestream_thumbnails))
+			return $livestream_thumbnails;
 	} // end find_livestream_widgets
 	
 	public function find_mixcloud_widgets($markup) {
+		global $options;
+
 		// Standard embed code
 		preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches);
 		$matches = array_unique($matches[1]);
@@ -1495,10 +1672,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $mixcloud_thumbnails;
+
+		if (isset($mixcloud_thumbnails))
+			return $mixcloud_thumbnails;
 	} // end find_mixcloud_widgets
 	
 	public function find_myvideo_widgets($markup, $dev_id, $website_id) {
+		global $options;
+
 		// Standard embed code
 		preg_match_all('/myvideo.(?:at|be|ch|de|nl|ro)\/movie\/([0-9]+)/i', $markup, $matches1);
 		
@@ -1531,10 +1712,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $myvideo_thumbnails;
+		
+		if (isset($myvideo_thumbnails))
+			return $myvideo_thumbnails;
 	} // end find_myvideo_widgets
 
 	public function find_official_widgets($markup) {
+		global $options;
+
 		// Official.fm iFrame
 		preg_match_all( '/official.fm%2F%2Ffeed%2Ftracks%2F([A-Za-z0-9]+)/i', $markup, $matches );
 		$matches = array_unique($matches[1]);
@@ -1562,11 +1747,15 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $official_thumbnails;
+		
+		if (isset($official_thumbnails))
+			return $official_thumbnails;
 	} // end find_official_widgets
 	
 	/*	
 	public function find_playfm_widgets($markup, $api) {
+		global $options;
+
 		// Play.fm embed
 		preg_match_all( '/playfmWidget.swf\?url=http%3A%2F%2Fwww.play.fm%2Frecordings%2Fflash%2F01%2Frecording%2F([0-9]+)/i', $markup, $matches );
 		$matches = array_unique($matches[1]);
@@ -1591,11 +1780,15 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $playfm_thumbnails;
+		
+		if (isset($playfm_thumbnails))
+			return $playfm_thumbnails;
 	} // end of find_playfm_widgets
 	*/
 	
 	public function find_rdio_widgets($markup) {
+		global $options;
+
 		// Rdio iFrame
 		preg_match_all( '/rd.io\/i\/([A-Za-z0-9]+)/i', $markup, $matches );
 		$matches = array_unique($matches[1]);
@@ -1623,10 +1816,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $rdio_thumbnails;
+
+		if (isset($rdio_thumbnails))
+			return $rdio_thumbnails;
 	} // end find_rdio_widgets
 	
 	public function find_socialcam_widgets($markup, $api) {
+		global $options;
+
 		// Socialcam iFrame
 		preg_match_all( '/rd.io\/i\/([A-Za-z0-9]+)/i', $markup, $matches );
 		$matches = array_unique($matches[1]);
@@ -1655,10 +1852,13 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $socialcam_thumbnails;
+		if (isset($socialcam_thumbnails))
+			return $socialcam_thumbnails;
 	} // end find_socialcam_widgets
 	
 	public function find_soundcloud_widgets($markup, $api) {
+		global $options;
+
 		// Standard embed code for tracks (Flash and HTML5 player)
 		preg_match_all('/api.soundcloud.com%2Ftracks%2F([0-9]+)/i', $markup, $matches1);
 
@@ -1728,10 +1928,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $soundcloud_thumbnails;
+
+		if (isset($soundcloud_thumbnails))
+			return $soundcloud_thumbnails;
 	} // end find_soundcloud_widgets
 	
 	public function find_ustream_widgets($markup, $api) {
+		global $options;
+
 		// Ustream iFrame player (recorded)
 		preg_match_all( '/ustream.tv\/(?:embed\/|embed\/recorded\/)([0-9]+)/i', $markup, $matches );
 		
@@ -1760,10 +1964,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $ustream_thumbnails;
+
+		if (isset($ustream_thumbnails))
+			return $ustream_thumbnails;
 	} // end find_ustream_widgets
 	
 	public function find_viddler_widgets($markup, $api) {
+		global $options;
+
 		preg_match_all( '/viddler.com\/embed\/([A-Za-z0-9]+)/i', $markup, $matches );
 
 		// Now if we've found a Viddler embed URL, let's set the thumbnail URL
@@ -1789,10 +1997,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $viddler_thumbnails;
+
+		if (isset($viddler_thumbnails))
+			return $viddler_thumbnails;
 	} // end find_viddler_widgets
 	
 	public function find_vimeo_widgets($markup) {
+		global $options;
+
 		// Vimeo Flash player ("old embed code")
 		preg_match_all('#<object[^>]+>.+?https?://vimeo.com/moogaloop.swf\?clip_id=([A-Za-z0-9\-_]+)&.+?</object>#s', $markup, $matches1);
 
@@ -1807,6 +2019,7 @@ class OGraphr_Core {
 
 		// Now if we've found a Vimeo ID, let's set the thumbnail URL
 		foreach($matches as $match) {
+			$json_url = "http://vimeo.com/api/v2/video/$match.php";
 			$vimeo_thumbnail = $this->get_vimeo_thumbnail($match, VIMEO_IMAGE_SIZE);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
 				if ($vimeo_thumbnail)
@@ -1825,10 +2038,14 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $vimeo_thumbnails;
+		
+		if (isset($vimeo_thumbnails))
+			return $vimeo_thumbnails;
 	} // end find_vimeo_widgets
 	
 	public function find_youtube_widgets($markup) {
+		global $options;
+
 		// Checks for the old standard YouTube embed
 		preg_match_all('#<object[^>]+>.+?https?://w*.?youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s', $markup, $matches1);
 
@@ -1849,8 +2066,8 @@ class OGraphr_Core {
 					print "\t YouTube #1: $youtube_thumbnail/0.jpg (ID:$match)\n";
 					print "\t YouTube #2: $youtube_thumbnail/1.jpg (ID:$match)\n";
 					print "\t YouTube #3: $youtube_thumbnail/2.jpg (ID:$match)\n";
-				} else {
-					print "\t YouTube: Error from URL ($json_url)\n";
+				} else {	
+					print "\t YouTube: Error from URL ($youtube_thumbnail/[012].jpg)\n";
 				}
 			}
 			
@@ -1872,7 +2089,9 @@ class OGraphr_Core {
 				}
 			}
 		}
-		return $youtube_thumbnails;
+		
+		if (isset($youtube_thumbnails))
+			return $youtube_thumbnails;
 	} //end find_youtube_widgets
 	
 	
@@ -2000,7 +2219,7 @@ class OGraphr_Core {
 		
 		if (is_array($widget_thumbnails))
 			foreach($widget_thumbnails as $widget_thumbnail)
-				$widget_thumbnail =  htmlentities($widget_thumbnail);
+				$widget_thumbnail = htmlentities($widget_thumbnail);
 				
 		if(!(empty($widget_thumbnails))) {
 			$widget_thumbnails = serialize($widget_thumbnails);

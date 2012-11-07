@@ -92,7 +92,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 	// Define default option settings
 	public function ographr_restore_defaults() {
 		$tmp = get_option('ographr_options');
-	    if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
+	    if((isset($tmp['chk_default_options_db'])) || (!is_array($tmp))) {
 		
 			if ($tmp['delete_postmeta'] == 1)
 				$this->ographr_delete_postmeta();
@@ -133,7 +133,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		wp_register_script( 'OGraphr_JScript', plugins_url('/inc/scripts.min.js', __FILE__), array('jquery'), null, true );
 		
 		
-		if ($options['add_graph']) {
+		if (isset($options['add_graph'])) {
 			wp_register_style( 'JQPlot_Stylesheet', plugins_url('/inc/jquery.jqplot.min.css', __FILE__) );
 			wp_register_script( 'JQPlot_Core', plugins_url('/inc/jquery.jqplot.min.js', __FILE__), array('jquery'), null, true );
 			wp_register_script( 'JQPlot_highlighter', plugins_url('/inc/jqplot.highlighter.min.js', __FILE__), array('jquery'), null, true );
@@ -177,7 +177,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 			wp_enqueue_style( 'OGraphr_Stylesheet' );
 			wp_enqueue_script( 'OGraphr_JScript' );
 		
-			if ($options['add_graph']) {
+			if (isset($options['add_graph'])) {
 				wp_enqueue_style( 'JQPlot_Stylesheet' );
 				wp_enqueue_script( 'JQPlot_Core' );
 				wp_enqueue_script( 'JQPlot_highlighter' );
@@ -271,7 +271,17 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 								<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
 
-								<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label>&nbsp;
+								<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label><br/>
+								
+								<label class="advanced_opt"><input name="ographr_options[add_author]" type="checkbox" value="1" <?php if (isset($options['add_author'])) { checked('1', $options['add_author']); } ?> /> Add author </label>&nbsp;
+
+								<label class="advanced_opt"><input name="ographr_options[add_section]" type="checkbox" value="1" <?php if (isset($options['add_section'])) { checked('1', $options['add_section']); } ?> /> Add category </label>&nbsp;
+
+								<label class="advanced_opt"><input name="ographr_options[add_tags]" type="checkbox" value="1" <?php if (isset($options['add_tags'])) { checked('1', $options['add_tags']); } ?> /> Add tags </label>&nbsp;
+
+								<label class="advanced_opt"><input name="ographr_options[add_pubtime]" type="checkbox" value="1" <?php if (isset($options['add_pubtime'])) { checked('1', $options['add_pubtime']); } ?> /> Add published time </label>&nbsp;
+								
+								<label class="advanced_opt"><input name="ographr_options[add_modtime]" type="checkbox" value="1" <?php if (isset($options['add_modtime'])) { checked('1', $options['add_modtime']); } ?> /> Add modified time </label>&nbsp;
 								
 								</tr>
 						
@@ -323,11 +333,11 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 									<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> />&nbsp;YouTube</label>
 							
-								<? if((!$options['bandcamp_api']) && ($options['enable_bandcamp'])) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
-								<? if((!$options['myvideo_dev_api']) && ($options['enable_myvideo'])) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_developer_key" style="color:red;">Developer API key</a></span>';} ?>
-								<? if((!$options['myvideo_web_api']) && ($options['enable_myvideo'])) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_website_key" style="color:red;">Website API key</a></span>';} ?>
-								<? if((!$options['socialcam_api']) && ($options['enable_socialcam'])) { echo '<br/><span style="color:red;font-size:x-small;">Socialcam requires a valid <a href="#socialcam_api_key" style="color:red;">API key</a></span>';} ?></td> 
-								<? if((!$options['viddler_api']) && ($options['enable_viddler'])) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
+								<? if((!isset($options['bandcamp_api'])) && (isset($options['enable_bandcamp']))) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
+								<? if((!isset($options['myvideo_dev_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_developer_key" style="color:red;">Developer API key</a></span>';} ?>
+								<? if((!isset($options['myvideo_web_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_website_key" style="color:red;">Website API key</a></span>';} ?>
+								<? if((!isset($options['socialcam_api'])) && (isset($options['enable_socialcam']))) { echo '<br/><span style="color:red;font-size:x-small;">Socialcam requires a valid <a href="#socialcam_api_key" style="color:red;">API key</a></span>';} ?></td> 
+								<? if((!isset($options['viddler_api'])) && (isset($options['enable_viddler']))) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 							</tr>
 							
 							<!-- ADVERTISEMENT -->
@@ -392,7 +402,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 										
 										<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude themes </label>&nbsp;
 									</td> 
-										
 								</tr>
 							
 								<!-- CUSTOM URLS -->
@@ -404,7 +413,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							
 								<!-- LIMIT ACCESS -->
 								<tr valign="center"> 
-									<th align="left" width="140px" scope="row"><a name="user_agents" id="user_agents"></a><label>User Agents:</label></th> 
+									<th align="left" width="140px" scope="row"><label name="user_agents" id="user_agents">User Agents:</label></th> 
 									<td colspan="2">
 										
 										<!-- Checkbox -->
@@ -413,12 +422,28 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 										<label><input name="ographr_options[gplus_ua]" type="checkbox" value="1" <?php if (isset($options['gplus_ua'])) { checked('1', $options['gplus_ua']); } ?> /> Google+ </label>&nbsp;
 										
 										<!-- Checkbox -->
-										<label><input name="ographr_options[linkedin_ua]" type="checkbox" value="1" <?php if (isset($options['linkedin_ua'])) { checked('1', $options['linkedin_ua']); } ?> /> LinkedIn </label></td>
+										<label><input name="ographr_options[linkedin_ua]" type="checkbox" value="1" <?php if (isset($options['linkedin_ua'])) { checked('1', $options['linkedin_ua']); } ?> /> LinkedIn </label>&nbsp;
+										
+										<!-- Checkbox -->
+										<label><input name="ographr_options[twitter_ua]" type="checkbox" value="1" <?php if (isset($options['twitter_ua'])) { checked('1', $options['twitter_ua']); } ?> /> Twitter </label></td>
 								</tr>
 							
 								<tr valign="top"> 
 									<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
 									<td colspan="2"><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites. <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank" >Google+</a> currently does not use a unique user-agent, hence the detection is inaccurate</a>!</small></td>
+								</tr>
+
+								<!-- OPENGRAPH -->
+								<tr valign="center"> 
+									<th align="left" width="140px" scope="row"><label>Open Graph:</label></th> 
+									<td colspan="2">
+										<label><input name="ographr_options[limit_opengraph]" type="checkbox" value="1" <?php if (isset($options['limit_opengraph'])) { checked('1', $options['limit_opengraph']); } ?> /> Only add Open Graph tags on Facebook </label>
+									</td> 
+								</tr>
+
+								<tr valign="top"> 
+									<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
+									<td colspan="2"><small>Note that other websites such as Google+ are able to interprete Open Graph tags as well.</small></td>
 								</tr>
 						
 							</tbody></table>			
@@ -520,107 +545,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						</dd>
 
 						</dl>
-					
-						<!-- F A C E B O O K -->
-						<dl class="advanced_opt">
-							<dt><h3>Facebook</h3></dt>
-							<dd>	
-							<table width="100%" cellspacing="2" cellpadding="5"> 
-							<tbody>
 
-							<!-- HUMAN READABLE-NAME -->	
-							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label>Human-readable Name:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[fb_site_name]" value="<?php echo $options['fb_site_name']; ?>" /></td> 
-							<td><small>(optional)</small</td>
-							</tr>
-						
-							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-							<td colspan="2"><small><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
-								<code>%siteurl%</code> &#8211; the URL of your blog (<em><? echo $wp_url; ?></em>)</small></td> 
-							</tr>
-						
-							<!-- OBJECT TYPE -->	
-							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label>Object Type:</label></th> 
-							<td width="30px">
-								<select name='ographr_options[fb_type]'>
-									<option value='_none' <?php selected('_none', $options['fb_type']); ?>>(none)</option>
-									<option value='activity' <?php selected('activity', $options['fb_type']); ?>>activity</option>
-									<option value='actor' <?php selected('actor', $options['fb_type']); ?>>actor</option>
-									<option value='album' <?php selected('album', $options['fb_type']); ?>>album</option>
-									<option value='article' <?php selected('article', $options['fb_type']); ?>>article</option>
-									<option value='athlete' <?php selected('athlete', $options['fb_type']); ?>>athlete</option>
-									<option value='author' <?php selected('author', $options['fb_type']); ?>>author</option>
-									<option value='band' <?php selected('band', $options['fb_type']); ?>>band</option>
-									<option value='bar' <?php selected('bar', $options['fb_type']); ?>>bar</option>
-									<option value='blog' <?php selected('blog', $options['fb_type']); ?>>blog</option>
-									<option value='book' <?php selected('book', $options['fb_type']); ?>>book</option>
-									<option value='cafe' <?php selected('cafe', $options['fb_type']); ?>>cafe</option>
-									<option value='cause' <?php selected('cause', $options['fb_type']); ?>>cause</option>
-									<option value='city' <?php selected('city', $options['fb_type']); ?>>city</option>
-									<option value='company' <?php selected('company', $options['fb_type']); ?>>company</option>
-									<option value='country' <?php selected('country', $options['fb_type']); ?>>country</option>
-									<option value='director' <?php selected('director', $options['fb_type']); ?>>director</option>
-									<option value='drink' <?php selected('drink', $options['fb_type']); ?>>drink</option>
-									<option value='food' <?php selected('food', $options['fb_type']); ?>>food</option>
-									<option value='game' <?php selected('game', $options['fb_type']); ?>>game</option>
-									<option value='government' <?php selected('government', $options['fb_type']); ?>>government</option>
-									<option value='hotel' <?php selected('hotel', $options['fb_type']); ?>>hotel</option>
-									<option value='landmark' <?php selected('landmark', $options['fb_type']); ?>>landmark</option>
-									<option value='movie' <?php selected('movie', $options['fb_type']); ?>>movie</option>
-									<option value='musician' <?php selected('musician', $options['fb_type']); ?>>musician</option>
-									<option value='non_profit' <?php selected('non_profit', $options['fb_type']); ?>>non_profit</option>
-									<option value='politician' <?php selected('politician', $options['fb_type']); ?>>politician</option>
-									<option value='product' <?php selected('product', $options['fb_type']); ?>>product</option>
-									<option value='public_figure' <?php selected('public_figure', $options['fb_type']); ?>>public_figure</option>
-									<option value='restaurant' <?php selected('restaurant', $options['fb_type']); ?>>restaurant</option>
-									<option value='school' <?php selected('school', $options['fb_type']); ?>>school</option>
-									<option value='song' <?php selected('song', $options['fb_type']); ?>>song</option>
-									<option value='sport' <?php selected('sport', $options['fb_type']); ?>>sport</option>
-									<option value='sports_league' <?php selected('sports_league', $options['fb_type']); ?>>sports_league</option>
-									<option value='sports_team' <?php selected('sports_team', $options['fb_type']); ?>>sports_team</option>
-									<option value='state_province' <?php selected('state_province', $options['fb_type']); ?>>state_province</option>
-									<option value='tv_show' <?php selected('tv_show', $options['fb_type']); ?>>tv_show</option>
-									<option value='university' <?php selected('university', $options['fb_type']); ?>>university</option>
-									<option value='website' <?php selected('website', $options['fb_type']); ?>>website</option>
-
-								</select>
-								</td> 
-							<td><small>(optional)</small></td>
-							</tr>
-						
-							<!-- FACEBOOK ADMIN -->	
-							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label>Admin ID:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[fb_admins]" value="<?php echo $options['fb_admins']; ?>" /></td> 
-							<td><small>(optional)</small></td>
-							</tr>
-						
-							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-							<td colspan="2"><small>If you administer a page for your blog on Facebook, you can enter your <a href="http://developers.facebook.com/docs/reference/api/user/" target="_blank">User ID</a> above</small></td> 
-							</tr>
-						
-							<!-- FACEBOOK APP -->	
-							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label>Application ID:</label></th> 
-							<td><input type="text" size="75" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /></td> 
-							<td><small>(optional)</small></td>
-							</tr>
-						
-							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-							<td colspan="2"><small>If your blog uses a Facebook app, you can enter your <a href="https://developers.facebook.com/apps" target="_blank">Application ID</a> above</small></td> 
-
-							</tr>						
-						
-							</tbody></table>			
-						</dd>
-
-						</dl>
-						
 						<!-- E X P E R T -->
 						<dl class="advanced_opt">
 							<dt><h3>Expert Settings</h3></dt>
@@ -855,6 +780,10 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<tr valign="center"> 
 									<th align="left" scope="row"><label> Alternative tags:</label></th> 
 									<td colspan="2">
+										<?php if (OGRAPHR_BETA) { ?>
+											<label><input name="ographr_options[add_twitter_meta]" type="checkbox" value="1" <?php if (isset($options['add_twitter_meta'])) { checked('1', $options['add_twitter_meta']); } ?> /> Twitter Cards <a href="https://dev.twitter.com/docs/cards" title="Twiter Documentation: Twitter Cards" target="_blank" id="help_link">?</a></label>&nbsp;
+										<?php } ?>
+										
 										<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Google+ Meta <a href="https://developers.google.com/+/plugins/snippet/" title="Google+ Documentation: Snippets" target="_blank" id="help_link">?</a></label>&nbsp;
 											
 										<label><input name="ographr_options[add_link_rel]" type="checkbox" value="1" <?php if (isset($options['add_link_rel'])) { checked('1', $options['add_link_rel']); } ?> /> Canonical Link Elements <a href="http://developers.whatwg.org/links.html" title="WHATWG: Links" target="_blank" id="help_link">?</a></label>&nbsp;
@@ -876,9 +805,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<tr valign="center"> 
 									<th align="left" scope="row"><label>Visual Graph:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[fill_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['fill_curves'])) { checked('1', $options['fill_curves']); }; if((!$options['add_graph']) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?>/> Fill curves</label>&nbsp;
+										<label><input name="ographr_options[fill_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['fill_curves'])) { checked('1', $options['fill_curves']); }; if((!isset($options['add_graph'])) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?>/> Fill curves</label>&nbsp;
 										
-										<label><input name="ographr_options[smooth_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); }; if((!$options['add_graph']) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?> /> Smooth curves</label>&nbsp;
+										<label><input name="ographr_options[smooth_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); }; if((!isset($options['add_graph'])) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?> /> Smooth curves</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -886,6 +815,137 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						</dd>
 
 						</dl>
+					
+						<!-- F A C E B O O K -->
+						<dl class="advanced_opt">
+							<dt><h3>Facebook</h3></dt>
+							<dd>	
+							<table width="100%" cellspacing="2" cellpadding="5"> 
+							<tbody>
+
+							<!-- HUMAN READABLE-NAME -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>Human-readable Name:</label></th> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[fb_site_name]" value="<?php echo $options['fb_site_name']; ?>" /></td> 
+							<td><small>(optional)</small</td>
+							</tr>
+						
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
+							<td colspan="2"><small><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
+								<code>%siteurl%</code> &#8211; the URL of your blog (<em><? echo $wp_url; ?></em>)</small></td> 
+							</tr>
+						
+							<!-- OBJECT TYPE -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>Object Type:</label></th> 
+							<td width="30px">
+								<select name='ographr_options[fb_type]'>
+									<option value='_none' <?php selected('_none', $options['fb_type']); ?>>(none)</option>
+									<option value='activity' <?php selected('activity', $options['fb_type']); ?>>activity</option>
+									<option value='actor' <?php selected('actor', $options['fb_type']); ?>>actor</option>
+									<option value='album' <?php selected('album', $options['fb_type']); ?>>album</option>
+									<option value='article' <?php selected('article', $options['fb_type']); ?>>article</option>
+									<option value='athlete' <?php selected('athlete', $options['fb_type']); ?>>athlete</option>
+									<option value='author' <?php selected('author', $options['fb_type']); ?>>author</option>
+									<option value='band' <?php selected('band', $options['fb_type']); ?>>band</option>
+									<option value='bar' <?php selected('bar', $options['fb_type']); ?>>bar</option>
+									<option value='blog' <?php selected('blog', $options['fb_type']); ?>>blog</option>
+									<option value='book' <?php selected('book', $options['fb_type']); ?>>book</option>
+									<option value='cafe' <?php selected('cafe', $options['fb_type']); ?>>cafe</option>
+									<option value='cause' <?php selected('cause', $options['fb_type']); ?>>cause</option>
+									<option value='city' <?php selected('city', $options['fb_type']); ?>>city</option>
+									<option value='company' <?php selected('company', $options['fb_type']); ?>>company</option>
+									<option value='country' <?php selected('country', $options['fb_type']); ?>>country</option>
+									<option value='director' <?php selected('director', $options['fb_type']); ?>>director</option>
+									<option value='drink' <?php selected('drink', $options['fb_type']); ?>>drink</option>
+									<option value='food' <?php selected('food', $options['fb_type']); ?>>food</option>
+									<option value='game' <?php selected('game', $options['fb_type']); ?>>game</option>
+									<option value='government' <?php selected('government', $options['fb_type']); ?>>government</option>
+									<option value='hotel' <?php selected('hotel', $options['fb_type']); ?>>hotel</option>
+									<option value='landmark' <?php selected('landmark', $options['fb_type']); ?>>landmark</option>
+									<option value='movie' <?php selected('movie', $options['fb_type']); ?>>movie</option>
+									<option value='musician' <?php selected('musician', $options['fb_type']); ?>>musician</option>
+									<option value='non_profit' <?php selected('non_profit', $options['fb_type']); ?>>non_profit</option>
+									<option value='politician' <?php selected('politician', $options['fb_type']); ?>>politician</option>
+									<option value='product' <?php selected('product', $options['fb_type']); ?>>product</option>
+									<option value='public_figure' <?php selected('public_figure', $options['fb_type']); ?>>public_figure</option>
+									<option value='restaurant' <?php selected('restaurant', $options['fb_type']); ?>>restaurant</option>
+									<option value='school' <?php selected('school', $options['fb_type']); ?>>school</option>
+									<option value='song' <?php selected('song', $options['fb_type']); ?>>song</option>
+									<option value='sport' <?php selected('sport', $options['fb_type']); ?>>sport</option>
+									<option value='sports_league' <?php selected('sports_league', $options['fb_type']); ?>>sports_league</option>
+									<option value='sports_team' <?php selected('sports_team', $options['fb_type']); ?>>sports_team</option>
+									<option value='state_province' <?php selected('state_province', $options['fb_type']); ?>>state_province</option>
+									<option value='tv_show' <?php selected('tv_show', $options['fb_type']); ?>>tv_show</option>
+									<option value='university' <?php selected('university', $options['fb_type']); ?>>university</option>
+									<option value='website' <?php selected('website', $options['fb_type']); ?>>website</option>
+
+								</select>
+								</td> 
+							<td><small>(optional)</small></td>
+							</tr>
+						
+							<!-- FACEBOOK ADMIN -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>Admin ID:</label></th> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[fb_admins]" value="<?php echo $options['fb_admins']; ?>" /></td> 
+							<td><small>(optional)</small></td>
+							</tr>
+						
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
+							<td colspan="2"><small>If you administer a page for your blog on Facebook, you can enter your <a href="http://developers.facebook.com/docs/reference/api/user/" target="_blank">User ID</a> above</small></td> 
+							</tr>
+						
+							<!-- FACEBOOK APP -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>Application ID:</label></th> 
+							<td><input type="text" size="75" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /></td> 
+							<td><small>(optional)</small></td>
+							</tr>
+						
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
+							<td colspan="2"><small>If your blog uses a Facebook app, you can enter your <a href="https://developers.facebook.com/apps" target="_blank">Application ID</a> above</small></td> 
+							</tr>	
+						
+							</tbody></table>			
+						</dd>
+
+						</dl>
+
+						<?php if (OGRAPHR_BETA) { ?>
+						<!-- TWITTER -->
+						<dl class="advanced_opt">
+							<dt><h3>Twitter</h3></dt>
+							<dd>
+							<p>
+								While this plugin is ready to support Twitter Cards, website owners must <a href="https://dev.twitter.com/form/participate-twitter-cards" target="_blank">opt-in</a> to have cards displayed for your domain, and Twitter must approve the integration. So, for the time being you can enter your credentials - and wait.
+							</p>
+							<table width="100%" cellspacing="2" cellpadding="5"> 
+							<tbody>
+						
+							<!-- WEBSITE USER -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>Website User:</label></th> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[twitter_site_user]" value="<?php echo $options['twitter_site_user']; ?>" /></td> 
+							<td><small>(optional)</small></td>
+							</tr>
+						
+						
+							<!-- AUTHOR USER -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>Author User:</label></th> 
+							<td><input type="text" size="75" name="ographr_options[twitter_author_user]" value="<?php echo $options['twitter_author_user']; ?>" /></td> 
+							<td><small>(optional)</small></td>
+							</tr>
+
+							</tbody></table>			
+						</dd>
+
+						</dl>
+						<?php } ?>
 
 						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" <?php if(!OGRAPHR_DEBUG) print 'id="enable_delete"'; ?> <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
 						
@@ -898,7 +958,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						</fieldset>
 						</form>
 						<!-- *********************** END: Main Content ********************* -->
-						<p class="yifooter"><a style="" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">OGraphr <? echo OGRAPHR_VERSION ?></a> &copy <? $this_year = date(Y); if (date(Y) > 2012) { print "2012-$this_year"; } else { print "2012"; } ?> by Jan T. Sott</p>
+						<p class="yifooter"><a style="" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">OGraphr <? echo OGRAPHR_VERSION ?></a> &copy <? $this_year = date('Y'); if (date('Y') > 2012) { print "2012-$this_year"; } else { print "2012"; } ?> by Jan T. Sott</p>
 						</td> <!-- [left] -->
 
 						<td class="right">
@@ -997,23 +1057,42 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 	// Sanitize and validate input. Accepts an array, return a sanitized array.
 	public function ographr_validate_options($input) {
 		 // strip html from textboxes
-		$input['website_title'] =  htmlentities($input['website_title']);
-		$input['website_thumbnail'] =  htmlentities($input['website_thumbnail']);
-		$input['website_description'] =  htmlentities($input['website_description']);
-		$input['filter_custom_urls'] =  htmlentities($input['filter_custom_urls']);
-		$input['etracks_api'] =  htmlentities($input['etracks_api']);
-		$input['bambuser_api'] =  htmlentities($input['bambuser_api']);
-		$input['bandcamp_api'] =  htmlentities($input['bandcamp_api']);
-		$input['flickr_api'] =  htmlentities($input['flickr_api']);
-		$input['myvideo_dev_api'] =  htmlentities($input['myvideo_dev_api']);
-		$input['myvideo_web_api'] =  htmlentities($input['myvideo_web_api']);
-		$input['socialcam_api'] =  htmlentities($input['socialcam_api']);
-		$input['soundcloud_api'] =  htmlentities($input['soundcloud_api']);
-		$input['ustream_api'] =  htmlentities($input['ustream_api']);
-		$input['viddler_api'] =  htmlentities($input['viddler_api']);
-		$input['fb_site_name'] =  htmlentities($input['fb_site_name']);
-		$input['fb_admins'] =  htmlentities($input['fb_admins']);
-		$input['fb_app_id'] =  htmlentities($input['fb_app_id']);
+		$input['website_title'] = htmlentities($input['website_title']);
+		$input['website_thumbnail'] = htmlentities($input['website_thumbnail']);
+		$input['website_description'] = htmlentities($input['website_description']);
+		$input['filter_custom_urls'] = htmlentities($input['filter_custom_urls']);
+		$input['etracks_api'] = htmlentities($input['etracks_api']);
+		$input['bambuser_api'] = htmlentities($input['bambuser_api']);
+		$input['bandcamp_api'] = htmlentities($input['bandcamp_api']);
+		$input['flickr_api'] = htmlentities($input['flickr_api']);
+		$input['myvideo_dev_api'] = htmlentities($input['myvideo_dev_api']);
+		$input['myvideo_web_api'] = htmlentities($input['myvideo_web_api']);
+		$input['socialcam_api'] = htmlentities($input['socialcam_api']);
+		$input['soundcloud_api'] = htmlentities($input['soundcloud_api']);
+		$input['ustream_api'] = htmlentities($input['ustream_api']);
+		$input['viddler_api'] = htmlentities($input['viddler_api']);
+		$input['fb_site_name'] = htmlentities($input['fb_site_name']);
+		$input['fb_admins'] = htmlentities($input['fb_admins']);
+		$input['fb_app_id'] = htmlentities($input['fb_app_id']);
+		$input['twitter_site_user'] = htmlentities($input['twitter_site_user']);
+		$input['twitter_author_user'] = htmlentities($input['twitter_author_user']);
+
+		// is twitter:site:id valid?
+		if ($input['twitter_site_user'] == "@")
+			$input['twitter_site_user'] = NULL;
+
+		$twitter_illegal = "/[^A-Za-z0-9_@]/";
+		$input['twitter_site_user'] = preg_replace($twitter_illegal, "", $input['twitter_site_user']);
+		if (($input['twitter_site_user'] != NULL) && ($input['twitter_site_user'][0] != "@"))
+			$input['twitter_site_user'] = "@" . $input['twitter_site_user'];
+
+		// is twitter:creator:id valid?
+		if ($input['twitter_author_user'] == "@")
+			$input['twitter_author_user'] = NULL;
+
+		$input['twitter_author_user'] = preg_replace($twitter_illegal, "", $input['twitter_author_user']);
+		if (($input['twitter_author_user'] != NULL) && ($input['twitter_author_user'][0] != "@"))
+			$input['twitter_author_user'] = "@" . $input['twitter_author_user'];
 		
 		return $input;
 	}
@@ -1037,7 +1116,11 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 										'posts_indexed' => '0'
 										);
 			}
-				
+			
+			// suppress warnings
+			$posts_total = NULL;
+			$posts_indexed = NULL;
+
 			foreach($stats as $key => $value) {
 				$posts_total = "$posts_total, ['$key', $value[posts_total]]";
 			}
@@ -1091,7 +1174,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 					axes:{
 				        xaxis:{
 				          renderer:jQuery.jqplot.DateAxisRenderer,
-				          tickInterval:'<?php if ($interval > 720 ) { print "1 year"; } else if ($interval > 90 ) { print "1 month"; } else if ($interval > 21 ) { print "1 week"; } else { print "1 day"; } ?>',
+				          tickInterval:'<?php if ($interval > 8760) { print "10 years"; } else if ($interval > 720 ) { print "1 year"; } else if ($interval > 90 ) { print "1 month"; } else if ($interval > 21 ) { print "1 week"; } else { print "1 day"; } ?>',
 				          min: <? print '"' . date("F j, Y", strtotime(array_shift(array_keys($stats))) ) . '"'; ?>,
 				          tickOptions:{
 				            formatString:'%b&nbsp;%#d'
