@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7
+Version: 0.7.1
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -24,11 +24,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Thanks to Sutherland Boswell, Michael Wöhrer, and Matthias Gutjahr!
+Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSandro
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7");
+    define("OGRAPHR_VERSION", "0.7.1");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -125,22 +125,6 @@ register_activation_hook( __FILE__, array(&$core, 'ographr_activate') );
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
-	
-// Get this plugins' settings
-$options = get_option('ographr_options');
-
-// Get API keys
-if (!$options['etracks_api']) { $options['etracks_api'] = ETRACKS_API_KEY; $etracks_api = $options['etracks_api']; }
-if (!$options['bambuser_api']) { $options['bambuser_api'] = BAMBUSER_API_KEY; $bambuser_api = $options['bambuser_api']; }
-if (!$options['flickr_api']) { $options['flickr_api'] = FLICKR_API_KEY; $flickr_api = $options['flickr_api']; }
-if (!$options['myvideo_dev_api']) { $myvideo_dev_api = $options['myvideo_dev_api']; }
-if (!$options['myvideo_web_api']) { $myvideo_web_api = $options['myvideo_web_api']; }
-//if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
-if (OGRAPHR_BETA == TRUE )
-	if (!$options['playfm_api']) { $options['playfm_api'] = PLAYFM_API_KEY; $playfm_api = $options['playfm_api']; }
-if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
-if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
-if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
 
 class OGraphr_Core {
 	
@@ -153,8 +137,7 @@ class OGraphr_Core {
 			else
 				$tmp_locale = "_none";
 			
-			delete_option('ographr_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
-			$arr = array(	"exec_mode" => "1",
+			$options = array(	"exec_mode" => "1",
 							"data_expiry" => "-1",
 							"advanced_opt" => "0",
 							"website_title" => "%postname%",
@@ -197,7 +180,7 @@ class OGraphr_Core {
 							"enable_jwplayer" => "1",
 							"add_attached_image" => "1",
 							"add_post_thumbnail" => "0",
-							"add_twitter_meta" => "1",
+							"add_twitter_meta" => "0",
 							"add_google_meta" => "0",
 							"add_link_rel" => "0",
 							"filter_smilies" => "1",
@@ -217,7 +200,7 @@ class OGraphr_Core {
 							"add_modtime" => "0"
 			);
 		
-			update_option('ographr_options', $arr);
+			return $options;
 	}
 	
 	public function remote_exists($path){
@@ -369,7 +352,8 @@ class OGraphr_Core {
 			$s_time = microtime();
 		}
 	
-		global $options;
+		//global $options;
+		$options = get_option('ographr_options');
 		global $post;
 		
 		if ((!$enable_plugin_on_front = $options['enable_plugin_on_front']) && (!is_single()) && (!is_page())) {
@@ -852,7 +836,8 @@ class OGraphr_Core {
 		
 	public function get_widget_thumbnails($markup) {		
 		
-		global $options;
+		//global $options;
+		$options = get_option('ographr_options');
 			
 		// Get images in post
 		if  (isset($options['add_post_images'])) {
@@ -996,7 +981,7 @@ class OGraphr_Core {
 		
 		// 8TRACKS
 		if (isset($options['enable_eight_tracks'])) {					
-			$etracks_thumbnails = $this->find_etracks_widgets($markup);
+			$etracks_thumbnails = $this->find_etracks_widgets($markup, $options);
 			if (isset($etracks_thumbnails)) {			
 				foreach ($etracks_thumbnails as $etracks_thumbnail) {
 					if ($etracks_thumbnail)
@@ -1007,7 +992,7 @@ class OGraphr_Core {
 		
 		// BAMBUSER
 		if (isset($options['enable_bambuser'])) {					
-			$bambuser_thumbnails = $this->find_bambuser_widgets($markup, $options['bambuser_api']);
+			$bambuser_thumbnails = $this->find_bambuser_widgets($markup, $options);
 			if (isset($bambuser_thumbnails)) {			
 				foreach ($bambuser_thumbnails as $bambuser_thumbnail) {
 					if ($bambuser_thumbnail)
@@ -1018,7 +1003,7 @@ class OGraphr_Core {
 			
 		// BANDCAMP
 		if (isset($options['enable_bandcamp'])) {					
-			$bandcamp_thumbnails = $this->find_bandcamp_widgets($markup, $options['bandcamp_api']);
+			$bandcamp_thumbnails = $this->find_bandcamp_widgets($markup, $options);
 			if (isset($bandcamp_thumbnails)) {			
 				foreach ($bandcamp_thumbnails as $bandcamp_thumbnail) {
 					if ($bandcamp_thumbnail)
@@ -1029,7 +1014,7 @@ class OGraphr_Core {
 							
 		// BLIP.TV
 		if (isset($options['enable_bliptv'])) {					
-			$bliptv_thumbnails = $this->find_bliptv_widgets($markup);
+			$bliptv_thumbnails = $this->find_bliptv_widgets($markup, $options);
 			if (isset($bliptv_thumbnails)) {			
 				foreach ($bliptv_thumbnails as $bliptv_thumbnail) {
 					if ($bliptv_thumbnail)
@@ -1040,7 +1025,7 @@ class OGraphr_Core {
 			
 		// DAILYMOTION
 		if (isset($options['enable_dailymotion'])) {					
-			$dailymotion_thumbnails = $this->find_dailymotion_widgets($markup);
+			$dailymotion_thumbnails = $this->find_dailymotion_widgets($markup, $options);
 			if (isset($dailymotion_thumbnails)) {			
 				foreach ($dailymotion_thumbnails as $dailymotion_thumbnail) {
 					if ($dailymotion_thumbnail)
@@ -1051,7 +1036,7 @@ class OGraphr_Core {
 		
 		// FLICKR
 		if (isset($options['enable_flickr'])) {					
-			$flickr_thumbnails = $this->find_flickr_widgets($markup, $options['flickr_api']);
+			$flickr_thumbnails = $this->find_flickr_widgets($markup, $options);
 			if (isset($flickr_thumbnails)) {			
 				foreach ($flickr_thumbnails as $flickr_thumbnail) {
 						if ($flickr_thumbnail)
@@ -1062,7 +1047,7 @@ class OGraphr_Core {
 		
 		// HULU	
 		if (isset($options['enable_hulu'])) {					
-			$hulu_thumbnails = $this->find_hulu_widgets($markup);
+			$hulu_thumbnails = $this->find_hulu_widgets($markup, $options);
 			if (isset($hulu_thumbnails)) {			
 				foreach ($hulu_thumbnails as $hulu_thumbnail) {
 					if ($hulu_thumbnail)
@@ -1073,7 +1058,7 @@ class OGraphr_Core {
 		
 		// INTERNET ARCHIVE
 		if (isset($options['enable_internetarchive'])) {					
-			$internetarchive_thumbnails = $this->find_internetarchive_widgets($markup);
+			$internetarchive_thumbnails = $this->find_internetarchive_widgets($markup, $options);
 			if (isset($internetarchive_thumbnails)) {			
 				foreach ($internetarchive_thumbnails as $internetarchive_thumbnail) {
 					if ($internetarchive_thumbnail)
@@ -1084,7 +1069,7 @@ class OGraphr_Core {
 		
 		// JUSTIN.TV	
 		if (isset($options['enable_justintv'])) {					
-			$justintv_thumbnails = $this->find_justintv_widgets($markup);
+			$justintv_thumbnails = $this->find_justintv_widgets($markup, $options);
 			if (isset($justintv_thumbnails)) {			
 				foreach ($justintv_thumbnails as $justintv_thumbnail) {
 					if ($justintv_thumbnail)
@@ -1095,7 +1080,7 @@ class OGraphr_Core {
 		
 		// LIVESTREAM	
 		if (isset($options['enable_livestream'])) {					
-			$livestream_thumbnails = $this->find_livestream_widgets($markup);
+			$livestream_thumbnails = $this->find_livestream_widgets($markup, $options);
 			if (isset($livestream_thumbnails)) {			
 				foreach ($livestream_thumbnails as $livestream_thumbnail) {
 					if ($livestream_thumbnail)
@@ -1106,7 +1091,7 @@ class OGraphr_Core {
 		
 		// MIXCLOUD	
 		if (isset($options['enable_mixcloud'])) {					
-			$mixcloud_thumbnails = $this->find_mixcloud_widgets($markup);
+			$mixcloud_thumbnails = $this->find_mixcloud_widgets($markup, $options);
 			if (isset($mixcloud_thumbnails)) {			
 				foreach ($mixcloud_thumbnails as $mixcloud_thumbnail) {
 					if ($mixcloud_thumbnail)
@@ -1117,7 +1102,7 @@ class OGraphr_Core {
 		
 		// MYVIDEO	
 		if (isset($options['enable_myvideo'])) {					
-			$myvideo_thumbnails = $this->find_myvideo_widgets($markup, $options['myvideo_dev_api'], $options['myvideo_web_api']);
+			$myvideo_thumbnails = $this->find_myvideo_widgets($markup, $options);
 			if (isset($myvideo_thumbnails)) {			
 				foreach ($myvideo_thumbnails as $myvideo_thumbnail) {
 					if ($myvideo_thumbnail)
@@ -1128,7 +1113,7 @@ class OGraphr_Core {
 			
 		// OFFICIAL.TV
 		if (isset($options['enable_official'])) {
-			$official_thumbnails = $this->find_official_widgets($markup);
+			$official_thumbnails = $this->find_official_widgets($markup, $options);
 			if (isset($official_thumbnails)) {	
 				foreach ($official_thumbnails as $official_thumbnail) {
 					if ($official_thumbnail)
@@ -1140,7 +1125,7 @@ class OGraphr_Core {
 		/*
 		// PLAY.FM
 		if (isset($options['enable_playfm'])) {
-			$playfm_thumbnails = $this->find_playfm_widgets($markup, $options['playfm_api']);
+			$playfm_thumbnails = $this->find_playfm_widgets($markup, $options);
 			if (isset($playfm_thumbnails)) {	
 				foreach ($playfm_thumbnails as $playfm_thumbnail) {
 					if ($playfm_thumbnail)
@@ -1152,7 +1137,7 @@ class OGraphr_Core {
 		
 		// RDIO
 		if (isset($options['enable_rdio'])) {
-			$rdio_thumbnails = $this->find_rdio_widgets($markup);
+			$rdio_thumbnails = $this->find_rdio_widgets($markup, $options);
 			if (isset($rdio_thumbnails)) {	
 				foreach ($rdio_thumbnails as $rdio_thumbnail) {
 					if ($rdio_thumbnail)
@@ -1163,7 +1148,7 @@ class OGraphr_Core {
 		
 		// SOCIALCAM
 		if (isset($options['enable_socialcam'])) {
-			$socialcam_thumbnails = $this->find_socialcam_widgets($markup, $options['socialcam_api']);
+			$socialcam_thumbnails = $this->find_socialcam_widgets($markup, $options);
 			if (isset($socialcam_thumbnails)) {	
 				foreach ($socialcam_thumbnails as $socialcam_thumbnail) {
 					if ($socialcam_thumbnail)
@@ -1174,7 +1159,7 @@ class OGraphr_Core {
 	
 		// SOUNDCLOUD
 		if (isset($options['enable_soundcloud'])) {
-			$soundcloud_thumbnails = $this->find_soundcloud_widgets($markup, $options['soundcloud_api']);
+			$soundcloud_thumbnails = $this->find_soundcloud_widgets($markup, $options);
 			if (isset($soundcloud_thumbnails)) {	
 				foreach ($soundcloud_thumbnails as $soundcloud_thumbnail) {
 					if ($soundcloud_thumbnail)
@@ -1185,7 +1170,7 @@ class OGraphr_Core {
 
 		// USTREAM	
 		if (isset($options['enable_ustream'])) {
-			$ustream_thumbnails = $this->find_ustream_widgets($markup, $options['ustream_api']);
+			$ustream_thumbnails = $this->find_ustream_widgets($markup, $options);
 			if (isset($ustream_thumbnails)) {
 				foreach ($ustream_thumbnails as $ustream_thumbnail) {
 					if ($ustream_thumbnail)
@@ -1196,7 +1181,7 @@ class OGraphr_Core {
 
 		// VIDDLER
 		if (isset($options['enable_viddler'])) {
-			$viddler_thumbnails = $this->find_viddler_widgets($markup, $options['viddler_api']);
+			$viddler_thumbnails = $this->find_viddler_widgets($markup, $options);
 			if (isset($viddler_thumbnails)) {
 				foreach ($viddler_thumbnails as $viddler_thumbnail) {
 					if ($viddler_thumbnail)
@@ -1207,7 +1192,7 @@ class OGraphr_Core {
 	
 		// VIMEO
 		if (isset($options['enable_vimeo'])) {
-			$vimeo_thumbnails = $this->find_vimeo_widgets($markup);
+			$vimeo_thumbnails = $this->find_vimeo_widgets($markup, $options);
 			if (isset($vimeo_thumbnails)) {
 				foreach ($vimeo_thumbnails as $vimeo_thumbnail) {
 					if ($vimeo_thumbnail)
@@ -1218,7 +1203,7 @@ class OGraphr_Core {
 
 		// YOUTUBE
 		if (isset($options['enable_youtube'])) {
-			$youtube_thumbnails = $this->find_youtube_widgets($markup);
+			$youtube_thumbnails = $this->find_youtube_widgets($markup, $options);
 			if (isset($youtube_thumbnails)) {
 				foreach ($youtube_thumbnails as $youtube_thumbnail) {
 					if ($youtube_thumbnail)
@@ -1231,8 +1216,7 @@ class OGraphr_Core {
 	}	// end get_widget_thumbnails
 		
 	
-	public function find_etracks_widgets($markup) {
-		global $options;
+	public function find_etracks_widgets($markup, $options) {
 
 		// 8tracks iFrame and embed players
 		preg_match_all( '/8tracks.com\/mixes\/([0-9]+)\/player/i', $markup, $matches1 );
@@ -1272,8 +1256,9 @@ class OGraphr_Core {
 	} // end find_etracks_widgets
 	
 	
-	public function find_bambuser_widgets($markup, $api) {
-		global $options;
+	public function find_bambuser_widgets($markup, $options) {
+
+		$api = $options['bambuser_api'];
 
 		// Bambuser embed players
 		preg_match_all( '/static.bambuser.com\/r\/player.swf\?vid=([0-9]+)/i', $markup, $matches1);
@@ -1312,8 +1297,8 @@ class OGraphr_Core {
 			return $bambuser_thumbnails;
 	} // end find_bambuser_widgets
 	
-	public function find_bandcamp_widgets($markup, $api) {
-		global $options;
+	public function find_bandcamp_widgets($markup, $options) {
+		$api = $options["bandcamp_api"];
 
 		// Standard embed code for albums
 		preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//i', $markup, $matches);					
@@ -1382,8 +1367,7 @@ class OGraphr_Core {
 			return $bandcamp_thumbnails;
 	} // end find_bandcamp_widgets
 		
-	public function find_bliptv_widgets($markup) {
-		global $options;
+	public function find_bliptv_widgets($markup, $options) {
 
 		// Blip.tv iFrame player
 		preg_match_all( '/blip.tv\/play\/([A-Za-z0-9]+)/i', $markup, $matches1 );
@@ -1422,8 +1406,7 @@ class OGraphr_Core {
 			return $bliptv_thumbnails;
 	} // end find_bliptv_widgets
 
-	public function find_dailymotion_widgets($markup) {
-		global $options;
+	public function find_dailymotion_widgets($markup, $options) {
 
 		// Dailymotion Flash player
 		preg_match_all('#<object[^>]+>.+?https?://w*.?dailymotion.com/swf/video/([A-Za-z0-9-_]+).+?</object>#s', $markup, $matches1);
@@ -1465,8 +1448,9 @@ class OGraphr_Core {
 			return $dailymotion_thumbnails;
 	} //end find_dailymotion_widgets
 
-	public function find_flickr_widgets($markup, $api) {
-		global $options;
+	public function find_flickr_widgets($markup, $options) {
+
+		$api = $options['flickr_api'];
 
 		preg_match_all('/<object.*?data=\"http:\/\/www.flickr.com\/apps\/video\/stewart.swf\?.*?>(.*?photo_id=([0-9]+).*?)<\/object>/smi', $markup, $matches);
 		$matches = $matches[2];
@@ -1499,8 +1483,7 @@ class OGraphr_Core {
 			return $flickr_thumbnails;
 	} // end find_flickr_widgets
 	
-	public function find_hulu_widgets($markup) {
-		global $options;
+	public function find_hulu_widgets($markup, $options) {
 
 		// Hulu iFrame player
 		preg_match_all( '/hulu.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches );				
@@ -1534,8 +1517,7 @@ class OGraphr_Core {
 			return $hulu_thumbnails;
 	} // end find_hulu_widgets
 	
-	public function find_internetarchive_widgets($markup) {
-		global $options;
+	public function find_internetarchive_widgets($markup, $options) {
 
 		// Internet Archive iFrame players
 		preg_match_all( '/archive.org\/embed\/([A-Za-z0-9]+)/i', $markup, $matches);
@@ -1570,8 +1552,7 @@ class OGraphr_Core {
 			return $internetarchive_thumbnails;
 	} // end find_internetarchive_widgets
 	
-	public function find_justintv_widgets($markup) {
-		global $options;
+	public function find_justintv_widgets($markup, $options) {
 
 		// Justin.tv/Twitch.tv embed player
 		preg_match_all( '/(?:justin|twitch).tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/i', $markup, $matches );
@@ -1606,8 +1587,7 @@ class OGraphr_Core {
 			return $justintv_thumbnails;
 	} //end find_justintv_widgets
 	
-	public function find_livestream_widgets($markup) {
-		global $options;
+	public function find_livestream_widgets($markup, $options) {
 
 		// Standard embed code
 		preg_match_all('/cdn.livestream.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches);
@@ -1638,8 +1618,7 @@ class OGraphr_Core {
 			return $livestream_thumbnails;
 	} // end find_livestream_widgets
 	
-	public function find_mixcloud_widgets($markup) {
-		global $options;
+	public function find_mixcloud_widgets($markup, $options) {
 
 		// Standard embed code
 		preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches);
@@ -1677,8 +1656,10 @@ class OGraphr_Core {
 			return $mixcloud_thumbnails;
 	} // end find_mixcloud_widgets
 	
-	public function find_myvideo_widgets($markup, $dev_id, $website_id) {
-		global $options;
+	public function find_myvideo_widgets($markup, $options) {
+
+		$dev_id = $options['myvideo_dev_api'];
+		$website_id = $options['myvideo_web_api'];
 
 		// Standard embed code
 		preg_match_all('/myvideo.(?:at|be|ch|de|nl|ro)\/movie\/([0-9]+)/i', $markup, $matches1);
@@ -1717,8 +1698,7 @@ class OGraphr_Core {
 			return $myvideo_thumbnails;
 	} // end find_myvideo_widgets
 
-	public function find_official_widgets($markup) {
-		global $options;
+	public function find_official_widgets($markup, $options) {
 
 		// Official.fm iFrame
 		preg_match_all( '/official.fm%2F%2Ffeed%2Ftracks%2F([A-Za-z0-9]+)/i', $markup, $matches );
@@ -1753,8 +1733,9 @@ class OGraphr_Core {
 	} // end find_official_widgets
 	
 	/*	
-	public function find_playfm_widgets($markup, $api) {
-		global $options;
+	public function find_playfm_widgets($markup, $options) {
+
+		$api = $options['playfm_api'];
 
 		// Play.fm embed
 		preg_match_all( '/playfmWidget.swf\?url=http%3A%2F%2Fwww.play.fm%2Frecordings%2Fflash%2F01%2Frecording%2F([0-9]+)/i', $markup, $matches );
@@ -1786,8 +1767,7 @@ class OGraphr_Core {
 	} // end of find_playfm_widgets
 	*/
 	
-	public function find_rdio_widgets($markup) {
-		global $options;
+	public function find_rdio_widgets($markup, $options) {
 
 		// Rdio iFrame
 		preg_match_all( '/rd.io\/i\/([A-Za-z0-9]+)/i', $markup, $matches );
@@ -1821,8 +1801,9 @@ class OGraphr_Core {
 			return $rdio_thumbnails;
 	} // end find_rdio_widgets
 	
-	public function find_socialcam_widgets($markup, $api) {
-		global $options;
+	public function find_socialcam_widgets($markup, $options) {
+
+		$api = $options['socialcam_api'];
 
 		// Socialcam iFrame
 		preg_match_all( '/rd.io\/i\/([A-Za-z0-9]+)/i', $markup, $matches );
@@ -1856,8 +1837,9 @@ class OGraphr_Core {
 			return $socialcam_thumbnails;
 	} // end find_socialcam_widgets
 	
-	public function find_soundcloud_widgets($markup, $api) {
-		global $options;
+	public function find_soundcloud_widgets($markup, $options) {
+
+		$api = $options['soundcloud_api'];
 
 		// Standard embed code for tracks (Flash and HTML5 player)
 		preg_match_all('/api.soundcloud.com%2Ftracks%2F([0-9]+)/i', $markup, $matches1);
@@ -1933,8 +1915,9 @@ class OGraphr_Core {
 			return $soundcloud_thumbnails;
 	} // end find_soundcloud_widgets
 	
-	public function find_ustream_widgets($markup, $api) {
-		global $options;
+	public function find_ustream_widgets($markup, $options) {
+
+		$api = $options['ustream_api'];
 
 		// Ustream iFrame player (recorded)
 		preg_match_all( '/ustream.tv\/(?:embed\/|embed\/recorded\/)([0-9]+)/i', $markup, $matches );
@@ -1969,8 +1952,9 @@ class OGraphr_Core {
 			return $ustream_thumbnails;
 	} // end find_ustream_widgets
 	
-	public function find_viddler_widgets($markup, $api) {
-		global $options;
+	public function find_viddler_widgets($markup, $options) {
+
+		$api = $options['viddler_api'];
 
 		preg_match_all( '/viddler.com\/embed\/([A-Za-z0-9]+)/i', $markup, $matches );
 
@@ -2002,8 +1986,7 @@ class OGraphr_Core {
 			return $viddler_thumbnails;
 	} // end find_viddler_widgets
 	
-	public function find_vimeo_widgets($markup) {
-		global $options;
+	public function find_vimeo_widgets($markup, $options) {
 
 		// Vimeo Flash player ("old embed code")
 		preg_match_all('#<object[^>]+>.+?https?://vimeo.com/moogaloop.swf\?clip_id=([A-Za-z0-9\-_]+)&.+?</object>#s', $markup, $matches1);
@@ -2043,8 +2026,7 @@ class OGraphr_Core {
 			return $vimeo_thumbnails;
 	} // end find_vimeo_widgets
 	
-	public function find_youtube_widgets($markup) {
-		global $options;
+	public function find_youtube_widgets($markup, $options) {
 
 		// Checks for the old standard YouTube embed
 		preg_match_all('#<object[^>]+>.+?https?://w*.?youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s', $markup, $matches1);
@@ -2097,76 +2079,29 @@ class OGraphr_Core {
 	
 	// initialize
 	public function ographr_core_init() {
-		global $core;
-		global $options;
-		
-		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1)
-			$core->ographr_self_update();
-	}
-	
-	// upgrades? currently not in use
-	public function ographr_self_update() {
-		global $options;
-		
-		// house keeping
-			$last_update = $options['last_updated'];
-			$opt_updated = FALSE;
-		
-			// pre 0.5
-			if (!$options['exec_mode']) {
-				$options['exec_mode'] = "1";
-				if ($options[‘flickr_api’] == FLICKR_API_KEY)
-					$options[‘flickr_api’] = "";
-				if ($options[‘soundcloud_api’] == SOUNDCLOUD_API_KEY)
-					$options[‘soundcloud_api’] = "";
-				if ($options[‘ustream_api’] == USTREAM_API_KEY)
-					$options[‘ustream_api’] = "";
-				$opt_updated = TRUE;
-			}
+		$options = $this->ographr_set_defaults();
 
-			// pre 0.5.5
-			if (!$last_update) {
-				$options['enable_videoposter'] = "1";
-				$options['enable_jwplayer'] = "1";
-				$options['add_post_images'] = "1";
-				$opt_updated = TRUE;
-			}
-			
-			// 0.5.6
-			if (version_compare($last_update, "0.5.6") == "<=") {
-				$options['data_expiry'] = "-1";
-				$opt_updated = TRUE;
-			}
-			
-			// 0.5.9
-			if (version_compare($last_update, "0.5.10") == "<") {
-				$options['enable_bambuser'] = "1";
-				$opt_updated = TRUE;
-			}
-			
-			// 0.6
-			if (version_compare($last_update, "0.6") == "<") {
-				$options['enable_livestream'] = "1";
-				$opt_updated = TRUE;
-			}
-			
-			// 0.6.3
-			if (version_compare($last_update, "0.6.3") == "<") {
-				$options['enable_internetarchive'] = "1";
-				$opt_updated = TRUE;
-			}
-			
-			// 0.6.9
-			if (version_compare($last_update, "0.6.9") == "<") {
-				$options['enable_rdio'] = "1";
-				$opt_updated = TRUE;
-			}
+		//global $options;
+		$options = get_option('ographr_options');
+
+		// Get API keys
+		if ( (!$options['etracks_api']) || (!$options['bambuser_api']) || (!$options['flickr_api']) || (!$options['myvideo_dev_api']) || (!$options['myvideo_web_api']) || (!$options['socialcam_api']) || (!$options['soundcloud_api']) || (!$options['ustream_api']) ) {
+			if (!$options['etracks_api']) { $options['etracks_api'] = ETRACKS_API_KEY; }
+			if (!$options['bambuser_api']) { $options['bambuser_api'] = BAMBUSER_API_KEY; }
+			if (!$options['flickr_api']) { $options['flickr_api'] = FLICKR_API_KEY; }
+			if (!$options['myvideo_dev_api']) { $myvideo_dev_api = $options['myvideo_dev_api']; }
+			if (!$options['myvideo_web_api']) { $myvideo_web_api = $options['myvideo_web_api']; }
+			//if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
+			if (OGRAPHR_BETA == TRUE )
+				if (!$options['playfm_api']) { $options['playfm_api'] = PLAYFM_API_KEY; $playfm_api = $options['playfm_api']; }
+			if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
+			if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
+			if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
+
+			update_option('ographr_options', $options);
+		}
 		
-			// version that performed update
-			if ($opt_updated == TRUE) {
-				$options['last_update'] = OGRAPHR_VERSION;
-				update_option('ographr_options', $options);
-			}
+		
 	}
 	
 	// Display a Settings link on the OGraphr Plugins page
@@ -2184,7 +2119,8 @@ class OGraphr_Core {
 
 
 	public function ographr_admin_notice(){
-	    global $options;
+	    //global $options;
+		$options = get_option('ographr_options');
 
 		// Debug
 		if ((OGRAPHR_DEBUG == TRUE) && (current_user_can('manage_options'))) {
@@ -2205,7 +2141,8 @@ class OGraphr_Core {
 	// Save thumbnails as postdata
 	public function ographr_save_postmeta($post_id) {
 		global $core;
-		global $options;
+		//global $options;
+		$options = get_option('ographr_options');
 
 		if($options['exec_mode'] == 2) {
 			return;
@@ -2288,7 +2225,8 @@ class OGraphr_Core {
 	
 	
 	public function ographr_admin_bar() {
-		global $options;	
+		//global $options;
+		$options = get_option('ographr_options');	
 		if (!$options['add_adminbar'])
 			return;
 			

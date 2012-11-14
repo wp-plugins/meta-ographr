@@ -103,9 +103,11 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 			else
 				$tmp_locale = "_none";
 				
-			$this->ographr_set_defaults();
-			
-			$options = get_option('ographr_options');
+			//$this->ographr_set_defaults();
+			delete_option('ographr_options');
+
+			$options = $this->ographr_set_defaults();
+			update_option('ographr_options', $options);
 		}
 	}
 
@@ -119,14 +121,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 	// Init plugin options to white list our options
 	public function ographr_init(){
-		
+
 		//global $options;
 		$options = get_option('ographr_options');
-		
-		if (version_compare($options['last_update'], OGRAPHR_VERSION) == -1) {
-			$core->ographr_self_update();
-			$options = get_option('ographr_options');
-		}
 		
 		// 0.6
 		wp_register_style( 'OGraphr_Stylesheet', plugins_url('/inc/style.min.css', __FILE__) );
@@ -771,7 +768,15 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<option value='vi' <?php selected('vi', $options['locale']); ?>>Vietnamese</option>
 								</select>
 								
-								<?php if (WPLANG) { print "<small>Wordpress is currently set to <em>" . WPLANG . "</em></small>"; } ?>
+								<?php
+									if (!WPLANG) {
+										print "<small>Wordpress is set to default language (<em>en</em>)</small>"; 
+									} else if (!defined('WPLANG')) {
+										print "<small>not defined, using default (<em>en</em>)</small>"; 
+									} else {
+										print "<small>Wordpress is currently set to <em>" . WPLANG . "</em></small>";
+									}
+								?>
 								
 								</td>
 							</tr>
@@ -780,9 +785,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<tr valign="center"> 
 									<th align="left" scope="row"><label> Alternative tags:</label></th> 
 									<td colspan="2">
-										<?php if (OGRAPHR_BETA) { ?>
-											<label><input name="ographr_options[add_twitter_meta]" type="checkbox" value="1" <?php if (isset($options['add_twitter_meta'])) { checked('1', $options['add_twitter_meta']); } ?> /> Twitter Cards <a href="https://dev.twitter.com/docs/cards" title="Twiter Documentation: Twitter Cards" target="_blank" id="help_link">?</a></label>&nbsp;
-										<?php } ?>
+										<label><input name="ographr_options[add_twitter_meta]" type="checkbox" value="1" <?php if (isset($options['add_twitter_meta'])) { checked('1', $options['add_twitter_meta']); } ?> /> Twitter Cards <a href="https://dev.twitter.com/docs/cards" title="Twiter Documentation: Twitter Cards" target="_blank" id="help_link">?</a></label>&nbsp;
 										
 										<label><input name="ographr_options[add_google_meta]" type="checkbox" value="1" <?php if (isset($options['add_google_meta'])) { checked('1', $options['add_google_meta']); } ?> /> Google+ Meta <a href="https://developers.google.com/+/plugins/snippet/" title="Google+ Documentation: Snippets" target="_blank" id="help_link">?</a></label>&nbsp;
 											
@@ -802,12 +805,12 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								</tr>
 								
 								<!-- STATISTICS -->
-								<tr valign="center"> 
+								<tr valign="center" class="disable_graph"> 
 									<th align="left" scope="row"><label>Visual Graph:</label></th> 
 									<td colspan="2">
 										<label><input name="ographr_options[fill_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['fill_curves'])) { checked('1', $options['fill_curves']); }; if((!isset($options['add_graph'])) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?>/> Fill curves</label>&nbsp;
 										
-										<label><input name="ographr_options[smooth_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); }; if((!isset($options['add_graph'])) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?> /> Smooth curves</label>&nbsp;
+										<label ><input name="ographr_options[smooth_curves]" class="disable_graph no_expiry" type="checkbox" value="1" <?php if (isset($options['smooth_curves'])) { checked('1', $options['smooth_curves']); }; if((!isset($options['add_graph'])) || ($options['exec_mode'] == 2)) print 'disabled="disabled"'; ?> /> Smooth curves</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -915,7 +918,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 						</dl>
 
-						<?php if (OGRAPHR_BETA) { ?>
+
 						<!-- TWITTER -->
 						<dl class="advanced_opt">
 							<dt><h3>Twitter</h3></dt>
@@ -942,10 +945,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							</tr>
 
 							</tbody></table>			
-						</dd>
+							</dd>
 
 						</dl>
-						<?php } ?>
 
 						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" <?php if(!OGRAPHR_DEBUG) print 'id="enable_delete"'; ?> <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
 						
