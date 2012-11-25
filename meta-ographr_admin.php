@@ -358,7 +358,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<tr valign="center" class="advanced_opt"> 
 									<th align="left" scope="row"><label>Functionality:</label></th> 
 									<td colspan="2">
-									<label><input name="ographr_options[enable_plugin_on_front]" type="checkbox" id="enable_plugin" value="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?> /> Enable plug-in </label>&nbsp;
+									<label><input name="ographr_options[enable_plugin_on_front]" type="checkbox" class="atoggle" value="1" data-atarget="input.enable_triggers" data-astate="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?>/> Enable plug-in </label>&nbsp;
 								
 									<label><input name="ographr_options[enable_triggers_on_front]" type="checkbox" class="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!$options['enable_plugin_on_front']) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
 									</td> 
@@ -462,7 +462,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<!-- 8TRACKS -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label><a name="etracks_api_key" id="etracks_api_key"></a>8tracks:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[etracks_api]" value="<?php if (($options['etracks_api'] != ETRACKS_API_KEY) && ($options['etracks_api'])) { echo $options['etracks_api']; } ?>" /></td> 
+							<td width="30px"><input type="text"  size="75" name="ographr_options[etracks_api]" value="<?php if (($options['etracks_api'] != ETRACKS_API_KEY) && ($options['etracks_api'])) { echo $options['etracks_api']; } ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 							
@@ -510,7 +510,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<td><small>(optional)</small></td>
 							<? } ?>
 							
-							<!-- SOUNDCLOUD -->	
+							<!-- SOCIALCAM -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label><a name="socialcam_api_key" id="socialcam_api_key"></a>Socialcam:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[socialcam_api]" value="<?php if ($options['socialcam_api']) { echo $options['socialcam_api']; } ?>" /></td> 
@@ -555,9 +555,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<th align="left" scope="row"><label>Image Retrieval:</label></th> 
 									<td colspan="2">
 										<div id="enable_expiry">
-											<label><input name="ographr_options[exec_mode]" type="radio" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?>  />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
+											<label><input name="ographr_options[exec_mode]" type="radio" class="atoggle" data-atarget=".no_expiry" data-astate="1" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?>  />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
 
-											<label><input name="ographr_options[exec_mode]" type="radio" value="2" <?php if (isset($options['exec_mode'])) { checked('2', $options['exec_mode']); } ?> id="enable_expiry" />&nbsp;Everytime your site is visited (slow, more accurate)&nbsp;</label>
+											<label><input name="ographr_options[exec_mode]" type="radio" class="atoggle" data-atarget=".no_expiry" data-astate="0" value="2" <?php if (isset($options['exec_mode'])) { checked('2', $options['exec_mode']); } ?>  />&nbsp;Everytime your site is visited (slow, more accurate)&nbsp;</label>
 										</div>
 									</td> 
 								</tr>
@@ -599,9 +599,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 										<label><input name="ographr_options[enable_jwplayer]" type="checkbox" value="1" <?php if (isset($options['enable_jwplayer'])) { checked('1', $options['enable_jwplayer']); } ?> /> JW Player </label>&nbsp;
 
-										<label><input name="ographr_options[add_post_images]" type="checkbox" id="enable_images" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
+										<label><input name="ographr_options[add_post_images]" type="checkbox" class="atoggle" data-atarget="input.disable_filters, textarea.disable_filters" data-astate="1" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
 
-										<label><input name="ographr_options[add_attached_image]" type="checkbox" value="1" id="attached_image" <?php if (isset($options['add_attached_image'])) { checked('1', $options['add_attached_image']); } ?> /> Attached images </label>&nbsp;
+										<label><input name="ographr_options[add_attached_image]" type="checkbox" value="1" class="atoggle" data-atarget="input.post_thumbnail" data-astate="0" <?php if (isset($options['add_attached_image'])) { checked('1', $options['add_attached_image']); } ?> /> Attached images </label>&nbsp;
 										
 										<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" class="post_thumbnail" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); }; if ($options['add_attached_image']) { print 'disabled="disabled"'; } ?> /> Post thumbnail <a href="http://codex.wordpress.org/Post_Thumbnails" title="Wordpress Codex: Post Thumbnails" target="_blank" id="help_link">?</a></label>&nbsp;
 									</td>
@@ -800,7 +800,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<td colspan="2">
 										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>&nbsp;
 										
-										<label><input name="ographr_options[add_graph]" id="enable_graph" class="no_expiry" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); }; if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?>/> Add visual graph</label>&nbsp;
+										<label><input name="ographr_options[add_graph]" class="atoggle no_expiry" data-atarget=".disable_graph" data-astate="1" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); }; if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?>/> Add visual graph</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -924,15 +924,22 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<dt><h3>Twitter</h3></dt>
 							<dd>
 							<p>
-								While this plugin is ready to support Twitter Cards, website owners must <a href="https://dev.twitter.com/form/participate-twitter-cards" target="_blank">opt-in</a> to have cards displayed for your domain, and Twitter must approve the integration. So, for the time being you can enter your credentials - and wait.
+								Website owners must <a href="https://dev.twitter.com/form/participate-twitter-cards" target="_blank">opt-in</a> to have cards displayed for your domain, and Twitter must approve the integration. Below you can specify both your <em>@username</em> and/or your user ID. Note that user IDs never change, while <em>@usernames</em> can be changed by the user.
 							</p>
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
-						
+
 							<!-- WEBSITE USER -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Website User:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[twitter_site_user]" value="<?php echo $options['twitter_site_user']; ?>" /></td> 
+							<td><small>(optional)</small></td>
+							</tr>
+						
+							<!-- WEBSITE ID -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>Website ID:</label></th> 
+							<td width="30px"><input type="text" size="75" name="ographr_options[twitter_site_id]" value="<?php echo $options['twitter_site_id']; ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 						
@@ -941,6 +948,13 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Author User:</label></th> 
 							<td><input type="text" size="75" name="ographr_options[twitter_author_user]" value="<?php echo $options['twitter_author_user']; ?>" /></td> 
+							<td><small>(optional)</small></td>
+							</tr>
+
+							<!-- AUTHOR ID -->	
+							<tr valign="center"> 
+							<th align="left" width="140px" scope="row"><label>Author ID:</label></th> 
+							<td><input type="text" size="75" name="ographr_options[twitter_author_id]" value="<?php echo $options['twitter_author_id']; ?>" /></td> 
 							<td><small>(optional)</small></td>
 							</tr>
 
@@ -1077,7 +1091,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		$input['fb_admins'] = htmlentities($input['fb_admins']);
 		$input['fb_app_id'] = htmlentities($input['fb_app_id']);
 		$input['twitter_site_user'] = htmlentities($input['twitter_site_user']);
+		$input['twitter_site_id'] = htmlentities($input['twitter_site_id']);
 		$input['twitter_author_user'] = htmlentities($input['twitter_author_user']);
+		$input['twitter_author_id'] = htmlentities($input['twitter_author_id']);
 
 		// is twitter:site:id valid?
 		if ($input['twitter_site_user'] == "@")

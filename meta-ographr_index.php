@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.1
+Version: 0.7.2
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.1");
+    define("OGRAPHR_VERSION", "0.7.2");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -137,7 +137,7 @@ class OGraphr_Core {
 			else
 				$tmp_locale = "_none";
 			
-			$options = array(	"exec_mode" => "1",
+			$options = array("exec_mode" => "1",
 							"data_expiry" => "-1",
 							"advanced_opt" => "0",
 							"website_title" => "%postname%",
@@ -626,25 +626,6 @@ class OGraphr_Core {
 								$wp_modified = get_the_modified_date('Y-m-d');
 								$article_meta = $article_meta . "<meta property=\"article:modified_time\" content=\"$wp_modified\" />\n";
 							}
-							
-							/*
-							if (isset($twitter_creator_name)) {
-								$wp_author = get_the_author();
-								$author = str_replace("%author%", $wp_author, $twitter_creator_name);
-							}
-							*/
-
-							/* custom excerpt
-							$excerpt = get_the_content();
-							$excerpt = preg_replace(" (\[.*?\])",'',$excerpt);
-							$excerpt = strip_shortcodes($excerpt);
-							$excerpt = strip_tags($excerpt);
-							$excerpt = substr($excerpt, 0, 300);
-							$excerpt = substr($excerpt, 0, strripos($excerpt, " "));
-							$excerpt = trim(preg_replace( '/\s+/', ' ', $excerpt));
-
-							var_dump($excerpt);
-							*/
 
 						endwhile;
 					}
@@ -654,24 +635,25 @@ class OGraphr_Core {
 				if (isset($options['add_twitter_meta'])) {
 					
 					// get values
-					//$twitter_site_name = $options['twitter_site_name'];
-					//$twitter_site_name = str_replace("%sitename%", $wp_name, $twitter_site_name);
+
 					$twitter_site_user = $options['twitter_site_user'];
+					$twitter_site_id = $options['twitter_site_id'];
 					$twitter_author_user = $options['twitter_author_user'];
+					$twitter_author_id = $options['twitter_author_id'];
 
 					// type of twitter card
 					$twitter_meta = $twitter_meta . "<meta property=\"twitter:card\" content=\"summary\" />\n";
 
 					// twitter site name
 					if (strlen($twitter_site_user) > 1) {
-						//$twitter_meta = $twitter_meta . "<meta property=\"twitter:site\" content=\"$twitter_site_name\" />\n";
 						$twitter_meta = $twitter_meta . "<meta property=\"twitter:site\" content=\"$twitter_site_user\" />\n";
+						$twitter_meta = $twitter_meta . "<meta property=\"twitter:site:id\" content=\"$twitter_site_id\" />\n";
 					}
 
 					if (is_single()) {
 						if (strlen($twitter_author_user) > 1) {
-							//$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator\" content=\"$author\" />\n";
 							$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator\" content=\"$twitter_author_user\" />\n";
+							$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator:id\" content=\"$twitter_author_id\" />\n";
 						}
 					}
 					
