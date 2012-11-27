@@ -237,8 +237,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<!-- THUMBNAIL -->
 							<tr valign="center"> 
 								<th align="left" scope="row"><label>Thumbnail:</label></th> 
-								<td><input type="text" size="75" name="ographr_options[website_thumbnail]" value="<?php echo $options['website_thumbnail']; ?>" /></td> 
-								<td><small>(optional)</small></td>
+								<td colspan="2"><input type="text" size="75" name="ographr_options[website_thumbnail]" value="<?php echo $options['website_thumbnail']; ?>" /></td>
 							</tr>
 						
 							<tr valign="center"> 
@@ -333,7 +332,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<? if((!isset($options['bandcamp_api'])) && (isset($options['enable_bandcamp']))) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
 								<? if((!isset($options['myvideo_dev_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_developer_key" style="color:red;">Developer API key</a></span>';} ?>
 								<? if((!isset($options['myvideo_web_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_website_key" style="color:red;">Website API key</a></span>';} ?>
-								<? if((!isset($options['socialcam_api'])) && (isset($options['enable_socialcam']))) { echo '<br/><span style="color:red;font-size:x-small;">Socialcam requires a valid <a href="#socialcam_api_key" style="color:red;">API key</a></span>';} ?></td> 
+								<? if((!isset($options['official_api'])) && (isset($options['enable_official']))) { echo '<br/><span style="color:red;font-size:x-small;">Official.fm requires a valid <a href="#official_website_key" style="color:red;">Website API key</a></span>';} ?>
+								<? if((!isset($options['socialcam_api'])) && (isset($options['enable_socialcam']))) { echo '<br/><span style="color:red;font-size:x-small;">Socialcam requires a valid <a href="#socialcam_api_key" style="color:red;">API key</a></span>';} ?>
 								<? if((!isset($options['viddler_api'])) && (isset($options['enable_viddler']))) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 							</tr>
 							
@@ -367,8 +367,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<!-- CUSTOM DESCRIPTION -->	
 								<tr valign="center"> 
 								<th align="left" width="140px" scope="row"><label>Custom Description:</label></th> 
-								<td width="30px"><input type="text" size="75" name="ographr_options[website_description]" class="enable_triggers" value="<?php echo $options['website_description']; ?>" /></td> 
-								<td><small>(optional)</small></td>
+								<td colspan="2" width="30px"><input type="text" size="75" name="ographr_options[website_description]" class="enable_triggers" value="<?php echo $options['website_description']; ?>" /></td> 
 								</tr>
 							
 								<tr valign="center"> 
@@ -453,9 +452,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<dt><h3>API Keys</h3></dt>
 							<dd>
 							<p>
-								Bandcamp offers only limited access to their API and in any case you have to provide a valid <a href="http://bandcamp.com/developer#key_request" target="_blank">developer key</a> to make use of this feature. MyVideo not only requires a developer key, but you also need to <a href="http://myvideo.de/API" target="_blank">register</a> your blog in order to get access to their API. To support <em>legacy</em> Viddler widgets you will have to provide a valid <a href="http://developers.viddler.com/">API key</a>, whereas new embed codes use HTML5-compliant poster images and will work without one.
+								Some services limit access to their API and require a valid developer key in order to make queries. These are marked <em>yellow</em> in the list below. All other services will work out of the box, however, if you have reason to use your own developer keys you may enter them below.
 							</p>
-							<p class="advanced_opt">All other services will work without providing an API key. However, if you prefer using your own ones, you can enter them below.</p>
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
 							
@@ -463,79 +461,84 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label><a name="etracks_api_key" id="etracks_api_key"></a>8tracks:</label></th> 
 							<td width="30px"><input type="text"  size="75" name="ographr_options[etracks_api]" value="<?php if (($options['etracks_api'] != ETRACKS_API_KEY) && ($options['etracks_api'])) { echo $options['etracks_api']; } ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td><a href="http://8tracks.com/developers/new" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
 							
 							<!-- BAMBUSER -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label><a name="bambuser_api_key" id="bambuser_api_key"></a>Bambuser:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[bambuser_api]" value="<?php if (($options['bambuser_api'] != BAMBUSER_API_KEY) && ($options['bambuser_api'])) { echo $options['bambuser_api']; } ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td><a href="http://bambuser.com/api/keys" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
 
 							<!-- BANDCAMP -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label><a name="bandcamp_api_key" id="bandcamp_api_key"></a>Bandcamp:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /></td> 
-							<td><small>(<strong>required</strong>)</small></td>
+							<td width="30px"><input type="text" size="75" class="required" name="ographr_options[bandcamp_api]" value="<?php echo $options['bandcamp_api']; ?>" /></td>
+							<td><a href="http://bandcamp.com/developer#key_request" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
 						
 							<!-- FLICKR -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>Flickr:</label></th> 
 							<td width="30px"><input type="text" size="75" name="ographr_options[flickr_api]" value="<?php if (($options['flickr_api'] != FLICKR_API_KEY) && ($options['flickr_api'])) { echo $options['flickr_api']; } ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td><a href="http://www.flickr.com/services/apps/create/apply/" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
 							
 							<!-- MYVIDEO DEVELOPER -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label><a name="myvideo_developer_key" id="myvideo_developer_key"></a>MyVideo (Developer):</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[myvideo_dev_api]" value="<?php if ($options['myvideo_dev_api']) { echo $options['myvideo_dev_api']; } ?>" /></td> 
-							<td><small>(<strong>required</strong>)</small></td>
+							<td width="30px"><input type="text" size="75" class="required" name="ographr_options[myvideo_dev_api]" value="<?php if ($options['myvideo_dev_api']) { echo $options['myvideo_dev_api']; } ?>" /></td>
+							<td><a href="http://myvideo.de/API" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
 							
 							<!-- MYVIDEO WEBSITE -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label><a name="myvideo_website_key" id="myvideo_website_key"></a>MyVideo (Website):</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[myvideo_web_api]" value="<?php if ($options['myvideo_web_api']) { echo $options['myvideo_web_api']; } ?>" /></td> 
-							<td><small>(<strong>required</strong>)</small></td>
+							<td width="30px"><input type="text" size="75" class="required" name="ographr_options[myvideo_web_api]" value="<?php if ($options['myvideo_web_api']) { echo $options['myvideo_web_api']; } ?>" /></td>
+							<td><a href="http://myvideo.de/API" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
-						
 							
-							<?php if (OGRAPHR_BETA == TRUE) { ?>	
+							<?php if (OGRAPHR_BETA == TRUE) { ?>
+								<!-- OFFICIAL -->	
+								<tr valign="center"> 
+								<th align="left" width="140px" scope="row"><label><a name="official_api_key" id="official_api_key"></a>Official.fm:</label></th> 
+								<td width="30px"><input type="text" size="75" name="ographr_options[official_api]" value="<?php if (($options['official_api'] != OFFICIAL_API_KEY) && ($options['official_api'])) { echo $options['official_api']; } ?>" /></td>
+								<td><a href="http://official.fm/developers/manage#register" title="Get an API key" target="_blank" id="help_link">?</a></td>
+								</tr>
+								
 								<!-- PLAY.FM -->	
 								<tr valign="center" class="advanced_opt"> 
 								<th align="left" width="140px" scope="row"><label>Play.fm:</label></th> 
 								<td width="30px"><input type="text" size="75" name="ographr_options[playfm_api]" value="<?php if (($options['playfm_api'] != PLAYFM_API_KEY) && ($options['playfm_api'])) { echo $options['playfm_api']; } ?>" disabled="disabled" /></td>
-								<td><small>(optional)</small></td>
 							<? } ?>
 							
 							<!-- SOCIALCAM -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label><a name="socialcam_api_key" id="socialcam_api_key"></a>Socialcam:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[socialcam_api]" value="<?php if ($options['socialcam_api']) { echo $options['socialcam_api']; } ?>" /></td> 
-							<td><small>(<strong>required</strong>)</small></td>
+							<td width="30px"><input type="text" size="75" class="required" name="ographr_options[socialcam_api]" value="<?php if ($options['socialcam_api']) { echo $options['socialcam_api']; } ?>" /></td>
+							<td><a href="http://socialcam.com/developers/applications/new" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
 						
 							<!-- SOUNDCLOUD -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>SoundCloud:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[soundcloud_api]" value="<?php if (($options['soundcloud_api'] != SOUNDCLOUD_API_KEY) && ($options['soundcloud_api'])) { echo $options['soundcloud_api']; } ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td width="30px"><input type="text" size="75" name="ographr_options[soundcloud_api]" value="<?php if (($options['soundcloud_api'] != SOUNDCLOUD_API_KEY) && ($options['soundcloud_api'])) { echo $options['soundcloud_api']; } ?>" /></td>
+							<td><a href="http://soundcloud.com/you/apps" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
 						
 							<!-- USTREAM -->	
 							<tr valign="center" class="advanced_opt"> 
 							<th align="left" width="140px" scope="row"><label>Ustream:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[ustream_api]" value="<?php if (($options['ustream_api'] != USTREAM_API_KEY) && ($options['ustream_api'])) { echo $options['ustream_api']; } ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td width="30px"><input type="text" size="75" name="ographr_options[ustream_api]" value="<?php if (($options['ustream_api'] != USTREAM_API_KEY) && ($options['ustream_api'])) { echo $options['ustream_api']; } ?>" /></td>
+							<td><a href="http://developer.ustream.tv/apikey/generate" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
 						
 							<!-- VIDDLER  -->
 							<tr valign="center"> 
-							<th align="left" width="140px" scope="row"><label><a name="viddler_api_key" id="viddler_api_key"></a>Viddler:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[viddler_api]" value="<?php echo $options['viddler_api']; ?>" /></td> 
-							<td><small>(<strong>required</strong>)</small></td>
+							<th align="left" width="140px" scope="row"><label><a name="viddler_api_key" id="viddler_api_key"></a>Viddler (Legacy):</label></th> 
+							<td width="30px"><input type="text" size="75" class="required" name="ographr_options[viddler_api]" value="<?php echo $options['viddler_api']; ?>" /></td>
+							<td><a href="http://developers.viddler.com/" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>	
 						
 							</tbody></table>			
@@ -829,8 +832,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<!-- HUMAN READABLE-NAME -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Human-readable Name:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[fb_site_name]" value="<?php echo $options['fb_site_name']; ?>" /></td> 
-							<td><small>(optional)</small</td>
+							<td colspan="2" width="30px"><input type="text" size="75" name="ographr_options[fb_site_name]" value="<?php echo $options['fb_site_name']; ?>" /></td>
 							</tr>
 						
 							<tr valign="center"> 
@@ -842,7 +844,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<!-- OBJECT TYPE -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Object Type:</label></th> 
-							<td width="30px">
+							<td colspan="2" width="30px">
 								<select name='ographr_options[fb_type]'>
 									<option value='_none' <?php selected('_none', $options['fb_type']); ?>>(none)</option>
 									<option value='activity' <?php selected('activity', $options['fb_type']); ?>>activity</option>
@@ -885,15 +887,13 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<option value='website' <?php selected('website', $options['fb_type']); ?>>website</option>
 
 								</select>
-								</td> 
-							<td><small>(optional)</small></td>
+								</td>
 							</tr>
 						
 							<!-- FACEBOOK ADMIN -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Admin ID:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[fb_admins]" value="<?php echo $options['fb_admins']; ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td colspan="2" width="30px"><input type="text" size="75" name="ographr_options[fb_admins]" value="<?php echo $options['fb_admins']; ?>" /></td>
 							</tr>
 						
 							<tr valign="center"> 
@@ -904,8 +904,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<!-- FACEBOOK APP -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Application ID:</label></th> 
-							<td><input type="text" size="75" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td colspan="2"><input type="text" size="75" name="ographr_options[fb_app_id]" value="<?php echo $options['fb_app_id']; ?>" /></td>
 							</tr>
 						
 							<tr valign="center"> 
@@ -932,30 +931,26 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<!-- WEBSITE USER -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Website User:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[twitter_site_user]" value="<?php echo $options['twitter_site_user']; ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td colspan="2" width="30px"><input type="text" size="75" name="ographr_options[twitter_site_user]" value="<?php echo $options['twitter_site_user']; ?>" /></td>
 							</tr>
 						
 							<!-- WEBSITE ID -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Website ID:</label></th> 
-							<td width="30px"><input type="text" size="75" name="ographr_options[twitter_site_id]" value="<?php echo $options['twitter_site_id']; ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td colspan="2" width="30px"><input type="text" size="75" name="ographr_options[twitter_site_id]" value="<?php echo $options['twitter_site_id']; ?>" /></td>
 							</tr>
 						
 						
 							<!-- AUTHOR USER -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Author User:</label></th> 
-							<td><input type="text" size="75" name="ographr_options[twitter_author_user]" value="<?php echo $options['twitter_author_user']; ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td colspan="2"><input type="text" size="75" name="ographr_options[twitter_author_user]" value="<?php echo $options['twitter_author_user']; ?>" /></td>
 							</tr>
 
 							<!-- AUTHOR ID -->	
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Author ID:</label></th> 
-							<td><input type="text" size="75" name="ographr_options[twitter_author_id]" value="<?php echo $options['twitter_author_id']; ?>" /></td> 
-							<td><small>(optional)</small></td>
+							<td colspan="2"><input type="text" size="75" name="ographr_options[twitter_author_id]" value="<?php echo $options['twitter_author_id']; ?>" /></td>
 							</tr>
 
 							</tbody></table>			
@@ -963,9 +958,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 						</dl>
 
-						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt" <?php if(!OGRAPHR_DEBUG) print 'id="enable_delete"'; ?> <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
+						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt atoggle" data-atarget="input.del_postmeta" data-astate="1" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
 						
-						<label class="advanced_opt"><input name="ographr_options[delete_postmeta]" type="checkbox" value="1" class="advanced_opt<?php if(!OGRAPHR_DEBUG) print ' enable_delete'; ?>" <?php if (isset($options['delete_postmeta'])) { checked('1', $options['delete_postmeta']); } ?> <?php if(!OGRAPHR_DEBUG) print 'disabled="disabled"'; ?> /> and delete all indexed data </label>
+						<label class="advanced_opt"><input name="ographr_options[delete_postmeta]" type="checkbox" value="1" class="advanced_opt del_postmeta" <?php if (isset($options['delete_postmeta'])) { checked('1', $options['delete_postmeta']); } ?> <?php if(!OGRAPHR_DEBUG) print 'disabled="disabled"'; ?> /> and delete all indexed data </label>
 						
 						<div class="submit">
 							<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
@@ -1083,35 +1078,39 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		$input['flickr_api'] = htmlentities($input['flickr_api']);
 		$input['myvideo_dev_api'] = htmlentities($input['myvideo_dev_api']);
 		$input['myvideo_web_api'] = htmlentities($input['myvideo_web_api']);
+		$input['official_api'] = htmlentities($input['official_api']);
 		$input['socialcam_api'] = htmlentities($input['socialcam_api']);
 		$input['soundcloud_api'] = htmlentities($input['soundcloud_api']);
 		$input['ustream_api'] = htmlentities($input['ustream_api']);
 		$input['viddler_api'] = htmlentities($input['viddler_api']);
 		$input['fb_site_name'] = htmlentities($input['fb_site_name']);
-		$input['fb_admins'] = htmlentities($input['fb_admins']);
-		$input['fb_app_id'] = htmlentities($input['fb_app_id']);
-		$input['twitter_site_user'] = htmlentities($input['twitter_site_user']);
-		$input['twitter_site_id'] = htmlentities($input['twitter_site_id']);
-		$input['twitter_author_user'] = htmlentities($input['twitter_author_user']);
-		$input['twitter_author_id'] = htmlentities($input['twitter_author_id']);
-
-		// is twitter:site:id valid?
-		if ($input['twitter_site_user'] == "@")
-			$input['twitter_site_user'] = NULL;
-
-		$twitter_illegal = "/[^A-Za-z0-9_@]/";
-		$input['twitter_site_user'] = preg_replace($twitter_illegal, "", $input['twitter_site_user']);
-		if (($input['twitter_site_user'] != NULL) && ($input['twitter_site_user'][0] != "@"))
-			$input['twitter_site_user'] = "@" . $input['twitter_site_user'];
-
-		// is twitter:creator:id valid?
-		if ($input['twitter_author_user'] == "@")
-			$input['twitter_author_user'] = NULL;
-
-		$input['twitter_author_user'] = preg_replace($twitter_illegal, "", $input['twitter_author_user']);
-		if (($input['twitter_author_user'] != NULL) && ($input['twitter_author_user'][0] != "@"))
-			$input['twitter_author_user'] = "@" . $input['twitter_author_user'];
 		
+		// is Facebook Admin ID numeric?
+		if(!is_numeric($input['fb_admins'])){
+			$input['fb_admins'] = preg_replace("/[^0-9]+/", "", $input['fb_admins']);
+		}
+		
+		// is Facebook Application ID numeric?
+		if(!is_numeric($input['fb_app_id'])){
+			$input['fb_app_id'] = preg_replace("/[^0-9]+/", "", $input['fb_app_id']);
+		}
+		
+		// is Twitter Website User numeric?
+		$input['twitter_site_user'] = preg_replace("/[^a-zA-Z0-9_]+/", "", $input['twitter_site_user']);
+		
+		// is Twitter Website ID numeric?
+		if(!is_numeric($input['twitter_site_id'])){
+			$input['twitter_site_id'] = preg_replace("/[^0-9]+/", "", $input['twitter_site_id']);
+		}
+		
+		// is Twitter Author User numeric?
+		$input['twitter_author_user'] = preg_replace("/[^a-zA-Z0-9_]+/", "", $input['twitter_author_user']);
+		
+		// is Twitter Author ID numeric?
+		if(!is_numeric($input['twitter_author_id'])){
+			$input['twitter_author_id'] = preg_replace("/[^0-9]+/", "", $input['twitter_author_id']);
+		}
+						
 		return $input;
 	}
 

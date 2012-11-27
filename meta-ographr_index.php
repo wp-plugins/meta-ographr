@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.2
+Version: 0.7.3
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.2");
+    define("OGRAPHR_VERSION", "0.7.3");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -149,7 +149,7 @@ class OGraphr_Core {
 							"add_adminbar" => "0",
 							"add_graph" => "0",
 							"fill_curves" => "0",
-							"smooth_curves" => "1",
+							"smooth_curves" => "0",
 							"add_comment" => "1",
 							"add_title" => "1",
 							"add_excerpt" => "1",
@@ -204,7 +204,6 @@ class OGraphr_Core {
 	}
 	
 	public function remote_exists($path){
-		//return (@fopen($path,"r")==true);
 		$response = wp_remote_head($path, array('timeout' => OGRAPHR_TIMEOUT, 'compress' => TRUE, 'decompress' => TRUE));
 		if (!is_wp_error($response)) {
 			return ($response['response']['code']==200);
@@ -461,7 +460,7 @@ class OGraphr_Core {
 					if ($flickr_api = $options['flickr_api']) { print "\t Flickr API key: $flickr_api\n"; }
 					if ($myvideo_dev_api = $options['myvideo_dev_api']) { print "\t MyVideo Developer key: $myvideo_dev_api\n"; }
 					if ($myvideo_web_api = $options['myvideo_web_api']) { print "\t MyVideo Website key: $myvideo_web_api\n"; }
-					//if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
+					if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
 					if (OGRAPHR_BETA == TRUE )
 						if ($playfm_api = $options['playfm_api']) { print "\t Play.fm API key: $playfm_api\n"; }
 					if ($socialcam_api = $options['socialcam_api']) { print "\t Socialcam API key: $socialcam_api\n"; }
@@ -646,13 +645,13 @@ class OGraphr_Core {
 
 					// twitter site name
 					if (strlen($twitter_site_user) > 1) {
-						$twitter_meta = $twitter_meta . "<meta property=\"twitter:site\" content=\"$twitter_site_user\" />\n";
+						$twitter_meta = $twitter_meta . "<meta property=\"twitter:site\" content=\"@$twitter_site_user\" />\n";
 						$twitter_meta = $twitter_meta . "<meta property=\"twitter:site:id\" content=\"$twitter_site_id\" />\n";
 					}
 
 					if (is_single()) {
 						if (strlen($twitter_author_user) > 1) {
-							$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator\" content=\"$twitter_author_user\" />\n";
+							$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator\" content=\"@$twitter_author_user\" />\n";
 							$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator:id\" content=\"$twitter_author_id\" />\n";
 						}
 					}
@@ -1199,6 +1198,8 @@ class OGraphr_Core {
 		
 	
 	public function find_etracks_widgets($markup, $options) {
+		
+		$api = $options['etracks_api'];
 
 		// 8tracks iFrame and embed players
 		preg_match_all( '/8tracks.com\/mixes\/([0-9]+)\/player/i', $markup, $matches1 );
@@ -1212,7 +1213,7 @@ class OGraphr_Core {
 		// Now if we've found a 8tracks embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
 			$service = "8tracks";
-			$json_url = "http://8tracks.com/mixes/$match.jsonp?api_key=e310c354bf4633de8dca0e7fb0a3a23fcc1614fe";
+			$json_url = "http://8tracks.com/mixes/$match.jsonp?api_key=$api";
 			$json_query = "mix->cover_urls->" . ETRACKS_IMAGE_SIZE;
 			$etracks_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
@@ -1681,6 +1682,8 @@ class OGraphr_Core {
 	} // end find_myvideo_widgets
 
 	public function find_official_widgets($markup, $options) {
+		
+		//$api = $options['official_api'];
 
 		// Official.fm iFrame
 		preg_match_all( '/official.fm%2F%2Ffeed%2Ftracks%2F([A-Za-z0-9]+)/i', $markup, $matches );
@@ -2061,25 +2064,27 @@ class OGraphr_Core {
 	
 	// initialize
 	public function ographr_core_init() {
-		$options = $this->ographr_set_defaults();
-
 		//global $options;
 		$options = get_option('ographr_options');
+		
+		if(empty($options))
+			$options = $this->ographr_set_defaults();
 
 		// Get API keys
-		if ( (!$options['etracks_api']) || (!$options['bambuser_api']) || (!$options['flickr_api']) || (!$options['myvideo_dev_api']) || (!$options['myvideo_web_api']) || (!$options['socialcam_api']) || (!$options['soundcloud_api']) || (!$options['ustream_api']) ) {
+		if ( (!$options['etracks_api']) || (!$options['bambuser_api']) || (!$options['flickr_api']) || (!$options['myvideo_dev_api']) || (!$options['myvideo_web_api']) || (!$options['official_api']) || (!$options['socialcam_api']) || (!$options['soundcloud_api']) || (!$options['ustream_api']) || ($options['last_update'] != OGRAPHR_VERSION) ) {
 			if (!$options['etracks_api']) { $options['etracks_api'] = ETRACKS_API_KEY; }
 			if (!$options['bambuser_api']) { $options['bambuser_api'] = BAMBUSER_API_KEY; }
 			if (!$options['flickr_api']) { $options['flickr_api'] = FLICKR_API_KEY; }
 			if (!$options['myvideo_dev_api']) { $myvideo_dev_api = $options['myvideo_dev_api']; }
 			if (!$options['myvideo_web_api']) { $myvideo_web_api = $options['myvideo_web_api']; }
-			//if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
+			if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
 			if (OGRAPHR_BETA == TRUE )
 				if (!$options['playfm_api']) { $options['playfm_api'] = PLAYFM_API_KEY; $playfm_api = $options['playfm_api']; }
 			if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
 			if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 			if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
-
+			if ($options['last_update'] != OGRAPHR_VERSION) { $options['last_update'] != OGRAPHR_VERSION; }
+			
 			update_option('ographr_options', $options);
 		}
 		
