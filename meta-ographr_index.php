@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.3
+Version: 0.7.4
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.3");
+    define("OGRAPHR_VERSION", "0.7.4");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -116,12 +116,17 @@ $core = new OGraphr_Core();
 
 add_action('init', array(&$core,'ographr_core_init'));
 add_action('wp_head', array(&$core,'ographr_main_dish'));
+add_action('language_attributes', array(&$core,'ographr_namespace'));
 add_action('save_post', array(&$core,'ographr_save_postmeta'));
 add_action('delete_post', array(&$core,'ographr_delete_stats'));
 add_action('admin_notices', array(&$core,'ographr_admin_notice'));
 add_action('admin_bar_menu', array(&$core,'ographr_admin_bar'), 150);
 add_filter('plugin_action_links', array(&$core, 'ographr_plugin_action_links'), 10, 2 );
 register_activation_hook( __FILE__, array(&$core, 'ographr_activate') );
+
+$options = get_option('ographr_options');
+if (isset($options['disable_jetpack']))
+	remove_action( 'wp_head', 'jetpack_og_tags' );
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -148,6 +153,7 @@ class OGraphr_Core {
 							"not_always" => "0",
 							"add_adminbar" => "0",
 							"add_graph" => "0",
+							"add_prefix" => "1",
 							"fill_curves" => "0",
 							"smooth_curves" => "0",
 							"add_comment" => "1",
@@ -191,6 +197,7 @@ class OGraphr_Core {
 							"linkedin_ua" => "0",
 							"twitter_ua" => "0",
 							"limit_opengraph" => "0",
+							"disable_jetpack" => "0",
 							"fb_site_name" => "%sitename%",
 							"fb_type" => "_none",
 							"add_author" => "0",
@@ -437,6 +444,8 @@ class OGraphr_Core {
 				if (isset($gplus_ua)) { print "\t Limited to Google+ User Agent\n"; }
 				if (isset($linkedin_ua)) { print "\t Limited to LinkedIn User Agent\n"; }
 				if (isset($twitter_ua)) { print "\t Limited to Twitter User Agent\n"; }
+
+				if (isset($options['disable_jetpack'])) { print "\t Jetpack Open Graph Tag is disabled\n"; }
 				
 				if (isset($options['filter_gravatar'])) { print "\t Avatars are filtered\n"; }
 				if (isset($options['filter_smilies'])) { print "\t Emoticons are filtered \n"; }
@@ -2089,6 +2098,16 @@ class OGraphr_Core {
 		}
 		
 		
+	}
+
+	// Add Open Graph prefix to HTML tag
+	public function ographr_namespace($attr) {
+		$options = get_option('ographr_options');
+		
+		if(isset($options['add_prefix']))
+			$attr .= " prefix=\"og: http://ogp.me/ns#\""; 
+
+        return $attr;
 	}
 	
 	// Display a Settings link on the OGraphr Plugins page

@@ -254,7 +254,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									 ?>
 								</small></td> 
 							</tr>
-						
+							
 							<tr valign="center" class="advanced_opt"> 
 								<th align="left" scope="row"><label>&nbsp;</label></th> 
 								<td colspan="2"><label><input name="ographr_options[not_always]" type="checkbox" value="1" <?php if (isset($options['not_always'])) { checked('1', $options['not_always']); } ?> /> Only add thumbnail when post contains no images </label></td> 
@@ -441,6 +441,14 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
 									<td colspan="2"><small>Note that other websites such as Google+ are able to interprete Open Graph tags as well.</small></td>
 								</tr>
+
+								<!-- JETPACK -->
+								<tr valign="center"> 
+									<th align="left" width="140px" scope="row"><label>Jetpack:</label></th> 
+									<td colspan="2">
+										<label><input name="ographr_options[disable_jetpack]" type="checkbox" value="1" <?php if (isset($options['disable_jetpack'])) { checked('1', $options['disable_jetpack']); } if (!is_plugin_active('jetpack/jetpack.php')) { print 'disabled="disabled"'; } ?> /> Disable Jetpack's Open Graph Tags function </label>
+									</td> 
+								</tr>
 						
 							</tbody></table>			
 						</dd>
@@ -591,6 +599,14 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									</select>
 									</td> 
 								<td>&nbsp;</td>
+								</tr>
+
+								<!-- HTML PREFIX -->
+								<tr valign="center"> 
+									<th align="left" scope="row"><label>Prefix:</label></th> 
+									<td colspan="2">
+										<label><input name="ographr_options[add_prefix]" type="checkbox" value="1" <?php if (isset($options['add_prefix'])) { checked('1', $options['add_prefix']); } ?> /> Add Open Graph prefix </label>
+									</td>
 								</tr>
 									
 								<!-- MORE TRIGGERS -->

@@ -4,7 +4,7 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.4.2
-Stable tag: 0.7.3
+Stable tag: 0.7.4
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as thumbnails on Facebook and other social networks.
 
@@ -94,6 +94,10 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 4. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.7.4 =
+* added option to disable Jetpack's OpenGraph function (and avoid duplicates)
+* added option to add OpenGraph prefix
 
 = 0.7.3 =
 * improved input validation
