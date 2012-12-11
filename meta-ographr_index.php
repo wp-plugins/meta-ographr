@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.4
+Version: 0.7.5
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.4");
+    define("OGRAPHR_VERSION", "0.7.5");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -184,6 +184,7 @@ class OGraphr_Core {
 							"add_post_images" => "1",
 							"enable_videoposter" => "1",
 							"enable_jwplayer" => "1",
+							"enable_nvbplayer" => "1",
 							"add_attached_image" => "1",
 							"add_post_thumbnail" => "0",
 							"add_twitter_meta" => "0",
@@ -445,7 +446,7 @@ class OGraphr_Core {
 				if (isset($linkedin_ua)) { print "\t Limited to LinkedIn User Agent\n"; }
 				if (isset($twitter_ua)) { print "\t Limited to Twitter User Agent\n"; }
 
-				if (isset($options['disable_jetpack'])) { print "\t Jetpack Open Graph Tag is disabled\n"; }
+				if (isset($options['disable_jetpack'])) { print "\t Jetpack Open Graph Tags are disabled\n"; }
 				
 				if (isset($options['filter_gravatar'])) { print "\t Avatars are filtered\n"; }
 				if (isset($options['filter_smilies'])) { print "\t Emoticons are filtered \n"; }
@@ -484,7 +485,7 @@ class OGraphr_Core {
 			}
 			
 			// Let's get started!
-			if (($enable_triggers_on_front = $options['enable_triggers_on_front']) || (is_single()) || (is_page())) {
+			if ( (isset($options['enable_triggers_on_front'])) || (is_single()) || (is_page()) ) {
 				
 				// Did we retrieve those images before and did they expire?
 				if (($options['exec_mode'] == 1) && ($expiry >= $interval) )  {
@@ -496,14 +497,14 @@ class OGraphr_Core {
 							$meta_value = htmlentities($meta_value);
 				}
 
-				if ((is_array($meta_values)) && (is_array($thumbnails)) && ($expiry >= $interval) ) {
+				if ((is_array($meta_values)) && (isset($thumbnails)) && ($expiry >= $interval) ) {
 					$thumbnails = array_merge($thumbnails, $meta_values);
 					if(OGRAPHR_DEBUG == TRUE) {
 						foreach($thumbnails as $thumbnail) {
 							print "\t Post meta: $thumbnail\n";
 						}
 					}
-				} else if ((is_array($meta_values)) && (!is_array($thumbnails)) && ($expiry >= $interval) ) {
+				} else if ((is_array($meta_values)) && (!isset($thumbnails)) && ($expiry >= $interval) ) {
 					$thumbnails = $meta_values;
 					if(OGRAPHR_DEBUG == TRUE) {
 						foreach($thumbnails as $thumbnail) {
@@ -519,9 +520,9 @@ class OGraphr_Core {
 					
 					// Get Widget Thumbnails (fallback)
 					$widget_thumbnails = $this->get_widget_thumbnails($markup);
-					if ((is_array($widget_thumbnails)) && (is_array($thumbnails))) {
+					if ((is_array($widget_thumbnails)) && (isset($thumbnails))) {
 						$thumbnails = array_merge($thumbnails, $widget_thumbnails);
-					} else if ((is_array($widget_thumbnails)) && (!is_array($thumbnails))) {
+					} else if ((is_array($widget_thumbnails)) && (!isset($thumbnails))) { //is_array
 						$thumbnails = $widget_thumbnails;
 					}
 					
@@ -580,12 +581,16 @@ class OGraphr_Core {
 				$site_name = str_replace("%sitename%", $wp_name, $site_name);
 				$site_name = str_replace("%siteurl%", $wp_url, $site_name);
 
-				#0.7				
-				$add_author = $options['add_author'];
-				$add_section = $options['add_section'];
-				$add_tags = $options['add_tags'];
-				$add_pubtime = $options['add_pubtime'];
-				$add_modtime = $options['add_modtime'];
+				if(isset($options['add_author']))				
+					$add_author = $options['add_author'];
+				if(isset($options['add_section']))
+					$add_section = $options['add_section'];
+				if(isset($options['add_tags']))
+					$add_tags = $options['add_tags'];
+				if(isset($options['add_pubtime']))
+					$add_pubtime = $options['add_pubtime'];
+				if(isset($options['add_modtime']))
+					$add_modtime = $options['add_modtime'];
 				//$twitter_creator_name = $options['twitter_creator_name'];
 
 				// suppress warnings
@@ -638,8 +643,7 @@ class OGraphr_Core {
 						endwhile;
 					}
 				}
-					
-				#0.7
+
 				if (isset($options['add_twitter_meta'])) {
 					
 					// get values
@@ -741,12 +745,12 @@ class OGraphr_Core {
 				}
 		
 				// Add thumbnails
-				if ($thumbnails) { // avoid error message when array is empty
+				if (isset($thumbnails)) { // avoid error message when array is empty
 					$thumbnails = array_unique($thumbnails); // unlikely, but hey!
 					$total_img = count($thumbnails);
 				}
 					
-				if (($total_img == 0) && ($web_thumb)) {
+				if ( (isset($total_img)) && ($total_img == 0) && ($web_thumb)) {
 					print "<meta property=\"og:image\" content=\"$web_thumb\" />\n";
 					if (isset($options['add_twitter_meta']))
 						$twitter_meta = $twitter_meta . "<meta property=\"twitter:image\" content=\"$web_thumb\" />\n";
@@ -754,7 +758,7 @@ class OGraphr_Core {
 					if (($ext == "jpg") || ($ext == "jpe"))
 						$ext = "jpeg";
 					$opengraph_meta = $opengraph_meta . "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
-				} else if ($thumbnails) { // investigate?
+				} else if (isset($thumbnails)) { // investigate?
 					foreach ($thumbnails as $thumbnail) {
 						if ($thumbnail) {
 							$opengraph_meta = $opengraph_meta . "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
@@ -765,7 +769,7 @@ class OGraphr_Core {
 				}
 				
 				// Add image-type if only one image has been found
-				if ($total_img == 1) {
+				if ( (isset($total_img)) && ($total_img == 1) ) {
 					$ext = preg_replace('/(?!.*\.(bmp|gif|jpe|jpeg|jpg|png|webp))(\?|&).*\Z/i', '', $thumbnail); // remove suffix (might need improvement)
 					$ext = pathinfo($ext, PATHINFO_EXTENSION);
 					if (($ext == "jpg") || ($ext == "jpe"))
@@ -806,7 +810,6 @@ class OGraphr_Core {
 					}
 				}
 				
-				#0.7
 				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || (OGRAPHR_DEBUG) || (!isset($options['limit_opengraph'])) ) {
 					print $opengraph_meta;
 					print $article_meta;
@@ -954,7 +957,28 @@ class OGraphr_Core {
 			
 			foreach($matches[1] as $match) {
 				if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-					print "\t JWPlayer: $match\n";
+					print "\t JW Player: $match\n";
+				}
+			
+				if (isset($match)) {
+					if ($options['exec_mode'] == 1)  {
+						$exists = $this->remote_exists($match);
+						if(($exists) && (!$match))
+							$thumbnails[] = $match;
+					} else {
+						$thumbnails[] = $match;
+					}
+				}
+			}
+		}
+		
+		// NVBPlayer
+		if (isset($options['enable_nvbplayer'])) {
+			preg_match_all('/(?:nvb.addVariable\([\'"]image_src[\'"],[\s])[\'"]([^\'"]+)[\'"].*?\)/smi', $markup, $matches);
+
+			foreach($matches[1] as $match) {
+				if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
+					print "\t NVB Player: $match\n";
 				}
 			
 				if (isset($match)) {
@@ -1704,9 +1728,15 @@ class OGraphr_Core {
 			$json_url = "http://api.official.fm/tracks/$match?fields=cover&api_version=2";
 			$json_query = "track->cover->urls->" . OFFICIAL_IMAGE_SIZE;
 			$official_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+			
+			// fix URL if necessary
+			$tmp = substr($official_thumbnail, 0, 2);
+			if($tmp == "//")
+				$official_thumbnail = "http:" . $official_thumbnail;
+			
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
 				if ($official_thumbnail)
-					print "\t Official.fm: $official_thumbnail (ID:$match)\n";
+					print "\t Official.fm: $official_thumbnail (ID:$json_url)\n";
 				else
 					print "\t Official.fm: Error from URL ($json_url)\n";
 			}
@@ -2092,8 +2122,7 @@ class OGraphr_Core {
 			if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
 			if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 			if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
-			if ($options['last_update'] != OGRAPHR_VERSION) { $options['last_update'] != OGRAPHR_VERSION; }
-			
+			if ( (!isset($options['last_update'])) || ($options['last_update'] != OGRAPHR_VERSION) ) { $options['last_update'] = OGRAPHR_VERSION;}
 			update_option('ographr_options', $options);
 		}
 		
@@ -2170,12 +2199,10 @@ class OGraphr_Core {
 			
 			$indexed = date("U"); //Y-m-d H:i:s
 			update_post_meta($post_id, 'ographr_indexed', $indexed);
-			// 0.6
 			$this->ographr_save_stats();
 		}
 	}
 	
-	// 0.6
 	public function ographr_save_stats() {
 		
 		$stats = get_option('ographr_data');
@@ -2206,9 +2233,7 @@ class OGraphr_Core {
 		update_option('ographr_data', $stats);
 	}
 	
-	// 0.6
 	public function ographr_delete_stats() {
-		
 		$stats = get_option('ographr_data');
 		
 		if($stats) {
@@ -2227,8 +2252,7 @@ class OGraphr_Core {
 
 			update_option('ographr_data', $stats);
 		}
-	}
-	
+	}	
 	
 	public function ographr_admin_bar() {
 		//global $options;
@@ -2238,10 +2262,7 @@ class OGraphr_Core {
 			
 		global $wp_admin_bar;
 
-	    if (current_user_can('manage_options')) {
-		
-				//global $post;
-				
+	    if (current_user_can('manage_options')) {				
 				$published = wp_count_posts();
 				$published = $published->publish;
 				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );

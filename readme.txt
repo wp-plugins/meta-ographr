@@ -1,10 +1,10 @@
 === OGraphr ===
 Contributors: yathosho
 Donate link: http://whyeye.org/donate
-Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
+Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.4.2
-Stable tag: 0.7.4
+Stable tag: 0.7.5
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as thumbnails on Facebook and other social networks.
 
@@ -34,7 +34,8 @@ Currently, these media widgets are supported:
 *  Viddler
 *  Vimeo
 *  YouTube
-*  JWPlayer
+*  JW Player
+*  NVB Player
 *  Standard HTML5 video-tags
 
 Open Graph tags will be used by social network sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you should find this plug-in useful.
@@ -85,15 +86,26 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 
 == Screenshots ==
 
-1. a link with a Mixcloud widget added as Facebook status update
+1. a link with a Mixcloud widget shared on Facebook
 
-2. a link with a SoundCloud widget added as Google+ status update
+2. a link with a SoundCloud widget shared on Google+
 
-3. standard settings page for OGraphr
+3. a link with a YouTube widget shared on Twitter
 
-4. advanced settings page for OGraphr
+4. standard settings page for OGraphr
+
+5. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.7.5 =
+* added support for NVB Player
+* modified option page layout to better match standard Wordpress UI
+* fixed result returned from Official.fm
+* fixed several errors when running Wordpress in debug mode
+* fixed bugs in options page HTML
+* improved option page descriptions
+* removed unnecessary comments
 
 = 0.7.4 =
 * added option to disable Jetpack's OpenGraph function (and avoid duplicates)

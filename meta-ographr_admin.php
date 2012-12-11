@@ -18,29 +18,13 @@
 */
 
 $admin_core = new OGraphr_Admin_Core();
-//$options = get_option('ographr_options');
 
-// ------------------------------------------------------------------------
-// REGISTER HOOKS & CALLBACK FUNCTIONS:
-// ------------------------------------------------------------------------
-// HOOKS TO SETUP DEFAULT PLUGIN OPTIONS, HANDLE CLEAN-UP OF OPTIONS WHEN
-// PLUGIN IS DEACTIVATED AND DELETED, INITIALISE PLUGIN, ADD OPTIONS PAGE.
-// ------------------------------------------------------------------------
-
-// Set-up Action and Filter Hooks
-//register_activation_hook(__FILE__, 'ographr_restore_defaults');
 register_uninstall_hook(__FILE__, 'ographr_delete_plugin_options');
 add_action('admin_init', array(&$admin_core, 'ographr_init') );
 add_action('admin_menu', array(&$admin_core, 'ographr_add_options_page') );
 add_action('admin_footer', array(&$admin_core, 'ographr_javascript') );
 
 class OGraphr_Admin_Core extends OGraphr_Core {
-	// --------------------------------------------------------------------------------------
-	// CALLBACK FUNCTION FOR: register_uninstall_hook(__FILE__, 'ographr_delete_plugin_options')
-	// --------------------------------------------------------------------------------------
-	// THIS FUNCTION RUNS WHEN THE USER DEACTIVATES AND DELETES THE PLUGIN. IT SIMPLY DELETES
-	// THE PLUGIN OPTIONS DB ENTRY (WHICH IS AN ARRAY STORING ALL THE PLUGIN OPTIONS).
-	// --------------------------------------------------------------------------------------
 
 	// Delete options table entries ONLY when plugin deactivated AND deleted
 	public function ographr_delete_plugin_options() {
@@ -58,8 +42,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		return $count; 
 	} 
 	
-	public function ographr_delete_postmeta() {
-		
+	public function ographr_delete_postmeta() {		
 		$published = wp_count_posts();
 		$published = $published->publish;
 		$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
@@ -78,16 +61,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								);
 		update_option('ographr_data', $stats);
 	}
-
-	// ------------------------------------------------------------------------------
-	// CALLBACK FUNCTION FOR: register_activation_hook(__FILE__, 'ographr_restore_defaults')
-	// ------------------------------------------------------------------------------
-	// THIS FUNCTION RUNS WHEN THE PLUGIN IS ACTIVATED. IF THERE ARE NO THEME OPTIONS
-	// CURRENTLY SET, OR THE USER HAS SELECTED THE CHECKBOX TO RESET OPTIONS TO THEIR
-	// DEFAULTS THEN THE OPTIONS ARE SET/RESET.
-	//
-	// OTHERWISE, THE PLUGIN OPTIONS REMAIN UNCHANGED.
-	// ------------------------------------------------------------------------------
 
 	// Define default option settings
 	public function ographr_restore_defaults() {
@@ -111,21 +84,12 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		}
 	}
 
-	// ------------------------------------------------------------------------------
-	// CALLBACK FUNCTION FOR: add_action('admin_init', 'ographr_init' )
-	// ------------------------------------------------------------------------------
-	// THIS FUNCTION RUNS WHEN THE 'admin_init' HOOK FIRES, AND REGISTERS YOUR PLUGIN
-	// SETTING WITH THE WORDPRESS SETTINGS API. YOU WON'T BE ABLE TO USE THE SETTINGS
-	// API UNTIL YOU DO.
-	// ------------------------------------------------------------------------------
-
 	// Init plugin options to white list our options
 	public function ographr_init(){
 
 		//global $options;
 		$options = get_option('ographr_options');
 		
-		// 0.6
 		wp_register_style( 'OGraphr_Stylesheet', plugins_url('/inc/style.min.css', __FILE__) );
 		wp_register_script( 'OGraphr_JScript', plugins_url('/inc/scripts.min.js', __FILE__), array('jquery'), null, true );
 		
@@ -141,18 +105,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 	}
 
-	// ------------------------------------------------------------------------------
-	// CALLBACK FUNCTION FOR: add_action('admin_menu', 'ographr_add_options_page');
-	// ------------------------------------------------------------------------------
-	// THIS FUNCTION RUNS WHEN THE 'admin_menu' HOOK FIRES, AND ADDS A NEW OPTIONS
-	// PAGE FOR YOUR PLUGIN TO THE SETTINGS MENU.
-	// ------------------------------------------------------------------------------
-
 	// Add menu page
 	public function ographr_add_options_page() {
-		//add_options_page('OGraphr Settings', 'OGraphr', 'manage_options', __FILE__, array($this, 'ographr_render_form'));
-		
-		// 0.6
 		$page = add_submenu_page( 'options-general.php', 
 		                                 __( 'OGraphr Settings', 'OGraphr' ), 
 		                                 __( 'OGraphr', 'OGraphr' ),
@@ -163,11 +117,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		add_action( 'admin_print_styles-' . $page, array($this, 'my_plugin_admin_styles') );
 	}
 	
-	public function my_plugin_admin_styles() {
-	       /*
-	        * It will be called only on your plugin admin page, enqueue our stylesheet here
-	        */
-	
+	public function my_plugin_admin_styles() {	
 			//global $options;
 			$options = get_option('ographr_options');
 	
@@ -183,15 +133,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 	 
 	}
 
-
-	// ------------------------------------------------------------------------------
-	// CALLBACK FUNCTION SPECIFIED IN: add_options_page()
-	// ------------------------------------------------------------------------------
-	// THIS FUNCTION IS SPECIFIED IN add_options_page() AS THE CALLBACK FUNCTION THAT
-	// ACTUALLY RENDER THE PLUGIN OPTIONS FORM AS A SUB-MENU UNDER THE EXISTING
-	// SETTINGS ADMIN MENU.
-	// ------------------------------------------------------------------------------
-
 	// Render the Plugin options form
 	public function ographr_render_form() {
 		$this->ographr_restore_defaults();
@@ -205,19 +146,20 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 			<form method="post" action="options.php">
 				<?php settings_fields('ographr_plugin_options'); ?>
 				<?php $options = get_option('ographr_options'); ?>
-
-				<br/><label><input name="ographr_options[advanced_opt]" type="checkbox" value="1" id="show_advanced" <?php if (isset($options['advanced_opt'])) { checked('1', $options['advanced_opt']); }  ?> /> Show advanced options </label>
-
+				<p>&nbsp;<label class="outside"><input name="ographr_options[advanced_opt]" type="checkbox" value="1" id="show_advanced" <?php if (isset($options['advanced_opt'])) { checked('1', $options['advanced_opt']); }  ?> /> Show advanced options </label></p>
+				
 				<!-- Beginning of the Plugin Options Form -->
-				<table id="outer"><tbody><tr><td class="left">
+				<table id="poststuff"><tbody><tr><td class="left">
+						
+						
 						<!-- *********************** BEGIN: Main Content ******************* -->
 						<form name="ographr-admin" method="post" action="http://wp.whyeye.org/wp-admin/options-general.php?page=meta-ographr.php">
 						<?php wp_nonce_field('ographr_save_options','ographr_admin_options_form'); ?>
 						<fieldset class="options">
 
-						<dl>
-							<dt><h3>General</h3></dt>
-							<dd>
+						<div class="postbox">
+							<h3 class="hndle">General</h3>
+							<div class="inside">
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
 							
@@ -261,7 +203,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							</tr>
 						
 							<!-- META TAGS -->
-							<tr valign="center"> 
+							<tr valign="top"> 
 								<th align="left" scope="row"><label>Meta-tags:</label></th> 
 								<td colspan="2"><label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label>&nbsp;
 
@@ -345,13 +287,13 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								</td>
 							</tr>
 						
-							</tbody></table></dd>
-						</dl>
+							</tbody></table></div>
+						</div>
 						
 						<!-- F R O N T   P A G E -->
-						<dl>
-							<dt><h3>Front Page</h3></dt>
-							<dd>
+						<div class="postbox">
+							<h3 class="hndle">Front Page</h3>
+							<div class="inside">
 								<table width="100%" cellspacing="2" cellpadding="5"> 
 								<tbody>
 							
@@ -375,15 +317,15 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<td colspan="2"><small><code>%tagline%</code> &#8211; your blog's tagline (<em><? if(get_bloginfo('description')) { echo get_bloginfo('description'); } else { echo '<span style="color:red;">empty</span>';} ?></em>)</small></td> 
 								</tr>
 							
-								</tbody></table></dd>			
-						</dd>
+								</tbody></table>			
+						</div>
 
-						</dl>
+						</div>
 					
 						<!-- R E S T R I C T I O N S -->
-						<dl class="advanced_opt">
-							<dt><h3>Restrictions</h3></dt>
-							<dd>
+						<div class="postbox advanced_opt">
+							<h3 class="hndle">Restrictions</h3>
+							<div class="inside">
 	
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
@@ -451,14 +393,14 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								</tr>
 						
 							</tbody></table>			
-						</dd>
+						</div>
 
-						</dl>
+						</div>
 					
 						<!-- A P I   K E Y S -->
-						<dl>
-							<dt><h3>API Keys</h3></dt>
-							<dd>
+						<div class="postbox">
+							<h3 class="hndle">API Keys</h3>
+							<div class="inside">
 							<p>
 								Some services limit access to their API and require a valid developer key in order to make queries. These are marked <em>yellow</em> in the list below. All other services will work out of the box, however, if you have reason to use your own developer keys you may enter them below.
 							</p>
@@ -550,14 +492,14 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							</tr>	
 						
 							</tbody></table>			
-						</dd>
+						</div>
 
-						</dl>
+						</div>
 
 						<!-- E X P E R T -->
-						<dl class="advanced_opt">
-							<dt><h3>Expert Settings</h3></dt>
-							<dd>
+						<div class="postbox advanced_opt">
+							<h3 class="hndle">Expert Settings</h3>
+							<div class="inside">
 								<table width="100%" cellspacing="2" cellpadding="5"> 
 								<tbody>
 									
@@ -603,10 +545,15 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 								<!-- HTML PREFIX -->
 								<tr valign="center"> 
-									<th align="left" scope="row"><label>Prefix:</label></th> 
+									<th align="left" scope="row"><label>Namespace:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[add_prefix]" type="checkbox" value="1" <?php if (isset($options['add_prefix'])) { checked('1', $options['add_prefix']); } ?> /> Add Open Graph prefix </label>
+										<label><input name="ographr_options[add_prefix]" type="checkbox" value="1" <?php if (isset($options['add_prefix'])) { checked('1', $options['add_prefix']); } ?> /> Add Open Graph prefix to source </label>
 									</td>
+								</tr>
+							
+								<tr valign="top"> 
+									<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
+									<td colspan="2"><small>Facebook advises the inclusion of the Open Graph prefix, though tags will be interpreted without one. However, your Wordpress theme needs to support <a href="http://codex.wordpress.org/Function_Reference/language_attributes" target="_blank">language attributes</a> to make this work! </small></td>
 								</tr>
 									
 								<!-- MORE TRIGGERS -->
@@ -617,6 +564,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 										<label><input name="ographr_options[enable_videoposter]" type="checkbox" value="1" <?php if (isset($options['enable_videoposter'])) { checked('1', $options['enable_videoposter']); } ?> /> Video posters </label>&nbsp;
 
 										<label><input name="ographr_options[enable_jwplayer]" type="checkbox" value="1" <?php if (isset($options['enable_jwplayer'])) { checked('1', $options['enable_jwplayer']); } ?> /> JW Player </label>&nbsp;
+										
+										<label><input name="ographr_options[enable_nvbplayer]" type="checkbox" value="1" <?php if (isset($options['enable_nvbplayer'])) { checked('1', $options['enable_nvbplayer']); } ?> /> NVB Player </label>&nbsp;
 
 										<label><input name="ographr_options[add_post_images]" type="checkbox" class="atoggle" data-atarget="input.disable_filters, textarea.disable_filters" data-astate="1" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
 
@@ -833,15 +782,15 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									</td>
 								</tr>
 								
-								</tbody></table></dd>			
-						</dd>
+								</tbody></table>			
+						</div>
 
-						</dl>
+						</div>
 					
 						<!-- F A C E B O O K -->
-						<dl class="advanced_opt">
-							<dt><h3>Facebook</h3></dt>
-							<dd>	
+						<div class="postbox advanced_opt">
+							<h3 class="hndle">Facebook</h3>
+							<div class="inside">	
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
 
@@ -929,15 +878,15 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							</tr>	
 						
 							</tbody></table>			
-						</dd>
+						</div>
 
-						</dl>
+						</div>
 
 
 						<!-- TWITTER -->
-						<dl class="advanced_opt">
-							<dt><h3>Twitter</h3></dt>
-							<dd>
+						<div class="postbox advanced_opt">
+							<h3 class="hndle">Twitter</h3>
+							<div class="inside">
 							<p>
 								Website owners must <a href="https://dev.twitter.com/form/participate-twitter-cards" target="_blank">opt-in</a> to have cards displayed for your domain, and Twitter must approve the integration. Below you can specify both your <em>@username</em> and/or your user ID. Note that user IDs never change, while <em>@usernames</em> can be changed by the user.
 							</p>
@@ -970,11 +919,11 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							</tr>
 
 							</tbody></table>			
-							</dd>
+							</div>
 
-						</dl>
+						</div>
 
-						<label class="advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt atoggle" data-atarget="input.del_postmeta" data-astate="1" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
+						<label class="outside advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt atoggle" data-atarget="input.del_postmeta" data-astate="1" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
 						
 						<label class="advanced_opt"><input name="ographr_options[delete_postmeta]" type="checkbox" value="1" class="advanced_opt del_postmeta" <?php if (isset($options['delete_postmeta'])) { checked('1', $options['delete_postmeta']); } ?> <?php if(!OGRAPHR_DEBUG) print 'disabled="disabled"'; ?> /> and delete all indexed data </label>
 						
@@ -991,9 +940,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						<td class="right">
 						<!-- *********************** BEGIN: Sidebar ************************ -->		
 
-						<dl>
-							<dt><h4>Navigator</h4></dt>
-							<dd>
+						<div class="postbox">
+							<h3 class="hndle">Navigator</h3>
+							<div class="inside">
 							<ul>
 								<li><strong><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">Website</a></strong></li>
 								<li><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/faq/" title="Frequently Asked Questions" target="_blank">FAQ</a></li>
@@ -1006,26 +955,26 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<li><a href="https://twitter.com/whyeye_org" class="twitter-follow-button" data-show-count="false" data-show-screen-name="false">Follow @whyeye_org</a>
 								<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script></li>
 							</ul>			
-							</dd>
+							</div>
 
-						</dl>
+						</div>
 
-						<dl>
-							<dt><h4>Humble Mumble</h4></dt>
-							<dd>
+						<div class="postbox">
+							<h3 class="hndle">Humble Mumble</h3>
+							<div class="inside">
 							<p style="font-size:8pt;">If you want to support this plugin, why not buy me a coffee?</p>
 							<ul>
 								<li><strong><a class="lpaypal" href="http://whyeye.org/donate/" target="_blank">Buy coffee!</a></strong></li>
 								<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/" target="_blank">Wishful thinking</a></li>
 							</ul>			
-							</dd>
+							</div>
 
-						</dl>
+						</div>
 						
 						<?php if ($options['add_graph']) { ?>
-							<dl>
-								<dt><h4>Statistics</h4></dt>
-								<dd>
+							<div class="postbox">
+								<h3 class="hndle">Statistics</h3>
+								<div class="inside">
 									<?php
 										global $post;
 										$posts_published = wp_count_posts();
@@ -1056,16 +1005,16 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 										
 									?>
 								<?php if ( ($options['exec_mode'] == 1) && ($options['add_graph']) ) { ?>								
-									<div id="chartdiv" style="height:110px;width:100%; "></div>
+									<div id="chartdiv" style="height:120px;width:100%; "></div>
 								<?php } ?>
 								<p style="font-size:8pt;">
-									<?php print "Posts indexed: $posts_harvested / $posts_published <span style=\"color:#999;\">&nbsp;$posts_percent%</span>"; ?><br/>
-									<?php print "Pages indexed: $pages_harvested / $pages_published <span style=\"color:#999;\">&nbsp;$pages_percent%</span>"; ?>
+									<?php print "<span style=\"color:#8560a8\">&#9632;</span><span style=\"color:#bd8cbf\">&#9632;</span> Posts indexed: $posts_harvested / $posts_published <span style=\"color:#999;\">&nbsp;$posts_percent%</span>"; ?><br/>
+									<?php print "<span style=\"color:transparent\">&#9632;&#9632;</span> Pages indexed: $pages_harvested / $pages_published <span style=\"color:#999;\">&nbsp;$pages_percent%</span>"; ?>
 								</p>
 								
-								</dd>
+								</div>
 
-							</dl>
+							</div>
 						<?php } ?>
 						<!-- *********************** END: Sidebar ************************ -->
 						</td> <!-- [right] -->
@@ -1094,7 +1043,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		$input['flickr_api'] = htmlentities($input['flickr_api']);
 		$input['myvideo_dev_api'] = htmlentities($input['myvideo_dev_api']);
 		$input['myvideo_web_api'] = htmlentities($input['myvideo_web_api']);
-		$input['official_api'] = htmlentities($input['official_api']);
+		if (OGRAPHR_BETA == TRUE)
+			$input['official_api'] = htmlentities($input['official_api']);
 		$input['socialcam_api'] = htmlentities($input['socialcam_api']);
 		$input['soundcloud_api'] = htmlentities($input['soundcloud_api']);
 		$input['ustream_api'] = htmlentities($input['ustream_api']);
@@ -1160,6 +1110,75 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 			$posts_total = substr($posts_total, 2);
 	
 			foreach($stats as $key => $value) {
+				$posts_indexed = "$posts_indexed, ['$key', $value[posts_indexed]]";
+			}
+			$posts_indexed = substr($posts_indexed, 2);
+			
+			// scale grid
+			$first_day = array_shift(array_keys($stats));
+			$today = strtotime("today");
+			$last_day = date("Y-m-d", $today);
+			$interval = $this->date_diff($first_day, $last_day);
+		?>
+	
+		<script type="text/javascript">
+					
+			function render_stats() {
+
+				var line1=[<? print $posts_total; ?>];
+				var line2=[<? print $posts_indexed; ?>];
+				  var plot1 = jQuery.jqplot('chartdiv', [line1, line2], {
+					series:[{color:'#bd8cbf'},{color:'#8560a8'}],
+					axesDefaults: {
+						pad: 0,
+						tickOptions: {
+							showLabel: false,
+						},
+					},							
+					seriesDefaults: {
+						lineWidth: '1.5',
+						showMarker: true,
+						fill: <? if ($options['fill_curves']) { print "true"; } else { print "false"; } ?>,
+						fillAlpha: 0.9,
+						markerOptions: {
+							size:<?php if ($interval >= 35) { print 0; } else { print 5; } ?>,
+						 	<?php if ($options['fill_curves']) { print 'color: "#ed1c24",'; } ?>
+						},
+						rendererOptions: {
+							smooth: <? if ($options['smooth_curves']) { print "true"; } else { print "false"; } ?>,
+							}
+						},
+					grid: {
+			            drawBorder: false,
+			            shadow: false,
+						background: '#fcfcfc',
+						borderWidth: '1'
+					},
+					axes:{
+				        xaxis:{
+				          renderer:jQuery.jqplot.DateAxisRenderer,
+				          tickInterval:'<?php if ($interval > 8760) { print "10 years"; } else if ($interval > 720 ) { print "1 year"; } else if ($interval > 90 ) { print "1 month"; } else if ($interval > 21 ) { print "1 week"; } else { print "1 day"; } ?>',
+				          min: <? print '"' . date("F j, Y", strtotime(array_shift(array_keys($stats))) ) . '"'; ?>,
+				          tickOptions:{
+				            formatString:'%b&nbsp;%#d'
+				          }		
+				        }
+				      },
+				      highlighter: {
+				        show: true,
+				        sizeAdjust: 7.5
+				      },
+				      cursor: {
+				        show: false
+				      }
+				  });
+			}
+	    </script>
+	
+		<?php } // OGRAPHR_BETA == TRUE
+	}
+
+}; // end of class) {
 				$posts_indexed = "$posts_indexed, ['$key', $value[posts_indexed]]";
 			}
 			$posts_indexed = substr($posts_indexed, 2);
