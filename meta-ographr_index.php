@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.5
+Version: 0.7.6
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.5");
+    define("OGRAPHR_VERSION", "0.7.6");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -126,7 +126,7 @@ register_activation_hook( __FILE__, array(&$core, 'ographr_activate') );
 
 $options = get_option('ographr_options');
 if (isset($options['disable_jetpack']))
-	remove_action( 'wp_head', 'jetpack_og_tags' );
+	remove_action( 'wp_head', 'jetpack_og_tags');
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -282,7 +282,7 @@ class OGraphr_Core {
 		$output = json_decode($output);
 		
 		// special treatment
-		if ($service == "Justin.tv") {
+		if ($service == "Justin.tv/Twitch") {
 			$output = $output[0];
 		} else if ($service == "Flickr") {
 			$ispublic = $output->photo->visibility->ispublic;
@@ -478,7 +478,7 @@ class OGraphr_Core {
 					if ($ustream_api = $options['ustream_api']) { print "\t Ustream API key: $ustream_api\n"; }
 					if ($viddler_api = $options['viddler_api']) { print "\t Viddler API key: $viddler_api\n"; }
 				
-					print "\n"; // an empty line!
+					print "\n\t-----\n";
 				}
 				
 				if ($web_thumb) { print "\t Default Thumbnail: $web_thumb\n"; }
@@ -555,7 +555,7 @@ class OGraphr_Core {
 				if(OGRAPHR_DEBUG == TRUE) {	
 					$e_time = microtime();
 					$time = $e_time - $s_time;
-					print "\n"; // an empty line!
+					print "\t-----\n"; // an empty line!
 					print "\t Processed in " . abs($time) . " seconds\n";
 					print "-->\n";
 				}
@@ -568,18 +568,19 @@ class OGraphr_Core {
 				// Add title & description
 				$title = $options['website_title'];
 				$site_name = $options['fb_site_name'];
-				$wp_title = get_the_title();
-				$wp_name = get_bloginfo('name');
-				$wp_url = get_option('home');
-				$wp_url = preg_replace('/https?:\/\//', NULL, $wp_url);
-				$title = str_replace("%postname%", $wp_title, $title);
-				$title = str_replace("%sitename%", $wp_name, $title);
-				$title = str_replace("%siteurl%", $wp_url, $title);
+				$mywp = array();
+				$mywp['title'] = get_the_title();
+				$mywp['blog_name'] = get_bloginfo('name');
+				$mywp['home_url'] = get_option('home');
+				$mywp['home_url'] = preg_replace('/https?:\/\//', NULL, $mywp['home_url']);
+				$title = str_replace("%postname%", $mywp['title'], $title);
+				$title = str_replace("%sitename%", $mywp['blog_name'], $title);
+				$title = str_replace("%siteurl%", $mywp['home_url'], $title);
 				if (!$title) {
-					$title = $wp_title;
+					$title = $mywp['title'];
 				}
-				$site_name = str_replace("%sitename%", $wp_name, $site_name);
-				$site_name = str_replace("%siteurl%", $wp_url, $site_name);
+				$site_name = str_replace("%sitename%", $mywp['blog_name'], $site_name);
+				$site_name = str_replace("%siteurl%", $mywp['home_url'], $site_name);
 
 				if(isset($options['add_author']))				
 					$add_author = $options['add_author'];
@@ -594,10 +595,10 @@ class OGraphr_Core {
 				//$twitter_creator_name = $options['twitter_creator_name'];
 
 				// suppress warnings
-				$article_meta = NULL;
-				$opengraph_meta = NULL;
-				$google_meta = NULL;
-				$twitter_meta = NULL;
+				$article_meta = array();
+				$opengraph_meta = array();
+				$google_meta = array();
+				$twitter_meta = array();
 				$link_rel = NULL;
 
 				// only enter the loop if required!			
@@ -608,36 +609,36 @@ class OGraphr_Core {
 
 							if (isset($add_author)) {
 								$author_id=$post->post_author;
-								$wp_author_link = get_author_posts_url($author_id);
-								$article_meta = $article_meta . "<meta property=\"article:author\" content=\"$wp_author_link\" />\n";
+								$mywp['author_url'] = get_author_posts_url($author_id);
+								$article_meta['article:author'] = $mywp['author_url'];
 							}							
 
 							if (isset($add_section)) {
-								$wp_categories = get_the_category();
-								if ($wp_categories) {
-								  foreach($wp_categories as $category) {
-									$article_meta = $article_meta . "<meta property=\"article:section\" content=\"$category->name\" />\n";
+								$mywp['categories'] = get_the_category();
+								if ($mywp['categories']) {
+									foreach($mywp['categories'] as $category) {
+										$article_meta['article:section'][] = $category->name;
 								  }
 								}
 							}
 
 							if (isset($add_tags)) {
-								$wp_tags = get_the_tags();
-								if ($wp_tags) {
-								  foreach($wp_tags as $tag) {
-									$article_meta = $article_meta . "<meta property=\"article:tag\" content=\"$tag->name\" />\n";
+								$mywp['tags'] = get_the_tags();
+								if ($mywp['tags']) {
+									foreach($mywp['tags'] as $tag) {
+										$article_meta['article:tag'][] = $tag->name;
 								  }
 								}
 							}
 
 							if (isset($add_pubtime)) {
-								$wp_published = get_the_date('Y-m-d');
-								$article_meta = $article_meta . "<meta property=\"article:published_time\" content=\"$wp_published\" />\n";
+								$mywp['published'] = get_the_date('Y-m-d');
+								$article_meta['article:published_time'] = $mywp['published'];
 							}							
 
 							if (isset($add_modtime)) {
-								$wp_modified = get_the_modified_date('Y-m-d');
-								$article_meta = $article_meta . "<meta property=\"article:modified_time\" content=\"$wp_modified\" />\n";
+								$mywp['modified'] = get_the_modified_date('Y-m-d');
+								$article_meta['article:modified_time'] = $mywp['modified'];
 							}
 
 						endwhile;
@@ -652,20 +653,31 @@ class OGraphr_Core {
 					$twitter_site_id = $options['twitter_site_id'];
 					$twitter_author_user = $options['twitter_author_user'];
 					$twitter_author_id = $options['twitter_author_id'];
+					
+					if ($twitter_author_user == "%user_twitter%") {
+						$mywp['twitter'] = get_the_author_meta('twitter');
+						$twitter_author_user = str_replace("%user_twitter%", $mywp['twitter'], $twitter_author_user);
+					} else if ($twitter_author_user == "%user_aim%") {
+						$mywp['twitter'] = get_the_author_meta('aim');
+						$twitter_author_user = str_replace("%user_aim%", $mywp['twitter'], $twitter_author_user);
+					} else if ($twitter_author_user == "%user_yahoo%") {
+						$mywp['twitter'] = get_the_author_meta('yim');
+						$twitter_author_user = str_replace("%user_yahoo%", $mywp['twitter'], $twitter_author_user);
+					}
 
 					// type of twitter card
-					$twitter_meta = $twitter_meta . "<meta property=\"twitter:card\" content=\"summary\" />\n";
+					$twitter_meta['twitter:card'] = "summary";
 
 					// twitter site name
 					if (strlen($twitter_site_user) > 1) {
-						$twitter_meta = $twitter_meta . "<meta property=\"twitter:site\" content=\"@$twitter_site_user\" />\n";
-						$twitter_meta = $twitter_meta . "<meta property=\"twitter:site:id\" content=\"$twitter_site_id\" />\n";
+						$twitter_meta['twitter:site'] = "@$twitter_site_user";
+						$twitter_meta['twitter:site:id'] = "$twitter_site_id";
 					}
 
 					if (is_single()) {
 						if (strlen($twitter_author_user) > 1) {
-							$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator\" content=\"@$twitter_author_user\" />\n";
-							$twitter_meta = $twitter_meta . "<meta property=\"twitter:creator:id\" content=\"$twitter_author_id\" />\n";
+							$twitter_meta['twitter:creator'] = "@$twitter_author_user";
+							$twitter_meta['twitter:creator:id'] = "$twitter_author_id";
 						}
 					}
 					
@@ -676,10 +688,10 @@ class OGraphr_Core {
 					$title = get_option('blogname');
 					if($title) {
 						if (isset($options['add_google_meta']))
-							$google_meta = $google_meta . "<meta name=\"title\" content=\"$title\" />\n";
+							$google_meta['title'] = $title;
 						if (isset($options['add_twitter_meta']))
-							$twitter_meta = $twitter_meta . "<meta property=\"twitter:title\" content=\"$title\" />\n";
-						$opengraph_meta = $opengraph_meta . "<meta property=\"og:title\" content=\"$title\" />\n";
+							$twitter_meta['twitter:title'] = $title;
+						$opengraph_meta['og:title'] = $title;
 					}
 					// Add custom description
 					$description = $options['website_description'];
@@ -687,19 +699,19 @@ class OGraphr_Core {
 					$description = str_replace("%tagline%", $wp_tagline, $description);
 					if($description) {
 						if (isset($options['add_google_meta']))
-							$google_meta = $google_meta . "<meta name=\"description\" content=\"$description\" />\n";
+							$google_meta['description'] = $description;
 						if (isset($options['add_twitter_meta']))
-							$twitter_meta = $twitter_meta . "<meta property=\"twitter:description\" content=\"$description\" />\n";
-						$opengraph_meta = $opengraph_meta . "<meta property=\"og:description\" content=\"$description\" />\n";
+							$twitter_meta['twitter:description'] = $description;
+						$opengraph_meta['og:description'] = $description;
 					}
 				} else { //single posts
 					if ($options['add_title'] && ($title)) {
 						// Post title
 						if (isset($options['add_google_meta']))
-							$google_meta = $google_meta . "<meta name=\"title\" content=\"$title\" />\n";
+							$google_meta['title'] = $title;
 						if (isset($options['add_twitter_meta']))
-							$twitter_meta = $twitter_meta . "<meta property=\"twitter:title\" content=\"$title\" />\n";
-						$opengraph_meta = $opengraph_meta . "<meta property=\"og:title\" content=\"$title\" />\n"; 
+							$twitter_meta['twitter:title'] = $title;
+						$opengraph_meta['og:title'] = $title;
 					}
 					
 					if($options['add_excerpt'] && ($description = wp_strip_all_tags((get_the_excerpt()), true))) {
@@ -708,10 +720,10 @@ class OGraphr_Core {
 							$description = $user_agent;
 						}
 						if (isset($options['add_google_meta']))
-							$google_meta = $google_meta . "<meta name=\"description\" content=\"$description\" />\n";
+							$google_meta['description'] = $description;
 						if (isset($options['add_twitter_meta']))
-							$twitter_meta = $twitter_meta . "<meta property=\"twitter:description\" content=\"$description\" />\n";
-						$opengraph_meta = $opengraph_meta . "<meta property=\"og:description\" content=\"$description\" />\n";
+							$twitter_meta['twitter:description'] = $description;
+						$opengraph_meta['og:description'] = $description;
 					}
 				}
 		
@@ -719,29 +731,29 @@ class OGraphr_Core {
 				if (($options['add_permalink']) && (is_front_page()) && ($link = get_option('home'))) {
 					print "<meta property=\"og:url\" content=\"$link\" />\n";
 					if (isset($options['add_twitter_meta']))
-						$twitter_meta = $twitter_meta . "<meta property=\"twitter:url\" content=\"$link\" />\n";
+						$twitter_meta['twitter:url'] = $link;
 				} else {
 					if(isset($options['add_permalink']) && ($link = get_permalink())) {
-						$opengraph_meta = $opengraph_meta . "<meta property=\"og:url\" content=\"$link\" />\n";
+						$opengraph_meta['og:url'] = $link;
 						if (isset($options['add_twitter_meta']))
-							$twitter_meta = $twitter_meta . "<meta property=\"twitter:url\" content=\"$link\" />\n";
+							$twitter_meta['twitter:url'] = $link;
 					}
 				}
 			
 				// Add site name
 				if ($site_name) {
-					$opengraph_meta = $opengraph_meta . "<meta property=\"og:site_name\" content=\"$site_name\" />\n";
+					$opengraph_meta['og:site_name'] = $site_name;
 				}
 				
 				// Add locale
 				$locale = $options['locale'];
 				if (($locale) && ($locale != "_none")) {
-					$opengraph_meta = $opengraph_meta . "<meta property=\"og:locale\" content=\"$locale\" />\n";
+					$opengraph_meta['og:locale'] = $locale;
 				}
 			
 				// Add type
 				if (($type = $options['fb_type']) && ($type != '_none')) {
-					$opengraph_meta = $opengraph_meta . "<meta property=\"og:type\" content=\"$type\" />\n";
+					$opengraph_meta['og:type'] = $type;
 				}
 		
 				// Add thumbnails
@@ -753,17 +765,17 @@ class OGraphr_Core {
 				if ( (isset($total_img)) && ($total_img == 0) && ($web_thumb)) {
 					print "<meta property=\"og:image\" content=\"$web_thumb\" />\n";
 					if (isset($options['add_twitter_meta']))
-						$twitter_meta = $twitter_meta . "<meta property=\"twitter:image\" content=\"$web_thumb\" />\n";
+						$twitter_meta['twitter:image'] = $web_thumb;
 					$ext = pathinfo($web_thumb, PATHINFO_EXTENSION);
 					if (($ext == "jpg") || ($ext == "jpe"))
 						$ext = "jpeg";
-					$opengraph_meta = $opengraph_meta . "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
+					$opengraph_meta['og:image:type'] = "image/$ext";
 				} else if (isset($thumbnails)) { // investigate?
 					foreach ($thumbnails as $thumbnail) {
 						if ($thumbnail) {
-							$opengraph_meta = $opengraph_meta . "<meta property=\"og:image\" content=\"$thumbnail\" />\n";
+							$opengraph_meta['og:image'][] = $thumbnail;
 							if (isset($options['add_twitter_meta']))
-								$twitter_meta = $twitter_meta . "<meta property=\"twitter:image\" content=\"$thumbnail\" />\n";
+								$twitter_meta['twitter:image'][] = $thumbnail;
 						}
 					}
 				}
@@ -775,18 +787,18 @@ class OGraphr_Core {
 					if (($ext == "jpg") || ($ext == "jpe"))
 						$ext = "jpeg";
 					if (($ext == "bmp") || ($ext == "gif") || ($ext == "jpeg") || ($ext == "png") || ($ext == "webp"))
-						$opengraph_meta = $opengraph_meta . "<meta property=\"og:image:type\" content=\"image/$ext\" />\n";
+						$opengraph_meta['og:image:type'] = "image/$ext";
 				}
 						
 			
 				// Add Facebook ID
 				if ($fb_admins = $options['fb_admins']) {
-					$opengraph_meta = $opengraph_meta . "<meta property=\"fb:admins\" content=\"$fb_admins\" />\n";
+					$opengraph_meta['fb:admins'] = $fb_admins;
 				}
 
 				// Add Facebook Application ID
 				if ($fb_app_id = $options['fb_app_id']) {
-					$opengraph_meta = $opengraph_meta . "<meta property=\"fb:app_id\" content=\"$fb_app_id\" />\n";
+					$opengraph_meta['fb:app_id'] = $fb_app_id;
 				}
 				
 				// Add Link elements
@@ -810,15 +822,49 @@ class OGraphr_Core {
 					}
 				}
 				
+				// Print Open Graph tags
 				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || (OGRAPHR_DEBUG) || (!isset($options['limit_opengraph'])) ) {
-					print $opengraph_meta;
-					print $article_meta;
+					//print $opengraph_meta;
+					foreach($opengraph_meta as $key => $value) {
+						if ($key == "og:image") {
+							foreach($opengraph_meta['og:image'] as $val_image)
+								print "<meta property=\"$key\" content=\"$val_image\" />\n";
+						} else {
+								print "<meta property=\"$key\" content=\"$value\" />\n";
+						}
+					}
+					// Print OG article tags
+					foreach($article_meta as $key => $value) {
+						if ($key == "article:section") {
+							foreach($article_meta['article:section'] as $value)
+							print "<meta property=\"$key\" content=\"$value\" />\n";
+						} else if ($key == "article:tag") {
+							foreach($article_meta['article:tag'] as $value)
+							print "<meta property=\"$key\" content=\"$value\" />\n";
+						} else {
+							print "<meta property=\"$key\" content=\"$value\" />\n";
+						}
+					}
 				}
 				
-				if ((isset($options['add_twitter_meta'])) && ((preg_match(TWITTER_USERAGENT, $user_agent)) || (OGRAPHR_DEBUG)))
-					print $twitter_meta;
+				// Print Twitter Cards
+				if ((isset($options['add_twitter_meta'])) && ((preg_match(TWITTER_USERAGENT, $user_agent)) || (OGRAPHR_DEBUG))) {
+					//print $twitter_meta;
+					foreach($twitter_meta as $key => $value) {
+						if ($key == "twitter:image") {
+							foreach($twitter_meta['twitter:image'] as $val_image)
+								print "<meta property=\"$key\" content=\"$val_image\" />\n";
+						} else {
+								print "<meta property=\"$key\" content=\"$value\" />\n";
+						}
+					}
+				}
+				
+				// Print Google+ Meta
 				if ((isset($options['add_google_meta'])) && ((preg_match(GOOGLEPLUS_USERAGENT, $user_agent)) || (OGRAPHR_DEBUG)))
-					print $google_meta;
+					foreach($google_meta as $key => $value) {
+						print "<meta name=\"$key\" content=\"$value\" />\n";
+					}
 				if (isset($options['add_link_rel']))
 					print $link_rel;
 
@@ -1250,10 +1296,14 @@ class OGraphr_Core {
 			$json_query = "mix->cover_urls->" . ETRACKS_IMAGE_SIZE;
 			$etracks_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($etracks_thumbnail)
-					print "\t 8tracks: $etracks_thumbnail (ID:$match)\n";
-				else
-					print "\t 8tracks: Error from URL ($json_url)\n";
+				if ($etracks_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $etracks_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($etracks_thumbnail)) {
@@ -1292,10 +1342,14 @@ class OGraphr_Core {
 			$json_query = "result->preview";
 			$bambuser_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($bambuser_thumbnail)
-					print "\t Bambuser: $bambuser_thumbnail (ID:$match)\n";
-				else
-					print "\t Bambuser: Error from URL ($json_url)\n";
+				if ($bambuser_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $bambuser_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($bambuser_thumbnail)) {
@@ -1314,6 +1368,7 @@ class OGraphr_Core {
 	} // end find_bambuser_widgets
 	
 	public function find_bandcamp_widgets($markup, $options) {
+		$service = "Bandcamp";
 		$api = $options["bandcamp_api"];
 
 		// Standard embed code for albums
@@ -1322,15 +1377,18 @@ class OGraphr_Core {
 
 		// Now if we've found a Bandcamp ID, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Bandcamp";
 			$json_url = "http://api.bandcamp.com/api/album/2/info?key=$api&album_id=$match";
 			$json_query = BANDCAMP_IMAGE_SIZE;
 			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($bandcamp_thumbnail)
-					print "\t Bandcamp album: $bandcamp_thumbnail (ID:$match)\n";
-				else
-					print "\t Bandcamp album: Error from URL ($json_url)\n";
+				if ($bandcamp_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $bandcamp_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($bandcamp_thumbnail)) {
@@ -1352,7 +1410,6 @@ class OGraphr_Core {
 		foreach($matches as $match) {
 			//$bandcamp_thumbnail = $this->get_bandcamp_parent_thumbnail($match, $bandcamp_api);
 			// get parent album id
-			$service = "Bandcamp";
 			$json_url = "http://api.bandcamp.com/api/track/1/info?key=$api&track_id=$match";
 			$json_query = "album_id";
 			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
@@ -1362,10 +1419,14 @@ class OGraphr_Core {
 			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($bandcamp_thumbnail)
-					print "\t Bandcamp track: $bandcamp_thumbnail (ID:$match)\n";
-				else
-					print "\t Bandcamp track: Error from URL ($json_url)\n";
+				if ($bandcamp_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $bandcamp_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($bandcamp_thumbnail)) {
@@ -1384,6 +1445,7 @@ class OGraphr_Core {
 	} // end find_bandcamp_widgets
 		
 	public function find_bliptv_widgets($markup, $options) {
+		$service = "Blip.tv";
 
 		// Blip.tv iFrame player
 		preg_match_all( '/blip.tv\/play\/([A-Za-z0-9]+)/i', $markup, $matches1 );
@@ -1396,15 +1458,18 @@ class OGraphr_Core {
 
 		// Now if we've found a Blip.tv embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Blip.tv";
 			$json_url = "http://blip.tv/players/episode/$match?skin=json";
 			$json_query = "Post->thumbnailUrl";
 			$bliptv_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($bliptv_thumbnail)
-					print "\t Blip.tv: $bliptv_thumbnail (ID:$match)\n";
-				else
-					print "\t Blip.tv: Error from URL ($json_url)\n";
+				if ($bliptv_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $bliptv_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($bliptv_thumbnail)) {
@@ -1423,6 +1488,7 @@ class OGraphr_Core {
 	} // end find_bliptv_widgets
 
 	public function find_dailymotion_widgets($markup, $options) {
+		$service = "Dailymotion";
 
 		// Dailymotion Flash player
 		preg_match_all('#<object[^>]+>.+?https?://w*.?dailymotion.com/swf/video/([A-Za-z0-9-_]+).+?</object>#s', $markup, $matches1);
@@ -1438,15 +1504,18 @@ class OGraphr_Core {
 
 		// Now if we've found a Dailymotion video ID, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Dailymotion";
 			$json_url = "https://api.dailymotion.com/video/$match?fields=thumbnail_url";
 			$json_query = "thumbnail_url";
 			$dailymotion_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($dailymotion_thumbnail)
-					print "\t Dailymotion: $dailymotion_thumbnail\n";
-				else
-					print "\t Dailymotion: Error from URL ($json_url)\n";
+				if ($dailymotion_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $dailymotion_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($dailymotion_thumbnail)) {
@@ -1465,7 +1534,7 @@ class OGraphr_Core {
 	} //end find_dailymotion_widgets
 
 	public function find_flickr_widgets($markup, $options) {
-
+		$service = "Flickr";
 		$api = $options['flickr_api'];
 
 		preg_match_all('/<object.*?data=\"http:\/\/www.flickr.com\/apps\/video\/stewart.swf\?.*?>(.*?photo_id=([0-9]+).*?)<\/object>/smi', $markup, $matches);
@@ -1473,15 +1542,18 @@ class OGraphr_Core {
 	
 		// Now if we've found a Flickr embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Flickr";
 			$json_url = "http://www.flickr.com/services/rest/?method=flickr.photos.getInfo&photo_id=$match&format=json&api_key=$api&nojsoncallback=1";
 			$json_query = NULL;
 			$flickr_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($flickr_thumbnail)
-					print "\t Flickr: $flickr_thumbnail (ID:$match)\n";
-				else
-					print "\t Flickr: Error from URL ($json_url)\n";
+				if ($flickr_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $flickr_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($flickr_thumbnail)) {
@@ -1500,6 +1572,7 @@ class OGraphr_Core {
 	} // end find_flickr_widgets
 	
 	public function find_hulu_widgets($markup, $options) {
+		$service = "Hulu";
 
 		// Hulu iFrame player
 		preg_match_all( '/hulu.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches );				
@@ -1507,15 +1580,18 @@ class OGraphr_Core {
 
 		// Now if we've found a Hulu embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Hulu";
 			$json_url = "http://www.hulu.com/api/oembed.json?url=http://www.hulu.com/embed/$match";
 			$json_query = "thumbnail_url";
 			$hulu_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($hulu_thumbnail)
-					print "\t Hulu: $hulu_thumbnail (ID:$match)\n";
-				else
-					print "\t Hulu: Error from URL ($json_url)\n";
+				if ($hulu_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $hulu_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($hulu_thumbnail)) {
@@ -1534,6 +1610,7 @@ class OGraphr_Core {
 	} // end find_hulu_widgets
 	
 	public function find_internetarchive_widgets($markup, $options) {
+		$service = "Internet Archive";
 
 		// Internet Archive iFrame players
 		preg_match_all( '/archive.org\/embed\/([A-Za-z0-9]+)/i', $markup, $matches);
@@ -1542,15 +1619,18 @@ class OGraphr_Core {
 
 		// Now if we've found a Internet Archive embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Internet Archive";
 			$json_url = "http://archive.org/details/$match&output=json";
 			$json_query = "misc->image";
 			$internetarchive_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($internetarchive_thumbnail)
-					print "\t Archive.org: $internetarchive_thumbnail (ID:$match)\n";
-				else
-					print "\t Archive.org: Error from URL ($json_url)\n";
+				if ($internetarchive_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $internetarchive_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($internetarchive_thumbnail)) {
@@ -1569,6 +1649,7 @@ class OGraphr_Core {
 	} // end find_internetarchive_widgets
 	
 	public function find_justintv_widgets($markup, $options) {
+		$service = "Justin.tv/Twitch";
 
 		// Justin.tv/Twitch.tv embed player
 		preg_match_all( '/(?:justin|twitch).tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/i', $markup, $matches );
@@ -1577,15 +1658,18 @@ class OGraphr_Core {
 		
 		// Now if we've found a Justin.tv/Twitch.tv embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Justin.tv";
 			$json_url = "http://api.justin.tv/api/stream/list.json?channel=$match";
 			$json_query = "channel->" . JUSTINTV_IMAGE_SIZE;
 			$justintv_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($justintv_thumbnail)
-					print "\t Justin.tv/Twitch: $justintv_thumbnail (ID:$match)\n";
-				else
-					print "\t Justin.tv/Twitch: Error from URL ($json_url)\n";
+				if ($justintv_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $justintv_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($justintv_thumbnail)) {
@@ -1604,6 +1688,7 @@ class OGraphr_Core {
 	} //end find_justintv_widgets
 	
 	public function find_livestream_widgets($markup, $options) {
+		$service = "Livestream";
 
 		// Standard embed code
 		preg_match_all('/cdn.livestream.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches);
@@ -1613,10 +1698,14 @@ class OGraphr_Core {
 		foreach($matches as $match) {
 			$livestream_thumbnail = "http://thumbnail.api.livestream.com/thumbnail?name=$match";
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($livestream_thumbnail)
-					print "\t Livestream: $livestream_thumbnail\n";
-				else
-					print "\t Livestream: Error from URL ($livestream_thumbnail)\n";
+				if ($livestream_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $livestream_thumbnail\n";
+					print "\t Image: $livestream_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($livestream_thumbnail)\n";
+				}
 			}
 			
 			if (isset($livestream_thumbnail)) {
@@ -1635,6 +1724,7 @@ class OGraphr_Core {
 	} // end find_livestream_widgets
 	
 	public function find_mixcloud_widgets($markup, $options) {
+		$service = "Mixcloud";
 
 		// Standard embed code
 		preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches);
@@ -1646,15 +1736,18 @@ class OGraphr_Core {
 		// Now if we've found a Mixcloud ID, let's set the thumbnail URL
 		foreach($matches as $match) {
 			$mixcloud_id = str_replace('%2F', '/', $match);
-			$service = "Mixcloud";
 			$json_url = "http://api.mixcloud.com/$match";
 			$json_query = "pictures->" . MIXCLOUD_IMAGE_SIZE;
 			$mixcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($mixcloud_thumbnail)
-					print "\t Mixcloud: $mixcloud_thumbnail\n";
-				else
-					print "\t Mixcloud: Error from URL ($json_url)\n";
+				if ($mixcloud_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $mixcloud_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($mixcloud_thumbnail)) {
@@ -1673,6 +1766,7 @@ class OGraphr_Core {
 	} // end find_mixcloud_widgets
 	
 	public function find_myvideo_widgets($markup, $options) {
+		$service = "MyVideo";
 
 		$dev_id = $options['myvideo_dev_api'];
 		$website_id = $options['myvideo_web_api'];
@@ -1688,15 +1782,18 @@ class OGraphr_Core {
 
 		// Now if we've found a MyVideo ID, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "MyVideo";
 			$json_url = "https://api.myvideo.de/prod/mobile/api2_rest.php?method=myvideo.videos.get_details&dev_id=$dev_id&website_id=$website_id&movie_id=$match&o_format=json";
 			$json_query = "response->myvideo->movie->movie_thumbnail";
 			$myvideo_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($myvideo_thumbnail)
-					print "\t MyVideo: $myvideo_thumbnail\n";
-				else
-					print "\t MyVideo: Error from URL ($json_url)\n";
+				if ($myvideo_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $myvideo_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($myvideo_thumbnail)) {
@@ -1715,7 +1812,7 @@ class OGraphr_Core {
 	} // end find_myvideo_widgets
 
 	public function find_official_widgets($markup, $options) {
-		
+		$service = "Official.fm";
 		//$api = $options['official_api'];
 
 		// Official.fm iFrame
@@ -1724,7 +1821,6 @@ class OGraphr_Core {
 
 		// Now if we've found a Official.fm embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Official.fm";
 			$json_url = "http://api.official.fm/tracks/$match?fields=cover&api_version=2";
 			$json_query = "track->cover->urls->" . OFFICIAL_IMAGE_SIZE;
 			$official_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
@@ -1735,10 +1831,14 @@ class OGraphr_Core {
 				$official_thumbnail = "http:" . $official_thumbnail;
 			
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($official_thumbnail)
-					print "\t Official.fm: $official_thumbnail (ID:$json_url)\n";
-				else
-					print "\t Official.fm: Error from URL ($json_url)\n";
+				if ($official_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $official_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($official_thumbnail)) {
@@ -1758,7 +1858,7 @@ class OGraphr_Core {
 	
 	/*	
 	public function find_playfm_widgets($markup, $options) {
-
+		$service = "Play.fm";
 		$api = $options['playfm_api'];
 
 		// Play.fm embed
@@ -1769,10 +1869,14 @@ class OGraphr_Core {
 		foreach($matches as $match) {
 			$playfm_thumbnail = $this->get_playfm_thumbnail($match, $api);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($playfm_thumbnail)
-					print "\t Play.fm: $playfm_thumbnail (ID:$match)\n";
-				else
-					print "\t Play.fm: Error from URL ($json_url)\n";
+				if ($playfm_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $playfm_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($playfm_thumbnail)) {
@@ -1792,6 +1896,7 @@ class OGraphr_Core {
 	*/
 	
 	public function find_rdio_widgets($markup, $options) {
+		$service = "Rdio";
 
 		// Rdio iFrame
 		preg_match_all( '/rd.io\/i\/([A-Za-z0-9]+)/i', $markup, $matches );
@@ -1799,15 +1904,18 @@ class OGraphr_Core {
 
 		// Now if we've found a Rdio embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Rdio";
 			$json_url = "http://www.rdio.com/api/oembed/?format=json&url=http://rd.io/x/$match";
 			$json_query = "thumbnail_url";
 			$rdio_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($rdio_thumbnail)
-					print "\t Rdio: $rdio_thumbnail (ID:$match)\n";
-				else
-					print "\t Rdio: Error from URL ($json_url)\n";
+				if ($rdio_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $rdio_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($rdio_thumbnail)) {
@@ -1826,6 +1934,7 @@ class OGraphr_Core {
 	} // end find_rdio_widgets
 	
 	public function find_socialcam_widgets($markup, $options) {
+		$service = "Socialcam";
 
 		$api = $options['socialcam_api'];
 
@@ -1835,16 +1944,19 @@ class OGraphr_Core {
 
 		// Now if we've found a Socialcam embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "Socialcam";
 			$json_url = "https://api.socialcam.com/v1/videos/$match.json?access_token=$api";
 			$json_query = "thumbnail_url";
 			$json_query = SOCIALCAM_IMAGE_SIZE . "->url";
 			$socialcam_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($socialcam_thumbnail)
-					print "\t Socialcam: $socialcam_thumbnail (ID:$match)\n";
-				else
-					print "\t Socialcam: Error from URL ($json_url)\n";
+				if ($socialcam_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $socialcam_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($socialcam_thumbnail)) {
@@ -1862,7 +1974,7 @@ class OGraphr_Core {
 	} // end find_socialcam_widgets
 	
 	public function find_soundcloud_widgets($markup, $options) {
-
+		$service = "SoundCloud";
 		$api = $options['soundcloud_api'];
 
 		// Standard embed code for tracks (Flash and HTML5 player)
@@ -1876,17 +1988,20 @@ class OGraphr_Core {
 
 		// Now if we've found a SoundCloud ID, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "SoundCloud";
 			$json_url = "http://api.soundcloud.com/tracks/$match.json?client_id=$api";
 			$json_query = "artwork_url";
 			$soundcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
 
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($soundcloud_thumbnail)
-					print "\t SoundCloud track: $soundcloud_thumbnail (ID:$match)\n";
-				else
-					print "\t SoundCloud track: Error from URL ($json_url)\n";
+				if ($soundcloud_thumbnail) {
+					print "\n\t [$service track]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $soundcloud_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 				
 			}
 			
@@ -1912,16 +2027,19 @@ class OGraphr_Core {
 
 		// Now if we've found a SoundCloud ID, let's set the thumbnail URL
 		foreach($matches as $match) {
-			$service = "SoundCloud";
 			$json_url = "http://api.soundcloud.com/playlists/$match.json?client_id=$api";
 			$json_query = "artwork_url";
 			$soundcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($soundcloud_thumbnail)
-					print "\t SoundCloud playlist: $soundcloud_thumbnail (ID:$match)\n";
-				else
-					print "\t SoundCloud playlist: Error from URL ($json_url)\n";
+				if ($soundcloud_thumbnail) {
+					print "\n\t [$service playlist]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $soundcloud_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($soundcloud_thumbnail)) {
@@ -1940,7 +2058,7 @@ class OGraphr_Core {
 	} // end find_soundcloud_widgets
 	
 	public function find_ustream_widgets($markup, $options) {
-
+		$service = "Ustream";
 		$api = $options['ustream_api'];
 
 		// Ustream iFrame player (recorded)
@@ -1950,15 +2068,18 @@ class OGraphr_Core {
 
 		// Now if we've found a Ustream embed URL, let's set the thumbnail URL
 		foreach($matches as $match) {					
-			$service = "Ustream";
 			$json_url = "http://api.ustream.tv/json/channel/$match/getInfo?key=$api";
 			$json_query = "results->imageUrl->" . USTREAM_IMAGE_SIZE;
 			$ustream_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);						
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($ustream_thumbnail)
-					print "\t Ustream: $ustream_thumbnail (ID:$match)\n";
-				else
-					print "\t Ustream: Error from URL ($json_url)\n";
+				if ($ustream_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $ustream_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($ustream_thumbnail)) {
@@ -1977,22 +2098,25 @@ class OGraphr_Core {
 	} // end find_ustream_widgets
 	
 	public function find_viddler_widgets($markup, $options) {
-
+		$service = "Viddler";
 		$api = $options['viddler_api'];
 
 		preg_match_all( '/viddler.com\/embed\/([A-Za-z0-9]+)/i', $markup, $matches );
 
 		// Now if we've found a Viddler embed URL, let's set the thumbnail URL
 		foreach($matches[1] as $match) {
-			$service = "Viddler";
 			$json_url = "http://api.viddler.com/api/v2/viddler.api.getDetails.json?video_id=$match&key=$api";
 			$json_query = "video->thumbnail_url";
 			$viddler_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($viddler_thumbnail)
-					print "\t Viddler: $viddler_thumbnail (ID:$match)\n";
-				else
-					print "\t Viddler: Error from URL ($json_url)\n";
+				if ($viddler_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $viddler_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($viddler_thumbnail)) {
@@ -2011,6 +2135,7 @@ class OGraphr_Core {
 	} // end find_viddler_widgets
 	
 	public function find_vimeo_widgets($markup, $options) {
+		$service = "Vimeo";
 
 		// Vimeo Flash player ("old embed code")
 		preg_match_all('#<object[^>]+>.+?https?://vimeo.com/moogaloop.swf\?clip_id=([A-Za-z0-9\-_]+)&.+?</object>#s', $markup, $matches1);
@@ -2029,10 +2154,14 @@ class OGraphr_Core {
 			$json_url = "http://vimeo.com/api/v2/video/$match.php";
 			$vimeo_thumbnail = $this->get_vimeo_thumbnail($match, VIMEO_IMAGE_SIZE);
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($vimeo_thumbnail)
-					print "\t Vimeo: $vimeo_thumbnail (ID:$match)\n";
-				else
-					print "\t Vimeo: Error from URL ($json_url)\n";
+				if ($vimeo_thumbnail) {
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: $json_url\n";
+					print "\t Image: $vimeo_thumbnail\n";
+				} else {
+					print "\n\t ERROR: $service request failed ($json_url)\n";
+				}
 			}
 			
 			if (isset($vimeo_thumbnail)) {
@@ -2051,6 +2180,7 @@ class OGraphr_Core {
 	} // end find_vimeo_widgets
 	
 	public function find_youtube_widgets($markup, $options) {
+		$service = "YouTube";
 
 		// Checks for the old standard YouTube embed
 		preg_match_all('#<object[^>]+>.+?https?://w*.?youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s', $markup, $matches1);
@@ -2069,11 +2199,14 @@ class OGraphr_Core {
 			$youtube_thumbnail = 'http://img.youtube.com/vi/' . $match; // no https connection
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
 				if ($youtube_thumbnail) {
-					print "\t YouTube #1: $youtube_thumbnail/0.jpg (ID:$match)\n";
-					print "\t YouTube #2: $youtube_thumbnail/1.jpg (ID:$match)\n";
-					print "\t YouTube #3: $youtube_thumbnail/2.jpg (ID:$match)\n";
+					print "\n\t [$service]\n";
+					print "\t ID: $match\n";
+					print "\t Request: http://img.youtube.com/vi/" . $match . "\n";
+					print "\t Image #1: $youtube_thumbnail/0.jpg (ID:$match)\n";
+					print "\t Image #2: $youtube_thumbnail/1.jpg (ID:$match)\n";
+					print "\t Image #3: $youtube_thumbnail/2.jpg (ID:$match)\n";
 				} else {	
-					print "\t YouTube: Error from URL ($youtube_thumbnail/[012].jpg)\n";
+					print "\n\t ERROR: $service request failed ($youtube_thumbnail/[012].jpg)\n";
 				}
 			}
 			

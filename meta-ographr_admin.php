@@ -172,7 +172,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						
 							<tr valign="center"> 
 								<th align="left" scope="row"><label>&nbsp;</label></th> 
-								<td colspan="2"><small><code>%postname%</code> &#8211; page or post title<br/><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_name = get_option('blogname')) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
+								<td colspan="2"><small><code>%postname%</code> &#8211; page or post title<br/><code>%sitename%</code> &#8211; your blog's name (<em><? if($mywp['blog_name'] = get_option('blogname')) { echo $mywp['blog_name']; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br/>
 									<code>%siteurl%</code> &#8211; the URL of your blog (<em><? $wp_url = get_option('home'); $wp_url = (preg_replace('/https?:\/\//', NULL, $wp_url)); echo $wp_url; ?></em>)</small></td> 
 							</tr>
 						
@@ -802,7 +802,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-							<td colspan="2"><small><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $wp_name; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
+							<td colspan="2"><small><code>%sitename%</code> &#8211; your blog's name (<em><? if($wp_url) { echo $mywp['blog_name']; } else { echo '<span style="color:red;">empty</span>';} ?></em>)<br />
 								<code>%siteurl%</code> &#8211; the URL of your blog (<em><? echo $wp_url; ?></em>)</small></td> 
 							</tr>
 						
@@ -910,6 +910,13 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<tr valign="center"> 
 							<th align="left" width="140px" scope="row"><label>Author User:</label></th> 
 							<td colspan="2"><input type="text" size="75" name="ographr_options[twitter_author_user]" value="<?php echo $options['twitter_author_user']; ?>" /></td>
+							</tr>
+
+							<tr valign="center"> 
+								<th align="left" scope="row"><label>&nbsp;</label></th> 
+								<td colspan="2"><small><code>%user_twitter%</code> &#8211; use Twitter name saved in your <a href="<?php print get_admin_url() . "profile.php";?>">user profile</a> (requires plugin, e.g. <a href="http://wordpress.org/extend/plugins/twitter-profile-field/" target="_blank">Twitter Profile Field</a>)<br/>
+									<code>%user_aim%</code> &#8211; abuse <em>AIM</em> name saved in your profile<br/>
+									<code>%user_yahoo%</code> &#8211; abuse <em>Yahoo! IM</em> name saved in your profile<small>
 							</tr>
 
 							<!-- AUTHOR ID -->	
@@ -1070,7 +1077,10 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		}
 		
 		// is Twitter Author User numeric?
-		$input['twitter_author_user'] = preg_replace("/[^a-zA-Z0-9_]+/", "", $input['twitter_author_user']);
+		if( ($input['twitter_author_user'] != "%user_twitter%")
+			&& ($input['twitter_author_user'] != "%user_aim%") 
+			&& ($input['twitter_author_user'] != "%user_yahoo%"))
+			$input['twitter_author_user'] = preg_replace("/[^a-zA-Z0-9_]+/", "", $input['twitter_author_user']);
 		
 		// is Twitter Author ID numeric?
 		if(!is_numeric($input['twitter_author_id'])){
@@ -1178,36 +1188,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		<?php } // OGRAPHR_BETA == TRUE
 	}
 
-}; // end of class) {
-				$posts_indexed = "$posts_indexed, ['$key', $value[posts_indexed]]";
-			}
-			$posts_indexed = substr($posts_indexed, 2);
-			
-			// scale grid
-			$first_day = array_shift(array_keys($stats));
-			$today = strtotime("today");
-			$last_day = date("Y-m-d", $today);
-			$interval = $this->date_diff($first_day, $last_day);
-		?>
-	
-		<script type="text/javascript">
-					
-			function render_stats() {
-
-				var line1=[<? print $posts_total; ?>];
-				var line2=[<? print $posts_indexed; ?>];
-				  var plot1 = jQuery.jqplot('chartdiv', [line1, line2], {
-					series:[{color:'#bd8cbf'},{color:'#8560a8'}],
-					axesDefaults: {
-						pad: 0,
-						tickOptions: {
-							showLabel: false,
-						},
-					},							
-					seriesDefaults: {
-						lineWidth: '1.5',
-						showMarker: true,
-						fill: <? if ($options['fill_curves']) { print "true"; } else { print "false"; } ?>,
+}; // end of classves']) { print "true"; } else { print "false"; } ?>,
 						fillAlpha: 0.9,
 						markerOptions: {
 							size:<?php if ($interval >= 35) { print 0; } else { print 5; } ?>,
