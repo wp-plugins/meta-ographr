@@ -4,13 +4,13 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 0.7.6
+Stable tag: 0.7.7
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as thumbnails on Facebook and other social networks.
 
 == Description ==
 
-This plugin adds several Open Graph meta-tags to the header of your theme. These include site name, a description (the excerpt of a post), the permalink, and images for embedded media widgets. The images will be retrieved from the audio player embedded in your post ("cover artwork") or snapshots from embedded videos. The plugin also supports other types of meta-tags, such as Google+ Snippets, Twitter Cards and Canonical Links.
+This plugin adds several Open Graph meta-tags to the header of your theme. These include site name, a description (the excerpt of a post), the permalink, and images for embedded media widgets. The images will be retrieved from the audio player embedded in your post ("cover artwork") or snapshots from embedded videos. The plugin also supports other types of meta-tags, such as Google+ Snippets, Twitter Cards and canonical links.
 
 Currently, these media widgets are supported:
 
@@ -68,10 +68,6 @@ Bandcamp is rather restrictive with access to their API, usually only allowing a
 
 You probably don't. All new Viddler players use HTML5-compliant poster images and these can be detected without making an API call. It's only old "Legacy" players rely on Viddler's API and you need a valid developer key to access it.
 
-= Why does Jetpack still inject Open Graph tags? =
-
-As of version 2.03, the Jetpack plugin uses its own methods to avoid duplicates. A direct result for OGraphr users is, that disabling Jetpack's Open Graph function no longer works. However, you can still disable duplicate tags in the OGraphr settings (disable options *Add page title*, *Add excerpt*, *Add permalink*, *Facebook Object Type*)
-
 = What about site performance? =
 
 Depending on the amount of embed codes in your site, retrieving images and other informations can delay the rendering of a page. This can be avoided by retrieving images only once when an article has been published or updated. You can further restrict OGraphr to trigger only when called by Facebook, Google+, LinkedIn or Twitter.
@@ -94,13 +90,18 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 
 2. a link with a SoundCloud widget shared on Google+
 
-3. a link with a YouTube widget shared on Twitter
+3. a link with a Vimeo widget shared on Twitter
 
 4. standard settings page for OGraphr
 
 5. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.7.7 =
+* improved method to disable Jetpack's OpenGraph function
+* removed unused functions and code pieces
+* modified option page
 
 = 0.7.6 =
 * optimized meta-tag output, using less memory
@@ -472,6 +473,18 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 * first release
 
 == Upgrade Notice ==
+
+= 0.6 =
+Due to the ongoing Official.tv make-over, API requests will not work for an undisclosed time
+
+= 0.5 =
+Review your settings!
+
+= 0.2.3 =
+Activate triggers after upgrading
+
+= 0.2 =
+Please adjust your settings after upgrading Upgrade Notice ==
 
 = 0.6 =
 Due to the ongoing Official.tv make-over, API requests will not work for an undisclosed time

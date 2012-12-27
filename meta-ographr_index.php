@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.6
+Version: 0.7.7
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.6");
+    define("OGRAPHR_VERSION", "0.7.7");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -69,14 +69,8 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 	define("MIXCLOUD_IMAGE_SIZE", "large");
 
 // OFFICIAL.FM
-	// no need to change this unless you want to use your own Official.fm API key (-> http://official.fm/developers)
-	define("OFFICIAL_API_KEY", "V3ESSBCbGcgPc51sLkxSHf67OQV6eBIN");
 	// default artwork size (tiny=40x40, small=120x120, medium=300x300, large=600x600)
 	define("OFFICIAL_IMAGE_SIZE", "medium");
-
-// PLAY.FM
-	// no need to change this unless you want to use your own Play.fm API key (-> http://www.play.fm/api/account)
-	define("PLAYFM_API_KEY", "e5821e991f3b7bc982c3:109a0ca3bc");
 
 // SOCIALCAM
 	// default artwork size (main_thumb, small_thumb)
@@ -126,7 +120,7 @@ register_activation_hook( __FILE__, array(&$core, 'ographr_activate') );
 
 $options = get_option('ographr_options');
 if (isset($options['disable_jetpack']))
-	remove_action( 'wp_head', 'jetpack_og_tags');
+	add_filter( 'jetpack_enable_opengraph', '__return_false', 99 );
 
 if ( is_admin() )
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -334,21 +328,6 @@ class OGraphr_Core {
 		$output = $output[0]['thumbnail_' . $image_size];	
 		return $output;
 	}
-	
-	/*
-	// Get Play.fm Thumbnail
-	public function get_playfm_thumbnail($id, $api_key = PLAYFM_API_KEY) {
-		$videoinfo_url = "http://blip.tv/players/episode/$id?skin=rss";
-		$xml = simplexml_load_file( $videoinfo_url );
-		if ( $xml == false ) {
-			return new WP_Error( 'bliptv_info_retrieval', __( 'Error retrieving video information from the URL <a href="' . $videoinfo_url . '">' . $videoinfo_url . '</a>. If opening that URL in your web browser returns anything else than an error page, the problem may be related to your web server and might be something your host administrator can solve.' ) );
-		} else {
-			$result = $xml->xpath( "/rss/channel/item/media:thumbnail/@url" );
-			$output = (string) $result[0]['url'];
-			return $output;
-		}
-	}
-	*/
 
 	//
 	// The Main Dish
@@ -470,9 +449,6 @@ class OGraphr_Core {
 					if ($flickr_api = $options['flickr_api']) { print "\t Flickr API key: $flickr_api\n"; }
 					if ($myvideo_dev_api = $options['myvideo_dev_api']) { print "\t MyVideo Developer key: $myvideo_dev_api\n"; }
 					if ($myvideo_web_api = $options['myvideo_web_api']) { print "\t MyVideo Website key: $myvideo_web_api\n"; }
-					if ($official_api = $options['official_api']) { print "\t Official.fm API key: $official_api\n"; }
-					if (OGRAPHR_BETA == TRUE )
-						if ($playfm_api = $options['playfm_api']) { print "\t Play.fm API key: $playfm_api\n"; }
 					if ($socialcam_api = $options['socialcam_api']) { print "\t Socialcam API key: $socialcam_api\n"; }
 					if ($soundcloud_api = $options['soundcloud_api']) { print "\t SoundCloud API key: $soundcloud_api\n"; }
 					if ($ustream_api = $options['ustream_api']) { print "\t Ustream API key: $ustream_api\n"; }
@@ -1181,19 +1157,6 @@ class OGraphr_Core {
 				}
 			}
 		}
-	
-		/*
-		// PLAY.FM
-		if (isset($options['enable_playfm'])) {
-			$playfm_thumbnails = $this->find_playfm_widgets($markup, $options);
-			if (isset($playfm_thumbnails)) {	
-				foreach ($playfm_thumbnails as $playfm_thumbnail) {
-					if ($playfm_thumbnail)
-						$thumbnails[] = $playfm_thumbnail;
-				}
-			}
-		}
-		*/
 		
 		// RDIO
 		if (isset($options['enable_rdio'])) {
@@ -1813,7 +1776,6 @@ class OGraphr_Core {
 
 	public function find_official_widgets($markup, $options) {
 		$service = "Official.fm";
-		//$api = $options['official_api'];
 
 		// Official.fm iFrame
 		preg_match_all( '/official.fm%2F%2Ffeed%2Ftracks%2F([A-Za-z0-9]+)/i', $markup, $matches );
@@ -1855,45 +1817,6 @@ class OGraphr_Core {
 		if (isset($official_thumbnails))
 			return $official_thumbnails;
 	} // end find_official_widgets
-	
-	/*	
-	public function find_playfm_widgets($markup, $options) {
-		$service = "Play.fm";
-		$api = $options['playfm_api'];
-
-		// Play.fm embed
-		preg_match_all( '/playfmWidget.swf\?url=http%3A%2F%2Fwww.play.fm%2Frecordings%2Fflash%2F01%2Frecording%2F([0-9]+)/i', $markup, $matches );
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Play.fm embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$playfm_thumbnail = $this->get_playfm_thumbnail($match, $api);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($playfm_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $playfm_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($playfm_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($playfm_thumbnail);
-					if($exists) 
-						$playfm_thumbnails[] = $playfm_thumbnail;
-				} else {
-					$playfm_thumbnails[] = $playfm_thumbnail;
-				}
-			}
-		}
-		
-		if (isset($playfm_thumbnails))
-			return $playfm_thumbnails;
-	} // end of find_playfm_widgets
-	*/
 	
 	public function find_rdio_widgets($markup, $options) {
 		$service = "Rdio";
@@ -2243,15 +2166,12 @@ class OGraphr_Core {
 			$options = $this->ographr_set_defaults();
 
 		// Get API keys
-		if ( (!$options['etracks_api']) || (!$options['bambuser_api']) || (!$options['flickr_api']) || (!$options['myvideo_dev_api']) || (!$options['myvideo_web_api']) || (!$options['official_api']) || (!$options['socialcam_api']) || (!$options['soundcloud_api']) || (!$options['ustream_api']) || ($options['last_update'] != OGRAPHR_VERSION) ) {
+		if ( (!$options['etracks_api']) || (!$options['bambuser_api']) || (!$options['flickr_api']) || (!$options['myvideo_dev_api']) || (!$options['myvideo_web_api']) || (!$options['socialcam_api']) || (!$options['soundcloud_api']) || (!$options['ustream_api']) || ($options['last_update'] != OGRAPHR_VERSION) ) {
 			if (!$options['etracks_api']) { $options['etracks_api'] = ETRACKS_API_KEY; }
 			if (!$options['bambuser_api']) { $options['bambuser_api'] = BAMBUSER_API_KEY; }
 			if (!$options['flickr_api']) { $options['flickr_api'] = FLICKR_API_KEY; }
 			if (!$options['myvideo_dev_api']) { $myvideo_dev_api = $options['myvideo_dev_api']; }
 			if (!$options['myvideo_web_api']) { $myvideo_web_api = $options['myvideo_web_api']; }
-			if (!$options['official_api']) { $options['official_api'] = OFFICIAL_API_KEY; $official_api = $options['official_api']; }
-			if (OGRAPHR_BETA == TRUE )
-				if (!$options['playfm_api']) { $options['playfm_api'] = PLAYFM_API_KEY; $playfm_api = $options['playfm_api']; }
 			if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
 			if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 			if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
@@ -2321,6 +2241,116 @@ class OGraphr_Core {
 		$markup = apply_filters('the_content',$markup);	
 
 		$widget_thumbnails = $core->get_widget_thumbnails($markup);
+		
+		if (is_array($widget_thumbnails))
+			foreach($widget_thumbnails as $widget_thumbnail)
+				$widget_thumbnail = htmlentities($widget_thumbnail);
+				
+		if(!(empty($widget_thumbnails))) {
+			$widget_thumbnails = serialize($widget_thumbnails);
+			update_post_meta($post_id, 'ographr_urls', $widget_thumbnails);
+			
+			$indexed = date("U"); //Y-m-d H:i:s
+			update_post_meta($post_id, 'ographr_indexed', $indexed);
+			$this->ographr_save_stats();
+		}
+	}
+	
+	public function ographr_save_stats() {
+		
+		$stats = get_option('ographr_data');
+		
+		if(!$stats) {
+			$yesterday = strtotime("yesterday");
+			$yesterday = date("Y-m-d", $yesterday);		
+			$stats[$yesterday] = array(
+									'posts_total' => '0',
+									'posts_indexed' => '0'
+									);
+		}
+		
+		// create function?
+		$posts_published = wp_count_posts();
+		$posts_published = $posts_published->publish;
+		$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
+		$myposts = get_posts( $args );
+		$posts_indexed = count($myposts);
+			
+		$today = date("Y-m-d");
+	
+		$stats[$today] = array(
+								'posts_total' => $posts_published,
+								'posts_indexed' => $posts_indexed
+								);
+
+		update_option('ographr_data', $stats);
+	}
+	
+	public function ographr_delete_stats() {
+		$stats = get_option('ographr_data');
+		
+		if($stats) {
+			$posts_published = wp_count_posts();
+			$posts_published = $posts_published->publish;
+			$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
+			$myposts = get_posts( $args );
+			$posts_indexed = count($myposts) - 1;  // line differs from ograhr_save_stats!
+
+			$today = date("Y-m-d");
+
+			$stats[$today] = array(
+									'posts_total' => $posts_published,
+									'posts_indexed' => $posts_indexed
+									);
+
+			update_option('ographr_data', $stats);
+		}
+	}	
+	
+	public function ographr_admin_bar() {
+		//global $options;
+		$options = get_option('ographr_options');	
+		if (!isset($options['add_adminbar']))
+			return;
+			
+		global $wp_admin_bar;
+
+	    if (current_user_can('manage_options')) {				
+				$published = wp_count_posts();
+				$published = $published->publish;
+				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
+				$myposts = get_posts( $args );
+				$harvested = count($myposts);
+				
+	            $menu_items = array(
+	                array(
+	                    'id' => 'ographr',
+	                    'title' => "OGraphr [$harvested/$published]",
+						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+	                ),
+					array(
+	                    'id' => 'ographr-settings',
+						'parent' => 'ographr',
+	                    'title' => 'Settings',
+						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+	                ),
+					array(
+	                    'id' => 'ographr-home',
+						'parent' => 'ographr',
+	                    'title' => 'Website',
+						'href' => 'http://wordpress.org/extend/plugins/meta-ographr/'
+	                )
+	            );
+
+	        foreach ($menu_items as $menu_item) {
+	            $wp_admin_bar->add_menu($menu_item);
+	        }
+	    }	
+	}
+
+}; // end of class
+
+?>ils($markup);
 		
 		if (is_array($widget_thumbnails))
 			foreach($widget_thumbnails as $widget_thumbnail)

@@ -252,10 +252,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<label><input name="ographr_options[enable_myvideo]" type="checkbox" value="1" <?php if ((isset($options['enable_myvideo'])) && ($options['myvideo_dev_api']) && ($options['myvideo_web_api'])) { checked('1', $options['enable_myvideo']); } ?> />&nbsp;MyVideo</label>&nbsp;
 							
 									<label><input name="ographr_options[enable_official]" type="checkbox" value="1" <?php if (isset($options['enable_official'])) { checked('1', $options['enable_official']); } ?> />&nbsp;Official.fm</label>&nbsp;
-							
-									<?php if (OGRAPHR_BETA == TRUE) { ?>
-										<label><input name="ographr_options[enable_playfm]" type="checkbox" value="1" <?php if ((isset($options['enable_playfm'])) && ($options['enable_playfm'])) { checked('1', $options['enable_playfm']); } ?> disabled="disabled" />&nbsp;Play.fm</label>&nbsp;
-									<? } ?>
 									
 									<label><input name="ographr_options[enable_rdio]" type="checkbox" value="1" <?php if (isset($options['enable_rdio'])) { checked('1', $options['enable_rdio']); } ?> />&nbsp;Rdio</label>&nbsp;
 									
@@ -274,7 +270,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<? if((!isset($options['bandcamp_api'])) && (isset($options['enable_bandcamp']))) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
 								<? if((!isset($options['myvideo_dev_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_developer_key" style="color:red;">Developer API key</a></span>';} ?>
 								<? if((!isset($options['myvideo_web_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_website_key" style="color:red;">Website API key</a></span>';} ?>
-								<? if((!isset($options['official_api'])) && (isset($options['enable_official']))) { echo '<br/><span style="color:red;font-size:x-small;">Official.fm requires a valid <a href="#official_website_key" style="color:red;">Website API key</a></span>';} ?>
 								<? if((!isset($options['socialcam_api'])) && (isset($options['enable_socialcam']))) { echo '<br/><span style="color:red;font-size:x-small;">Socialcam requires a valid <a href="#socialcam_api_key" style="color:red;">API key</a></span>';} ?>
 								<? if((!isset($options['viddler_api'])) && (isset($options['enable_viddler']))) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
 							</tr>
@@ -283,7 +278,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<tr valign="top" class="advanced_opt"> 
 								<th align="left" scope="row"><label>Advertisement:</label></th> 
 								<td colspan="2">
-									<label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source (<em>OGraphr v<? echo OGRAPHR_VERSION ?></em>)</label><br/>
+									<label><input name="ographr_options[add_comment]" type="checkbox" value="1" <?php if (isset($options['add_comment'])) { checked('1', $options['add_comment']); } ?> /> Display plug-in name in source</label><br/>
 								</td>
 							</tr>
 						
@@ -402,7 +397,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<h3 class="hndle">API Keys</h3>
 							<div class="inside">
 							<p>
-								Some services limit access to their API and require a valid developer key in order to make queries. These are marked <em>yellow</em> in the list below. All other services will work out of the box, however, if you have reason to use your own developer keys you may enter them below.
+								Some services limit access to their API and require a valid developer key in order to make queries. These are marked <span style="font-style:italic;padding:1px;background-color:#ffd">yellow</span> in the list below. All other services will work out of the box, however, if you have reason to use your own developer keys you may enter them below.
 							</p>
 							<table width="100%" cellspacing="2" cellpadding="5"> 
 							<tbody>
@@ -448,20 +443,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<td width="30px"><input type="text" size="75" class="required" name="ographr_options[myvideo_web_api]" value="<?php if ($options['myvideo_web_api']) { echo $options['myvideo_web_api']; } ?>" /></td>
 							<td><a href="http://myvideo.de/API" title="Get an API key" target="_blank" id="help_link">?</a></td>
 							</tr>
-							
-							<?php if (OGRAPHR_BETA == TRUE) { ?>
-								<!-- OFFICIAL -->	
-								<tr valign="center"> 
-								<th align="left" width="140px" scope="row"><label><a name="official_api_key" id="official_api_key"></a>Official.fm:</label></th> 
-								<td width="30px"><input type="text" size="75" name="ographr_options[official_api]" value="<?php if (($options['official_api'] != OFFICIAL_API_KEY) && ($options['official_api'])) { echo $options['official_api']; } ?>" /></td>
-								<td><a href="http://official.fm/developers/manage#register" title="Get an API key" target="_blank" id="help_link">?</a></td>
-								</tr>
-								
-								<!-- PLAY.FM -->	
-								<tr valign="center" class="advanced_opt"> 
-								<th align="left" width="140px" scope="row"><label>Play.fm:</label></th> 
-								<td width="30px"><input type="text" size="75" name="ographr_options[playfm_api]" value="<?php if (($options['playfm_api'] != PLAYFM_API_KEY) && ($options['playfm_api'])) { echo $options['playfm_api']; } ?>" disabled="disabled" /></td>
-							<? } ?>
 							
 							<!-- SOCIALCAM -->	
 							<tr valign="center"> 
@@ -1050,8 +1031,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		$input['flickr_api'] = htmlentities($input['flickr_api']);
 		$input['myvideo_dev_api'] = htmlentities($input['myvideo_dev_api']);
 		$input['myvideo_web_api'] = htmlentities($input['myvideo_web_api']);
-		if (OGRAPHR_BETA == TRUE)
-			$input['official_api'] = htmlentities($input['official_api']);
 		$input['socialcam_api'] = htmlentities($input['socialcam_api']);
 		$input['soundcloud_api'] = htmlentities($input['soundcloud_api']);
 		$input['ustream_api'] = htmlentities($input['ustream_api']);
@@ -1136,6 +1115,59 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 			function render_stats() {
 
 				var line1=[<? print $posts_total; ?>];
+				var line2=[<? print $posts_indexed; ?>];
+				  var plot1 = jQuery.jqplot('chartdiv', [line1, line2], {
+					series:[{color:'#bd8cbf'},{color:'#8560a8'}],
+					axesDefaults: {
+						pad: 0,
+						tickOptions: {
+							showLabel: false,
+						},
+					},							
+					seriesDefaults: {
+						lineWidth: '1.5',
+						showMarker: true,
+						fill: <? if ($options['fill_curves']) { print "true"; } else { print "false"; } ?>,
+						fillAlpha: 0.9,
+						markerOptions: {
+							size:<?php if ($interval >= 35) { print 0; } else { print 5; } ?>,
+						 	<?php if ($options['fill_curves']) { print 'color: "#ed1c24",'; } ?>
+						},
+						rendererOptions: {
+							smooth: <? if ($options['smooth_curves']) { print "true"; } else { print "false"; } ?>,
+							}
+						},
+					grid: {
+			            drawBorder: false,
+			            shadow: false,
+						background: '#fcfcfc',
+						borderWidth: '1'
+					},
+					axes:{
+				        xaxis:{
+				          renderer:jQuery.jqplot.DateAxisRenderer,
+				          tickInterval:'<?php if ($interval > 8760) { print "10 years"; } else if ($interval > 720 ) { print "1 year"; } else if ($interval > 90 ) { print "1 month"; } else if ($interval > 21 ) { print "1 week"; } else { print "1 day"; } ?>',
+				          min: <? print '"' . date("F j, Y", strtotime(array_shift(array_keys($stats))) ) . '"'; ?>,
+				          tickOptions:{
+				            formatString:'%b&nbsp;%#d'
+				          }		
+				        }
+				      },
+				      highlighter: {
+				        show: true,
+				        sizeAdjust: 7.5
+				      },
+				      cursor: {
+				        show: false
+				      }
+				  });
+			}
+	    </script>
+	
+		<?php } // OGRAPHR_BETA == TRUE
+	}
+
+}; // end of class[<? print $posts_total; ?>];
 				var line2=[<? print $posts_indexed; ?>];
 				  var plot1 = jQuery.jqplot('chartdiv', [line1, line2], {
 					series:[{color:'#bd8cbf'},{color:'#8560a8'}],
