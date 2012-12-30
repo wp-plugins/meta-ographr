@@ -4,7 +4,7 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 0.7.7
+Stable tag: 0.7.8
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as thumbnails on Facebook and other social networks.
 
@@ -38,7 +38,7 @@ Currently, these media widgets are supported:
 *  NVB Player
 *  Standard HTML5 video-tags
 
-Open Graph tags will be used by social network sites such as Facebook or Google+ to style a shared link or webpages "liked" by any user. As images attract more attention, you should find this plug-in useful.
+Open Graph tags will be used by social network sites such as Facebook, Twitter or Google+ to style a shared link or webpages "liked" by any user. Images supposedly attract more attention, so you might find this plug-in useful.
 
 == Installation ==
 
@@ -97,6 +97,12 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 5. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.7.8 =
+* fixed several errors when running Wordpress in debug mode
+* disabled statistics in Wordpress debug mode (until fixed)
+* modified standard settings view
+* modified fade effect
 
 = 0.7.7 =
 * improved method to disable Jetpack's OpenGraph function
@@ -474,17 +480,8 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 
 == Upgrade Notice ==
 
-= 0.6 =
-Due to the ongoing Official.tv make-over, API requests will not work for an undisclosed time
-
-= 0.5 =
-Review your settings!
-
-= 0.2.3 =
-Activate triggers after upgrading
-
-= 0.2 =
-Please adjust your settings after upgrading Upgrade Notice ==
+= 0.7.3 =
+Review settings
 
 = 0.6 =
 Due to the ongoing Official.tv make-over, API requests will not work for an undisclosed time
@@ -496,4 +493,4 @@ Review your settings!
 Activate triggers after upgrading
 
 = 0.2 =
-Please adjust your settings after upgrading
+Please adjust your settings after upgradinggs after upgrading

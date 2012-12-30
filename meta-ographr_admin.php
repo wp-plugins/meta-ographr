@@ -209,15 +209,15 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 								<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
 
-								<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label><br/>
+								<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label>&nbsp;
 								
-								<label class="advanced_opt"><input name="ographr_options[add_author]" type="checkbox" value="1" <?php if (isset($options['add_author'])) { checked('1', $options['add_author']); } ?> /> Add author </label>&nbsp;
+								<label><input name="ographr_options[add_author]" type="checkbox" value="1" <?php if (isset($options['add_author'])) { checked('1', $options['add_author']); } ?> /> Add author </label>&nbsp;
 
-								<label class="advanced_opt"><input name="ographr_options[add_section]" type="checkbox" value="1" <?php if (isset($options['add_section'])) { checked('1', $options['add_section']); } ?> /> Add category </label>&nbsp;
+								<label><input name="ographr_options[add_section]" type="checkbox" value="1" <?php if (isset($options['add_section'])) { checked('1', $options['add_section']); } ?> /> Add category </label>&nbsp;
 
-								<label class="advanced_opt"><input name="ographr_options[add_tags]" type="checkbox" value="1" <?php if (isset($options['add_tags'])) { checked('1', $options['add_tags']); } ?> /> Add tags </label>&nbsp;
+								<label><input name="ographr_options[add_tags]" type="checkbox" value="1" <?php if (isset($options['add_tags'])) { checked('1', $options['add_tags']); } ?> /> Add tags </label>&nbsp;
 
-								<label class="advanced_opt"><input name="ographr_options[add_pubtime]" type="checkbox" value="1" <?php if (isset($options['add_pubtime'])) { checked('1', $options['add_pubtime']); } ?> /> Add published time </label>&nbsp;
+								<label><input name="ographr_options[add_pubtime]" type="checkbox" value="1" <?php if (isset($options['add_pubtime'])) { checked('1', $options['add_pubtime']); } ?> /> Add published time </label>&nbsp;
 								
 								<label class="advanced_opt"><input name="ographr_options[add_modtime]" type="checkbox" value="1" <?php if (isset($options['add_modtime'])) { checked('1', $options['add_modtime']); } ?> /> Add modified time </label>&nbsp;
 								
@@ -507,12 +507,16 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<th align="left" width="140px" scope="row"><label>Data Expiry:</label></th> 
 								<td colspan="2">
 									<select name='ographr_options[data_expiry]' class="no_expiry" <?php if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?> >
+										<?php if (($options['exec_mode']) && (!isset($options['data_expiry']))) { $options['data_expiry'] = "-1";} ?>
 										<option value='-1' <?php selected('-1', $options['data_expiry']); ?> >never</option>
 										<?php if(OGRAPHR_DEBUG) { ?>
 											<option value='1' <?php selected('1', $options['data_expiry']); ?> >after 1 day</option>
 											<option value='2' <?php selected('2', $options['data_expiry']); ?> >after 2 days</option>
 											<option value='3' <?php selected('3', $options['data_expiry']); ?> >after 3 days</option>
 										<?php } ?>
+										<option value='7' <?php selected('7', $options['data_expiry']); ?> >after 1	week</option>
+										<option value='14' <?php selected('14', $options['data_expiry']); ?> >after 2 weeks</option>
+										<option value='21' <?php selected('21', $options['data_expiry']); ?> >after 3 weeks</option>
 										<option value='30' <?php selected('30', $options['data_expiry']); ?> >after 30 days</option>
 										<option value='60' <?php selected('60', $options['data_expiry']); ?> >after 60 days</option>
 										<option value='90' <?php selected('90', $options['data_expiry']); ?> >after 90 days</option>
@@ -959,7 +963,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 						</div>
 						
-						<?php if ($options['add_graph']) { ?>
+						<?php if( (isset($options['add_graph'])) && (WP_DEBUG != TRUE) ){ ?>
 							<div class="postbox">
 								<h3 class="hndle">Statistics</h3>
 								<div class="inside">
@@ -1075,7 +1079,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		//global $options;
 		$options = get_option('ographr_options');
 		
-		if ($options['add_graph']) {
+		if (isset($options['add_graph'])) {
 			$stats = get_option('ographr_data');
 			if(empty($stats)) {
 				$published = wp_count_posts();
@@ -1113,7 +1117,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		<script type="text/javascript">
 					
 			function render_stats() {
-
+				// does not work in WP_DEBUG mode (yet?)
 				var line1=[<? print $posts_total; ?>];
 				var line2=[<? print $posts_indexed; ?>];
 				  var plot1 = jQuery.jqplot('chartdiv', [line1, line2], {
@@ -1167,20 +1171,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		<?php } // OGRAPHR_BETA == TRUE
 	}
 
-}; // end of class[<? print $posts_total; ?>];
-				var line2=[<? print $posts_indexed; ?>];
-				  var plot1 = jQuery.jqplot('chartdiv', [line1, line2], {
-					series:[{color:'#bd8cbf'},{color:'#8560a8'}],
-					axesDefaults: {
-						pad: 0,
-						tickOptions: {
-							showLabel: false,
-						},
-					},							
-					seriesDefaults: {
-						lineWidth: '1.5',
-						showMarker: true,
-						fill: <? if ($options['fill_curves']) { print "true"; } else { print "false"; } ?>,
+}; // end of classelse { print "false"; } ?>,
 						fillAlpha: 0.9,
 						markerOptions: {
 							size:<?php if ($interval >= 35) { print 0; } else { print 5; } ?>,
