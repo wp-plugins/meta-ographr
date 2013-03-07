@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.8
+Version: 0.7.9
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.8");
+    define("OGRAPHR_VERSION", "0.7.9");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -99,8 +99,8 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 // USER-AGENTS
 	// facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)
 	define('FACEBOOK_USERAGENT', '/facebookexternalhit/i');
-	// Mozilla/5.0 (Windows NT 6.1; rv:6.0) Gecko/20110814 Firefox/6.0
-	define('GOOGLEPLUS_USERAGENT', '/Mozilla\/5\.0 \(Windows NT 6\.1; rv:6\.0\) Gecko\/20110814 Firefox/i');
+	// Google (+https://developers.google.com/+/web/snippet/)
+	define('GOOGLEPLUS_USERAGENT', '/Google \(\+https:\/\/developers\.google\.com\/\+\/web\/snippet\/\)/i');
 	// LinkedInBot/1.0 (compatible; Mozilla/5.0; Jakarta Commons-HttpClient/3.1 +http://www.linkedin.com)
 	define('LINKEDIN_USERAGENT', '/LinkedInBot/i');
 	// Twitterbot
@@ -181,6 +181,7 @@ class OGraphr_Core {
 							"enable_nvbplayer" => "1",
 							"add_attached_image" => "1",
 							"add_post_thumbnail" => "0",
+							"link_type" => "permalink",
 							"add_twitter_meta" => "0",
 							"add_google_meta" => "0",
 							"add_link_rel" => "0",
@@ -709,7 +710,12 @@ class OGraphr_Core {
 					if (isset($options['add_twitter_meta']))
 						$twitter_meta['twitter:url'] = $link;
 				} else {
-					if(isset($options['add_permalink']) && ($link = get_permalink())) {
+					if(isset($options['add_permalink'])) {
+						if($options['link_type'] == "shortlink") {
+							$link = wp_get_shortlink();
+						} else {
+							$link = get_permalink();
+						}
 						$opengraph_meta['og:url'] = $link;
 						if (isset($options['add_twitter_meta']))
 							$twitter_meta['twitter:url'] = $link;
@@ -723,7 +729,7 @@ class OGraphr_Core {
 				
 				// Add locale
 				$locale = $options['locale'];
-				if (($locale) && ($locale != "_none")) {
+				if (isset($locale) && ($locale != "_none")) {
 					$opengraph_meta['og:locale'] = $locale;
 				}
 			
@@ -835,7 +841,7 @@ class OGraphr_Core {
 						}
 					}
 				}
-				
+
 				// Print Google+ Meta
 				if ((isset($options['add_google_meta'])) && ((preg_match(GOOGLEPLUS_USERAGENT, $user_agent)) || (OGRAPHR_DEBUG)))
 					foreach($google_meta as $key => $value) {
@@ -2311,116 +2317,6 @@ class OGraphr_Core {
 		//global $options;
 		$options = get_option('ographr_options');	
 		if (!isset($options['add_adminbar']))
-			return;
-			
-		global $wp_admin_bar;
-
-	    if (current_user_can('manage_options')) {				
-				$published = wp_count_posts();
-				$published = $published->publish;
-				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
-				$myposts = get_posts( $args );
-				$harvested = count($myposts);
-				
-	            $menu_items = array(
-	                array(
-	                    'id' => 'ographr',
-	                    'title' => "OGraphr [$harvested/$published]",
-						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
-	                ),
-					array(
-	                    'id' => 'ographr-settings',
-						'parent' => 'ographr',
-	                    'title' => 'Settings',
-						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
-	                ),
-					array(
-	                    'id' => 'ographr-home',
-						'parent' => 'ographr',
-	                    'title' => 'Website',
-						'href' => 'http://wordpress.org/extend/plugins/meta-ographr/'
-	                )
-	            );
-
-	        foreach ($menu_items as $menu_item) {
-	            $wp_admin_bar->add_menu($menu_item);
-	        }
-	    }	
-	}
-
-}; // end of class
-
-?>ils($markup);
-		
-		if (is_array($widget_thumbnails))
-			foreach($widget_thumbnails as $widget_thumbnail)
-				$widget_thumbnail = htmlentities($widget_thumbnail);
-				
-		if(!(empty($widget_thumbnails))) {
-			$widget_thumbnails = serialize($widget_thumbnails);
-			update_post_meta($post_id, 'ographr_urls', $widget_thumbnails);
-			
-			$indexed = date("U"); //Y-m-d H:i:s
-			update_post_meta($post_id, 'ographr_indexed', $indexed);
-			$this->ographr_save_stats();
-		}
-	}
-	
-	public function ographr_save_stats() {
-		
-		$stats = get_option('ographr_data');
-		
-		if(!$stats) {
-			$yesterday = strtotime("yesterday");
-			$yesterday = date("Y-m-d", $yesterday);		
-			$stats[$yesterday] = array(
-									'posts_total' => '0',
-									'posts_indexed' => '0'
-									);
-		}
-		
-		// create function?
-		$posts_published = wp_count_posts();
-		$posts_published = $posts_published->publish;
-		$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
-		$myposts = get_posts( $args );
-		$posts_indexed = count($myposts);
-			
-		$today = date("Y-m-d");
-	
-		$stats[$today] = array(
-								'posts_total' => $posts_published,
-								'posts_indexed' => $posts_indexed
-								);
-
-		update_option('ographr_data', $stats);
-	}
-	
-	public function ographr_delete_stats() {
-		$stats = get_option('ographr_data');
-		
-		if($stats) {
-			$posts_published = wp_count_posts();
-			$posts_published = $posts_published->publish;
-			$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
-			$myposts = get_posts( $args );
-			$posts_indexed = count($myposts) - 1;  // line differs from ograhr_save_stats!
-
-			$today = date("Y-m-d");
-
-			$stats[$today] = array(
-									'posts_total' => $posts_published,
-									'posts_indexed' => $posts_indexed
-									);
-
-			update_option('ographr_data', $stats);
-		}
-	}	
-	
-	public function ographr_admin_bar() {
-		//global $options;
-		$options = get_option('ographr_options');	
-		if (!$options['add_adminbar'])
 			return;
 			
 		global $wp_admin_bar;

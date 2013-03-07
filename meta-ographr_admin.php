@@ -209,7 +209,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 								<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
 
-								<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add permalink </label>&nbsp;
+								<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" data-astate="0" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add link </label>&nbsp;
 								
 								<label><input name="ographr_options[add_author]" type="checkbox" value="1" <?php if (isset($options['add_author'])) { checked('1', $options['add_author']); } ?> /> Add author </label>&nbsp;
 
@@ -363,7 +363,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							
 								<tr valign="top"> 
 									<th align="left" width="140px" scope="row"><label>&nbsp;</label></th> 
-									<td colspan="2"><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites. <a href="http://code.google.com/p/google-plus-platform/issues/detail?id=178" target="_blank" >Google+</a> currently does not use a unique user-agent, hence the detection is inaccurate</a>!</small></td>
+									<td colspan="2"><small>Once a user-agent has been selected, the plugin will only be triggered when called by any of these sites.</small></td>
 								</tr>
 
 								<!-- OPENGRAPH -->
@@ -559,6 +559,16 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 										<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" class="post_thumbnail" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); }; if ($options['add_attached_image']) { print 'disabled="disabled"'; } ?> /> Post thumbnail <a href="http://codex.wordpress.org/Post_Thumbnails" title="Wordpress Codex: Post Thumbnails" target="_blank" id="help_link">?</a></label>&nbsp;
 									</td>
 								</tr>
+
+								<!-- LANGUAGE -->
+								<tr valign="center"> 
+									<th align="left" scope="row"><label>Link Type:</label></th> 
+									<td colspan="2">
+								
+								<select name='ographr_options[link_type]'>
+									<option value='permalink' <?php selected('permalink', $options['link_type']); ?>>Permalink</option>
+									<option value='shortlink' <?php selected('shortlink', $options['link_type']); ?>>Shortlink</option>
+								</select>
 								
 								<!-- LANGUAGE -->
 								<tr valign="center"> 
@@ -1132,86 +1142,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						lineWidth: '1.5',
 						showMarker: true,
 						fill: <? if ($options['fill_curves']) { print "true"; } else { print "false"; } ?>,
-						fillAlpha: 0.9,
-						markerOptions: {
-							size:<?php if ($interval >= 35) { print 0; } else { print 5; } ?>,
-						 	<?php if ($options['fill_curves']) { print 'color: "#ed1c24",'; } ?>
-						},
-						rendererOptions: {
-							smooth: <? if ($options['smooth_curves']) { print "true"; } else { print "false"; } ?>,
-							}
-						},
-					grid: {
-			            drawBorder: false,
-			            shadow: false,
-						background: '#fcfcfc',
-						borderWidth: '1'
-					},
-					axes:{
-				        xaxis:{
-				          renderer:jQuery.jqplot.DateAxisRenderer,
-				          tickInterval:'<?php if ($interval > 8760) { print "10 years"; } else if ($interval > 720 ) { print "1 year"; } else if ($interval > 90 ) { print "1 month"; } else if ($interval > 21 ) { print "1 week"; } else { print "1 day"; } ?>',
-				          min: <? print '"' . date("F j, Y", strtotime(array_shift(array_keys($stats))) ) . '"'; ?>,
-				          tickOptions:{
-				            formatString:'%b&nbsp;%#d'
-				          }		
-				        }
-				      },
-				      highlighter: {
-				        show: true,
-				        sizeAdjust: 7.5
-				      },
-				      cursor: {
-				        show: false
-				      }
-				  });
-			}
-	    </script>
-	
-		<?php } // OGRAPHR_BETA == TRUE
-	}
-
-}; // end of classelse { print "false"; } ?>,
-						fillAlpha: 0.9,
-						markerOptions: {
-							size:<?php if ($interval >= 35) { print 0; } else { print 5; } ?>,
-						 	<?php if ($options['fill_curves']) { print 'color: "#ed1c24",'; } ?>
-						},
-						rendererOptions: {
-							smooth: <? if ($options['smooth_curves']) { print "true"; } else { print "false"; } ?>,
-							}
-						},
-					grid: {
-			            drawBorder: false,
-			            shadow: false,
-						background: '#fcfcfc',
-						borderWidth: '1'
-					},
-					axes:{
-				        xaxis:{
-				          renderer:jQuery.jqplot.DateAxisRenderer,
-				          tickInterval:'<?php if ($interval > 8760) { print "10 years"; } else if ($interval > 720 ) { print "1 year"; } else if ($interval > 90 ) { print "1 month"; } else if ($interval > 21 ) { print "1 week"; } else { print "1 day"; } ?>',
-				          min: <? print '"' . date("F j, Y", strtotime(array_shift(array_keys($stats))) ) . '"'; ?>,
-				          tickOptions:{
-				            formatString:'%b&nbsp;%#d'
-				          }		
-				        }
-				      },
-				      highlighter: {
-				        show: true,
-				        sizeAdjust: 7.5
-				      },
-				      cursor: {
-				        show: false
-				      }
-				  });
-			}
-	    </script>
-	
-		<?php } // OGRAPHR_BETA == TRUE
-	}
-
-}; // end of classves']) { print "true"; } else { print "false"; } ?>,
 						fillAlpha: 0.9,
 						markerOptions: {
 							size:<?php if ($interval >= 35) { print 0; } else { print 5; } ?>,
