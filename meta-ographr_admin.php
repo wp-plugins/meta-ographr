@@ -647,8 +647,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<option value='el_CY' <?php selected('el_CY', $options['locale']); ?>>Greek (Cyprus)</option>
 									<option value='el_GR' <?php selected('el_GR', $options['locale']); ?>>Greek (Greece)</option>
 									<option value='el' <?php selected('el', $options['locale']); ?>>Greek</option>
-									<option value='iw_IL' <?php selected('iw_IL', $options['locale']); ?>>Hebrew (Israel)</option>
-									<option value='iw' <?php selected('iw', $options['locale']); ?>>Hebrew</option>
+									<option value='he_IL' <?php selected('he_IL', $options['locale']); ?>>Hebrew (Israel)</option>
+									<option value='he' <?php selected('he', $options['locale']); ?>>Hebrew</option>
 									<option value='hi_IN' <?php selected('hi_IN', $options['locale']); ?>>Hindi (India)</option>
 									<option value='hu_HU' <?php selected('hu_HU', $options['locale']); ?>>Hungarian (Hungary)</option>
 									<option value='hu' <?php selected('hu', $options['locale']); ?>>Hungarian</option>
