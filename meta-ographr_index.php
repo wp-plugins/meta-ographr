@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.10
+Version: 0.7.11
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.10");
+    define("OGRAPHR_VERSION", "0.7.11");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -1696,8 +1696,13 @@ class OGraphr_Core {
 		$service = "Mixcloud";
 
 		// Standard embed code
-		preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches);
-		$matches = array_unique($matches[1]);
+		preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches1);
+
+		// iFrame embed code
+		preg_match_all('/iframe\/\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches2);
+
+		$matches = array_merge($matches1[1], $matches2[1]);
+		$matches = array_unique($matches);
 
 		// Standard embed (API v1, undocumented)
 		// preg_match_all('/feed=http:\/\/www.mixcloud.com\/api\/1\/cloudcast\/([A-Za-z0-9\-_\%\/.]+)/i', $markup, $mixcloud_ids);					

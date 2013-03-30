@@ -4,7 +4,7 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5.1
-Stable tag: 0.7.10
+Stable tag: 0.7.11
 
 Retrieves the images of audio/video player widgets in your posts and embeds them as thumbnails on Facebook and other social networks.
 
@@ -97,6 +97,10 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 5. advanced settings page for OGraphr
 
 == Changelog ==
+
+= 0.7.11 =
+* added support for Mixcloud iFrame embeds
+* removed support for languages not supported by Open Graph standard
 
 = 0.7.10 =
 * fixed locale for Hebrew
@@ -486,6 +490,12 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 * first release
 
 == Upgrade Notice ==
+
+= 0.7.11 =
+Review language settings
+
+= 0.7.10 =
+Review language settings
 
 = 0.7.3 =
 Review settings
