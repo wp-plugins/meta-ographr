@@ -4,15 +4,15 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5.1
-Stable tag: 0.7.11
+Stable tag: 0.8
 
-Retrieves the images of audio/video player widgets in your posts and embeds them as thumbnails on Facebook and other social networks.
+Retrieves the images of audio/video players in your posts and embeds them as thumbnails on Facebook and other social networks.
 
 == Description ==
 
-This plugin adds several Open Graph meta-tags to the header of your theme. These include site name, a description (the excerpt of a post), the permalink, and images for embedded media widgets. The images will be retrieved from the audio player embedded in your post ("cover artwork") or snapshots from embedded videos. The plugin also supports other types of meta-tags, such as Google+ Snippets, Twitter Cards and canonical links.
+This plugin adds several Open Graph meta-tags to the header of your theme. These include site name, a description (the excerpt of a post), the permalink, and images for embedded media players. The images will be retrieved from the audio player embedded in your post ("cover artwork") or snapshots from embedded videos. The plugin also supports other types of meta-tags, such as Google+ Snippets, Twitter Cards and canonical links.
 
-Currently, these media widgets are supported:
+Currently, these media player are supported:
 
 *  8tracks
 *  Bambuser
@@ -58,7 +58,7 @@ People share links with their friends on social network sites whether you like i
 
 = Why doesn't Facebook display the cover artwork? =
 
-Facebook caches previously submitted links for an undisclosed time. If your page has been shared/liked on Facebook before, the cover artwork will not appear until that cache has expired. To make sure the plugin is active and working, you can always look for the og:image tags in the source of your page.
+Facebook caches previously submitted links for an undisclosed time. If your page has been shared/liked on Facebook before, the cover artwork will not appear until that cache has expired or the page is opened in the [Facebook debugger](http://developers.facebook.com/tools/debug "Facebook debugger"). To make sure the plugin is active and working, you can always look for the og:image tags in the source of your page - or you can force a cache refresh using the (http://developers.facebook.com/tools/debug "Facebook debugger").
 
 = Why do I need a Bandcamp API key? =
 
@@ -86,17 +86,35 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 
 == Screenshots ==
 
-1. a link with a Mixcloud widget shared on Facebook
+1. a link with a Mixcloud player shared on Facebook
 
-2. a link with a SoundCloud widget shared on Google+
+2. a link with a SoundCloud player shared on Google+
 
-3. a link with a Vimeo widget shared on Twitter
+3. a link with a Vimeo player shared on Twitter
 
-4. standard settings page for OGraphr
+4. standard settings page for OGraphr 0.7
 
-5. advanced settings page for OGraphr
+5. advanced settings page for OGraphr 0.7
 
 == Changelog ==
+
+= 0.8 =
+* added support to play video/audio content directly on Facebook
+* β: added support to play video/audio content directly on Twitter
+* added support for age, country and content restrictions
+* added support for iOS and Android mobile apps
+* added optional settings per post
+* added support for retrieving Twitter IDs from user profile
+* merged detection functions into one
+* removed cURL support
+* disabled link and title tags on category, archive search result pages
+* modified Vimeo query to use JSON
+* modified option page layout
+* modified tooltips for statistics graph
+* updated API method for Dailymotion
+* improved SoundCloud detection
+* fixed bug in Socialcam detection
+* renamed "Post thumbnails" label to "Featured images"
 
 = 0.7.11 =
 * added support for Mixcloud iFrame embeds
@@ -464,7 +482,6 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 * fixed typo in the 'Add excerpt' label
 
 = 0.2 =
-
 * reworked option page
 
 = 0.1.4 =
@@ -490,6 +507,9 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 * first release
 
 == Upgrade Notice ==
+
+= 0.8 =
+All previously indexed data will be overwritten
 
 = 0.7.11 =
 Review language settings

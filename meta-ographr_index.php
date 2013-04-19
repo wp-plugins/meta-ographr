@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.7.11
+Version: 0.8
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,15 +28,13 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.7.11");
+    define("OGRAPHR_VERSION", "0.8");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
 	define("OGRAPHR_BETA", FALSE);
 	// replace default description with user agent in use
 	define("OGRAPHR_UATEST", FALSE);
-	// use HTTP API instead of cURL
-	define("OGRAPHR_USECURL", FALSE);
 	// specify timeout for all HTTP requests (default is 1 second, http://googlecode.blogspot.co.at/2012/01/lets-make-tcp-faster.html)
 	define("OGRAPHR_TIMEOUT", 1);
 
@@ -84,7 +82,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 	
 // VIMEO
 	// default snapshot size (small=100, medium=200, large=640)
-	define("VIMEO_IMAGE_SIZE", "medium");
+	define("VIMEO_IMAGE_SIZE", "thumbnail_medium");
 	
 // USTREAM
 	// no need to change this unless you want to use your own Ustream.fm API key (-> http://developer.ustream.tv/apikey/generate)
@@ -146,6 +144,7 @@ class OGraphr_Core {
 							"website_description" => "",
 							"not_always" => "0",
 							"add_adminbar" => "0",
+							"add_metabox" => "0",
 							"add_graph" => "0",
 							"add_prefix" => "1",
 							"fill_curves" => "0",
@@ -155,7 +154,7 @@ class OGraphr_Core {
 							"add_excerpt" => "1",
 							"locale" => $tmp_locale,
 							"add_permalink" => "1",
-							"enable_eight_tracks" => "1",
+							"enable_etracks" => "1",
 							"enable_bambuser" => "1",
 							"enable_bandcamp" => "0",
 							"enable_bliptv" => "1",
@@ -188,6 +187,9 @@ class OGraphr_Core {
 							"filter_smilies" => "1",
 							"filter_themes" => "0",
 							"filter_gravatar" => "1",
+							"restrict_age" => "_none",
+							"restrict_country" => "0",
+							"restrict_content" => "0",
 							"facebook_ua" => "0",
 							"gplus_ua" => "0",
 							"linkedin_ua" => "0",
@@ -200,7 +202,18 @@ class OGraphr_Core {
 							"add_section" => "0",
 							"add_tags" => "0",
 							"add_pubtime" => "0",
-							"add_modtime" => "0"
+							"add_modtime" => "0",
+							"add_embeds" => "0",
+							"app_universal" => "1",
+							"app_iphone_name" => "",
+							"app_iphone_id" => "",
+							"app_iphone_url" => "",
+							"app_ipad_name" => "",
+							"app_ipad_id" => "",
+							"app_ipad_url" => "",
+							"app_android_name" => "",
+							"app_android_id" => "",
+							"app_android_url" => ""
 			);
 		
 			return $options;
@@ -248,87 +261,52 @@ class OGraphr_Core {
 
 
 	// Get JSON Thumbnail
-	public function get_json_thumbnail($service, $json_url, $json_query) {
-		if ((!function_exists('curl_init')) || (!OGRAPHR_USECURL)) {
+	public function get_json_thumbnail($services, $json_url, $json_query) {
 			$output = wp_remote_retrieve_body( wp_remote_get($json_url, array('timeout' => OGRAPHR_TIMEOUT)) );
-		} else {
-			//print "\t $service Query URL: $json_url\n";
-			$ch = curl_init();
-			$timeout = OGRAPHR_TIMEOUT * 1000;
-			curl_setopt($ch, CURLOPT_URL, $json_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-			curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = curl_exec($ch);
-			if (curl_error($ch) != null) {
-				return;
-			}
-			curl_close($ch); // Moved here to allow curl_error() operation above. Was previously below curl_exec() call.
-		}
 		
 		// special treatment
-		if ($service == "Blip.tv") {
+		if ($services['name'] == "Blip.tv") {
 			$output = preg_match('/(?:blip_ws_results\(\[)(.*)(?:\]\);)/smi', $output, $match); // fix Blip.tv JSON file
 			$output = $match[1];
+		} else if ($services['name'] == "Vimeo") {
+			$output = substr($output, 1, -1);
 		}
 		
 		$output = json_decode($output);
 		
 		// special treatment
-		if ($service == "Justin.tv/Twitch") {
+		if ($services['name'] == "Justin.tv/Twitch") {
 			$output = $output[0];
-		} else if ($service == "Flickr") {
+		} else if ($services['name'] == "Flickr") {
 			$ispublic = $output->photo->visibility->ispublic;
 			if ($ispublic == 1) {
 				$id = $output->photo->id;
 				$server = $output->photo->server;
 				$secret = $output->photo->secret;
 				$farm = $output->photo->farm;
-				$output = "http://farm" . $farm . ".staticflickr.com/" . $server . "/" . $id . "_" . $secret . "_" . FLICKR_IMAGE_SIZE . ".jpg";
+				$width = $output->photo->video->width;
+				$height = $output->photo->video->height;
+				$output = array(
+					"img" => "http://farm" . $farm . ".staticflickr.com/" . $server . "/" . $id . "_" . $secret . "_" . FLICKR_IMAGE_SIZE . ".jpg",
+					"w" => $width,
+					"h" => $height,
+				);
 				//$exists = $this->remote_exists($output);
 				//if($exists) {
-					return $output;
+				return $output;
 				//}
 			} else {
 				return;
 			}
 		}
-		
+
 		$json_keys = explode('->', $json_query);
 		foreach($json_keys as $json_key) {
 			$output = $output->$json_key;
 		}			
 
 		return $output;
-
-	}
-		
-	// Get Vimeo Thumbnail
-	public function get_vimeo_thumbnail($id, $image_size = 'large') {
-		$videoinfo_url = "http://vimeo.com/api/v2/video/$id.php";
-		
-		if ((!function_exists('curl_init')) || (!OGRAPHR_USECURL)) {
-			$output = unserialize(wp_remote_retrieve_body( wp_remote_get($videoinfo_url, array('timeout' => 1)) ) );
-		} else {
-			$ch = curl_init();
-			$timeout = OGRAPHR_TIMEOUT * 1000;
-			curl_setopt($ch, CURLOPT_URL, $videoinfo_url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true); // Return an error for curl_error() processing if HTTP response code >= 400
-			$output = unserialize(curl_exec($ch));
-			if (curl_error($ch) != null) {
-				return;
-			}
-			curl_close($ch);
-		}
-		
-		$output = $output[0]['thumbnail_' . $image_size];	
-		return $output;
-	}
+	} // end get_json_thumbnail
 
 	//
 	// The Main Dish
@@ -342,7 +320,17 @@ class OGraphr_Core {
 		//global $options;
 		$options = get_option('ographr_options');
 		global $post;
+
+		// ographr_meta_disable
+		if (isset($options['add_metabox'])) {
+			$tmp = get_post_meta($post->ID, 'ographr_disable_plugin', true); 
+			if ($tmp == "on") {
+				return;
+			}
+		}
 		
+		
+		// enable on front
 		if ((!$enable_plugin_on_front = $options['enable_plugin_on_front']) && (!is_single()) && (!is_page())) {
 			return;
 		}
@@ -411,15 +399,7 @@ class OGraphr_Core {
 				} else if ($options['exec_mode'] == 2) {
 					print "\t Image Retrieval: On-View\n";
 				}
-				
-				if( (function_exists('curl_init')) && (!OGRAPHR_USECURL) ){
-					print "\t cURL function exists, disabled by user\n";
-				} else if (function_exists('curl_init')) {
-					print "\t cURL function exists\n";
-				} else {
-					print "\t cURL function missing\n";
-				}				
-				
+					
 				if (isset($user_agent)) { print "\t User Agent: $user_agent\n"; }
 				if (isset($facebook_ua)) { print "\t Limited to Facebook User Agent\n"; }
 				if (isset($gplus_ua)) { print "\t Limited to Google+ User Agent\n"; }
@@ -467,25 +447,26 @@ class OGraphr_Core {
 				// Did we retrieve those images before and did they expire?
 				if (($options['exec_mode'] == 1) && ($expiry >= $interval) )  {
 					$meta_values = get_post_meta($post_id, 'ographr_urls', true);
-					$meta_values = unserialize($meta_values);
+					$meta_values = unserialize(base64_decode($meta_values));
 					
 					if (is_array($meta_values))
 						foreach($meta_values as $meta_value)
-							$meta_value = htmlentities($meta_value);
+							foreach($meta_value as $meta_item)
+								$meta_item = htmlentities($meta_item);
 				}
 
-				if ((is_array($meta_values)) && (isset($thumbnails)) && ($expiry >= $interval) ) {
+				if ((is_array($meta_values)) && (isset($thumbnails[0]['img'])) && ($expiry >= $interval) ) {
 					$thumbnails = array_merge($thumbnails, $meta_values);
 					if(OGRAPHR_DEBUG == TRUE) {
 						foreach($thumbnails as $thumbnail) {
-							print "\t Post meta: $thumbnail\n";
+							print "\t Post meta: " . $thumbnail['img'] . "\n";
 						}
 					}
 				} else if ((is_array($meta_values)) && (!isset($thumbnails)) && ($expiry >= $interval) ) {
 					$thumbnails = $meta_values;
 					if(OGRAPHR_DEBUG == TRUE) {
 						foreach($thumbnails as $thumbnail) {
-							print "\t Post meta: $thumbnail\n";
+							print "\t Post meta: " . $thumbnail['img'] . "\n";
 						}
 					}
 				} else {
@@ -509,14 +490,14 @@ class OGraphr_Core {
 					//write to db for future use
 					if (($options['exec_mode'] == 1) && ($total_img >= 1)) {
 						if (OGRAPHR_DEBUG == TRUE)
-							print "\n\t New data indexed and written to database\n";
+							print "\n\t New data indexed and written to database ($total_img)\n";
 						
-						if (is_array($thumbnails))
-							foreach($thumbnails as $thumbnail)
-								$thumbnail = htmlentities($thumbnail);
+						// if (is_array($thumbnails))
+						// 	foreach($thumbnails as $thumbnail)
+						// 		$thumbnail['img'] = htmlentities($thumbnail['img']);
 						
-						if(!(empty($thumbnails))) {
-							$thumbnails_db = serialize($thumbnails);
+						if(!empty($thumbnails)) {
+							$thumbnails_db = base64_encode(serialize($thumbnails));
 							update_post_meta($post_id, 'ographr_urls', $thumbnails_db);
 							
 							$indexed = date("U"); // Y-m-d H:i:s
@@ -625,12 +606,16 @@ class OGraphr_Core {
 				if (isset($options['add_twitter_meta'])) {
 					
 					// get values
-
 					$twitter_site_user = $options['twitter_site_user'];
 					$twitter_site_id = $options['twitter_site_id'];
 					$twitter_author_user = $options['twitter_author_user'];
 					$twitter_author_id = $options['twitter_author_id'];
+
+					$app_iphone_name = $options['app_iphone_name'];
+					$app_iphone_id = $options['app_iphone_id'];
+					$app_iphone_url = $options['app_iphone_url'];
 					
+					// abuse contact fields for Twitter user
 					if ($twitter_author_user == "%user_twitter%") {
 						$mywp['twitter'] = get_the_author_meta('twitter');
 						$twitter_author_user = str_replace("%user_twitter%", $mywp['twitter'], $twitter_author_user);
@@ -642,23 +627,64 @@ class OGraphr_Core {
 						$twitter_author_user = str_replace("%user_yahoo%", $mywp['twitter'], $twitter_author_user);
 					}
 
+					// abuse contact fields for Twitter ID
+					if (($twitter_author_id == "%user_aim%") && ($twitter_author_user != "%user_aim%")) {
+						$mywp['twitter'] = get_the_author_meta('aim');
+						$twitter_author_id = str_replace("%user_aim%", $mywp['twitter'], $twitter_author_id);
+					} else if (($twitter_author_id == "%user_yahoo%") && ($twitter_author_user != "%user_yahoo%")) {
+						$mywp['twitter'] = get_the_author_meta('yim');
+						$twitter_author_id = str_replace("%user_yahoo%", $mywp['twitter'], $twitter_author_id);
+					}
+
 					// type of twitter card
 					$twitter_meta['twitter:card'] = "summary";
 
 					// twitter site name
 					if (strlen($twitter_site_user) > 1) {
 						$twitter_meta['twitter:site'] = "@$twitter_site_user";
+						if ((isset($twitter_site_id) ) && ($twitter_site_id != NULL))
 						$twitter_meta['twitter:site:id'] = "$twitter_site_id";
 					}
 
 					if (is_single()) {
 						if (strlen($twitter_author_user) > 1) {
 							$twitter_meta['twitter:creator'] = "@$twitter_author_user";
-							$twitter_meta['twitter:creator:id'] = "$twitter_author_id";
+							if ((isset($twitter_author_id) ) && ($twitter_author_id != NULL))
+								$twitter_meta['twitter:creator:id'] = "$twitter_author_id";
 						}
 					}
-					
-				}
+
+					//iOS Apps
+					if (($app_iphone_name != NULL) && ($app_iphone_id != NULL) && ($app_iphone_url != NULL)) {
+						$twitter_meta['twitter:app:name:iphone'] = "$app_iphone_name";
+						$twitter_meta['twitter:app:id:iphone'] = "$app_iphone_id";
+						$twitter_meta['twitter:app:url:iphone'] = "$app_iphone_url";
+						if (isset($options['app_universal'])) {
+							$twitter_meta['twitter:app:name:ipad'] = "$app_iphone_name";
+							$twitter_meta['twitter:app:id:ipad'] = "$app_iphone_id";
+							$twitter_meta['twitter:app:url:ipad'] = "$app_iphone_url";
+						} else {
+							$app_ipad_name = $options['app_ipad_name'];
+							$app_ipad_id = $options['app_ipad_id'];
+							$app_ipad_url = $options['app_ipad_url'];
+
+							if (($app_ipad_name != NULL) && ($app_ipad_id != NULL) && ($app_ipad_url != NULL)) {
+								$twitter_meta['twitter:app:name:ipad'] = "$app_ipad_name";
+								$twitter_meta['twitter:app:id:ipad'] = "$app_ipad_id";
+								$twitter_meta['twitter:app:url:ipad'] = "$app_ipad_url";
+							}
+						}
+					}
+
+					$app_android_name = $options['app_android_name'];
+					$app_android_id = $options['app_android_id'];
+					$app_android_url = $options['app_android_url'];
+					if (($app_android_name != NULL) && ($app_android_id != NULL) && ($app_android_url != NULL)) {
+						$twitter_meta['twitter:app:name:android'] = "$app_android_name";
+						$twitter_meta['twitter:app:id:android'] = "$app_android_id";
+						$twitter_meta['twitter:app:url:android'] = "$app_android_url";
+					}
+				} //add_twitter_meta
 	
 				if ((isset($options['website_description'])) && (is_front_page())) {
 					// Blog title
@@ -681,7 +707,7 @@ class OGraphr_Core {
 							$twitter_meta['twitter:description'] = $description;
 						$opengraph_meta['og:description'] = $description;
 					}
-				} else { //single posts
+				} else if( (!is_category()) && (!is_archive()) && (!is_search()) ) { //single posts
 					if ($options['add_title'] && ($title)) {
 						// Post title
 						if (isset($options['add_google_meta']))
@@ -709,7 +735,7 @@ class OGraphr_Core {
 					print "<meta property=\"og:url\" content=\"$link\" />\n";
 					if (isset($options['add_twitter_meta']))
 						$twitter_meta['twitter:url'] = $link;
-				} else {
+				} else if( (!is_category()) && (!is_archive()) && (!is_search()) ) {
 					if(isset($options['add_permalink'])) {
 						if($options['link_type'] == "shortlink") {
 							$link = wp_get_shortlink();
@@ -721,11 +747,14 @@ class OGraphr_Core {
 							$twitter_meta['twitter:url'] = $link;
 					}
 				}
+
+
 			
 				// Add site name
 				if ($site_name) {
 					$opengraph_meta['og:site_name'] = $site_name;
 				}
+				
 				
 				// Add locale
 				$locale = $options['locale'];
@@ -737,15 +766,48 @@ class OGraphr_Core {
 				if (($type = $options['fb_type']) && ($type != '_none')) {
 					$opengraph_meta['og:type'] = $type;
 				}
+
+				if (isset($options['add_metabox'])) {
+					// Add age restriction
+					$age = get_post_meta($post->ID, 'ographr_restrict_age', true); 
+					if ($age == NULL)
+						$age = $options['restrict_age'];
+					if ( (isset($age)) && ($age != "_none") ) {
+						$opengraph_meta['og:restrictions:age'] = $age . "+";
+					}
+
+					// Add country restriction
+					$tmp = get_post_meta($post->ID, 'ographr_restrict_country', true);
+					if ($tmp != "on") {
+						$mode = $options['country_mode'];
+						$code = $options['country_code'];
+					} else {
+						$mode = get_post_meta($post->ID, 'ographr_country_mode', true);
+						$code = get_post_meta($post->ID, 'ographr_country_code', true);
+					}
+					if  ( (isset($mode)) && ($mode != NULL) && (isset($code)) && ($code != NULL) ) {
+						$opengraph_meta["og:restrictions:country:$mode"] = $code;
+					}
+
+					// Add content restriction
+					$content = get_post_meta($post->ID, 'ographr_restrict_content', true); 
+					if ($content == NULL)
+						$content = $options['restrict_content'];
+					if(isset($content)){
+						$opengraph_meta['og:restrictions:content'] = 'alcohol';
+					}
+				}	
+				
 		
 				// Add thumbnails
 				if (isset($thumbnails)) { // avoid error message when array is empty
-					$thumbnails = array_unique($thumbnails); // unlikely, but hey!
+					//$thumbnails = array_unique($thumbnails); // unlikely, but hey!
 					$total_img = count($thumbnails);
 				}
 					
 				if ( (isset($total_img)) && ($total_img == 0) && ($web_thumb)) {
-					print "<meta property=\"og:image\" content=\"$web_thumb\" />\n";
+					//print "<meta property=\"og:image\" content=\"$web_thumb\" />\n";
+					$opengraph_meta['og:image'][] = $web_thumb;
 					if (isset($options['add_twitter_meta']))
 						$twitter_meta['twitter:image'] = $web_thumb;
 					$ext = pathinfo($web_thumb, PATHINFO_EXTENSION);
@@ -754,22 +816,43 @@ class OGraphr_Core {
 					$opengraph_meta['og:image:type'] = "image/$ext";
 				} else if (isset($thumbnails)) { // investigate?
 					foreach ($thumbnails as $thumbnail) {
-						if ($thumbnail) {
-							$opengraph_meta['og:image'][] = $thumbnail;
-							if (isset($options['add_twitter_meta']))
-								$twitter_meta['twitter:image'][] = $thumbnail;
+						if ($thumbnail['img']) {
+							$opengraph_meta['og:image'][] = $thumbnail['img'];
+							if (isset($options['add_metabox'])) {
+								$tmp = get_post_meta($post->ID, 'ographr_twitter_image', true);
+								if ( ((isset($options['add_twitter_meta'])) && (!isset($tmp))) || ((isset($options['add_twitter_meta'])) && (($tmp == "_none") || ($tmp == NULL)) ) )  {
+									$twitter_meta["twitter:image"][] = $thumbnail['img'];
+								} else {
+									if ($tmp != "_none")
+										$twitter_meta['twitter:image'][0] = $tmp; // a bit repetitive though
+								}
+							}	
 						}
 					}
 				}
+
 				
 				// Add image-type if only one image has been found
 				if ( (isset($total_img)) && ($total_img == 1) ) {
-					$ext = preg_replace('/(?!.*\.(bmp|gif|jpe|jpeg|jpg|png|webp))(\?|&).*\Z/i', '', $thumbnail); // remove suffix (might need improvement)
+					$ext = preg_replace('/(?!.*\.(bmp|gif|jpe|jpeg|jpg|png|webp))(\?|&).*\Z/i', '', $thumbnails[0]['img']); // remove suffix (might need improvement)
 					$ext = pathinfo($ext, PATHINFO_EXTENSION);
 					if (($ext == "jpg") || ($ext == "jpe"))
 						$ext = "jpeg";
 					if (($ext == "bmp") || ($ext == "gif") || ($ext == "jpeg") || ($ext == "png") || ($ext == "webp"))
 						$opengraph_meta['og:image:type'] = "image/$ext";
+				}
+
+				// Add video player
+				if ( (isset($total_img)) && ($total_img == 1) && (isset($options['add_embeds'])) && (isset($thumbnails[0]['player'])) ) {
+					$opengraph_meta['og:video'] = $thumbnails[0]['player'];
+					$opengraph_meta['og:video:width'] = $thumbnails[0]['w'];
+					$opengraph_meta['og:video:height'] = $thumbnails[0]['h'];
+					if( (isset($options['add_twitter_meta'])) && (OGRAPHR_BETA == TRUE) ){
+						$twitter_meta['twitter:card'] = "player"; // overwrite previous value
+						$twitter_meta["twitter:player"] = $thumbnails[0]['player'];
+						$twitter_meta["twitter:player:width"] = $thumbnails[0]['w'];
+						$twitter_meta["twitter:player:height"] = $thumbnails[0]['h'];
+					}
 				}
 						
 			
@@ -793,12 +876,12 @@ class OGraphr_Core {
 					} else if ($thumbnails) { // investigate?
 						foreach ($thumbnails as $thumbnail) {
 							if ($thumbnail) {
-								$ext = preg_replace('/(?!.*\.(bmp|gif|jpe|jpeg|jpg|png|webp))(\?|&).*\Z/i', '', $thumbnail); // remove suffix (might need improvement)
+								$ext = preg_replace('/(?!.*\.(bmp|gif|jpe|jpeg|jpg|png|webp))(\?|&).*\Z/i', '', $thumbnail['img']); // remove suffix (might need improvement)
 								$ext = pathinfo($ext, PATHINFO_EXTENSION);
 								if (($ext == "jpg") || ($ext == "jpe"))
 									$ext = "jpeg";
 								if (($ext == "bmp") || ($ext == "gif") || ($ext == "jpeg") || ($ext == "png") || ($ext == "webp"))
-									$link_rel = $link_rel . "<link rel=\"image_src\" type=\"image/$ext\" href=\"$thumbnail\" />\n";
+									$link_rel = $link_rel . "<link rel=\"image_src\" type=\"image/$ext\" href=\"" . $thumbnail['img'] . "\" />\n";
 							}
 						}
 					}
@@ -819,10 +902,10 @@ class OGraphr_Core {
 					foreach($article_meta as $key => $value) {
 						if ($key == "article:section") {
 							foreach($article_meta['article:section'] as $value)
-							print "<meta property=\"$key\" content=\"$value\" />\n";
+								print "<meta property=\"$key\" content=\"$value\" />\n";
 						} else if ($key == "article:tag") {
 							foreach($article_meta['article:tag'] as $value)
-							print "<meta property=\"$key\" content=\"$value\" />\n";
+								print "<meta property=\"$key\" content=\"$value\" />\n";
 						} else {
 							print "<meta property=\"$key\" content=\"$value\" />\n";
 						}
@@ -911,9 +994,9 @@ class OGraphr_Core {
 						if ($options['exec_mode'] == 1)  {
 							$exists = $this->remote_exists($match);
 							if($exists)
-								$thumbnails[] = $match;
+								$thumbnails[]['img'] = $match;
 						} else {
-							$thumbnails[] = $match;
+							$thumbnails[]['img'] = $match;
 						}
 					}
 				}
@@ -934,9 +1017,9 @@ class OGraphr_Core {
 					if ($options['exec_mode'] == 1)  {
 						$exists = $this->remote_exists($match);
 						if(($exists) && (!$match))
-							$thumbnails[] = $match;
+							$thumbnails[]['img'] = $match;
 					} else {
-						$thumbnails[] = $match;
+						$thumbnails[]['img'] = $match;
 					}
 				}
 			}
@@ -958,7 +1041,7 @@ class OGraphr_Core {
 					if (OGRAPHR_DEBUG == TRUE) {
 						print "\t Post thumbnail: $website_thumbnail\n";
 					}
-					$thumbnails[] = $website_thumbnail;
+					$thumbnails[]['img'] = $website_thumbnail;
 				}
 			}
 		}
@@ -973,7 +1056,7 @@ class OGraphr_Core {
 				if ((OGRAPHR_DEBUG == TRUE) && ($options['exec_mode'] == 2)) {
 						print "\t Attached image: $attached_thumbnail[0]\n";
 					}
-					$thumbnails[] = $attached_thumbnail[0];
+					$thumbnails[]['img'] = $attached_thumbnail[0];
 				}
 			}
 		}
@@ -992,9 +1075,9 @@ class OGraphr_Core {
 					if ($options['exec_mode'] == 1)  {
 						$exists = $this->remote_exists($match);
 						if(($exists) && (!$match))
-							$thumbnails[] = $match;
+							$thumbnails[]['img'] = $match;
 					} else {
-						$thumbnails[] = $match;
+						$thumbnails[]['img'] = $match;
 					}
 				}
 			}
@@ -1013,1159 +1096,446 @@ class OGraphr_Core {
 					if ($options['exec_mode'] == 1)  {
 						$exists = $this->remote_exists($match);
 						if(($exists) && (!$match))
-							$thumbnails[] = $match;
+							$thumbnails[]['img'] = $match;
 					} else {
-						$thumbnails[] = $match;
+						$thumbnails[]['img'] = $match;
 					}
 				}
 			}
 		}
-		
-		// 8TRACKS
-		if (isset($options['enable_eight_tracks'])) {					
-			$etracks_thumbnails = $this->find_etracks_widgets($markup, $options);
-			if (isset($etracks_thumbnails)) {			
-				foreach ($etracks_thumbnails as $etracks_thumbnail) {
-					if ($etracks_thumbnail)
-						$thumbnails[] = $etracks_thumbnail;
-				}
-			}
-		}
-		
-		// BAMBUSER
-		if (isset($options['enable_bambuser'])) {					
-			$bambuser_thumbnails = $this->find_bambuser_widgets($markup, $options);
-			if (isset($bambuser_thumbnails)) {			
-				foreach ($bambuser_thumbnails as $bambuser_thumbnail) {
-					if ($bambuser_thumbnail)
-						$thumbnails[] = $bambuser_thumbnail;
-				}
-			}
-		}	
-			
-		// BANDCAMP
-		if (isset($options['enable_bandcamp'])) {					
-			$bandcamp_thumbnails = $this->find_bandcamp_widgets($markup, $options);
-			if (isset($bandcamp_thumbnails)) {			
-				foreach ($bandcamp_thumbnails as $bandcamp_thumbnail) {
-					if ($bandcamp_thumbnail)
-						$thumbnails[] = $bandcamp_thumbnail;
-				}
-			}
-		}
-							
-		// BLIP.TV
-		if (isset($options['enable_bliptv'])) {					
-			$bliptv_thumbnails = $this->find_bliptv_widgets($markup, $options);
-			if (isset($bliptv_thumbnails)) {			
-				foreach ($bliptv_thumbnails as $bliptv_thumbnail) {
-					if ($bliptv_thumbnail)
-						$thumbnails[] = $bliptv_thumbnail;
-				}
-			}
-		}
-			
-		// DAILYMOTION
-		if (isset($options['enable_dailymotion'])) {					
-			$dailymotion_thumbnails = $this->find_dailymotion_widgets($markup, $options);
-			if (isset($dailymotion_thumbnails)) {			
-				foreach ($dailymotion_thumbnails as $dailymotion_thumbnail) {
-					if ($dailymotion_thumbnail)
-						$thumbnails[] = $dailymotion_thumbnail;
-				}
-			}
-		}
-		
-		// FLICKR
-		if (isset($options['enable_flickr'])) {					
-			$flickr_thumbnails = $this->find_flickr_widgets($markup, $options);
-			if (isset($flickr_thumbnails)) {			
-				foreach ($flickr_thumbnails as $flickr_thumbnail) {
-						if ($flickr_thumbnail)
-							$thumbnails[] = $flickr_thumbnail;
-				}
-			}
-		}
-		
-		// HULU	
-		if (isset($options['enable_hulu'])) {					
-			$hulu_thumbnails = $this->find_hulu_widgets($markup, $options);
-			if (isset($hulu_thumbnails)) {			
-				foreach ($hulu_thumbnails as $hulu_thumbnail) {
-					if ($hulu_thumbnail)
-						$thumbnails[] = $hulu_thumbnail;
-				}
-			}
-		}
-		
-		// INTERNET ARCHIVE
-		if (isset($options['enable_internetarchive'])) {					
-			$internetarchive_thumbnails = $this->find_internetarchive_widgets($markup, $options);
-			if (isset($internetarchive_thumbnails)) {			
-				foreach ($internetarchive_thumbnails as $internetarchive_thumbnail) {
-					if ($internetarchive_thumbnail)
-						$thumbnails[] = $internetarchive_thumbnail;
-				}
-			}
-		}
-		
-		// JUSTIN.TV	
-		if (isset($options['enable_justintv'])) {					
-			$justintv_thumbnails = $this->find_justintv_widgets($markup, $options);
-			if (isset($justintv_thumbnails)) {			
-				foreach ($justintv_thumbnails as $justintv_thumbnail) {
-					if ($justintv_thumbnail)
-						$thumbnails[] = $justintv_thumbnail;
-				}
-			}
-		}
-		
-		// LIVESTREAM	
-		if (isset($options['enable_livestream'])) {					
-			$livestream_thumbnails = $this->find_livestream_widgets($markup, $options);
-			if (isset($livestream_thumbnails)) {			
-				foreach ($livestream_thumbnails as $livestream_thumbnail) {
-					if ($livestream_thumbnail)
-						$thumbnails[] = $livestream_thumbnail;
-				}
-			}
-		}
-		
-		// MIXCLOUD	
-		if (isset($options['enable_mixcloud'])) {					
-			$mixcloud_thumbnails = $this->find_mixcloud_widgets($markup, $options);
-			if (isset($mixcloud_thumbnails)) {			
-				foreach ($mixcloud_thumbnails as $mixcloud_thumbnail) {
-					if ($mixcloud_thumbnail)
-						$thumbnails[] = $mixcloud_thumbnail;
-				}
-			}
-		}
-		
-		// MYVIDEO	
-		if (isset($options['enable_myvideo'])) {					
-			$myvideo_thumbnails = $this->find_myvideo_widgets($markup, $options);
-			if (isset($myvideo_thumbnails)) {			
-				foreach ($myvideo_thumbnails as $myvideo_thumbnail) {
-					if ($myvideo_thumbnail)
-						$thumbnails[] = $myvideo_thumbnail;
-				}
-			}
-		}	
-			
-		// OFFICIAL.TV
-		if (isset($options['enable_official'])) {
-			$official_thumbnails = $this->find_official_widgets($markup, $options);
-			if (isset($official_thumbnails)) {	
-				foreach ($official_thumbnails as $official_thumbnail) {
-					if ($official_thumbnail)
-						$thumbnails[] = $official_thumbnail;
-				}
-			}
-		}
-		
-		// RDIO
-		if (isset($options['enable_rdio'])) {
-			$rdio_thumbnails = $this->find_rdio_widgets($markup, $options);
-			if (isset($rdio_thumbnails)) {	
-				foreach ($rdio_thumbnails as $rdio_thumbnail) {
-					if ($rdio_thumbnail)
-						$thumbnails[] = $rdio_thumbnail;
-				}
-			}
-		}
-		
-		// SOCIALCAM
-		if (isset($options['enable_socialcam'])) {
-			$socialcam_thumbnails = $this->find_socialcam_widgets($markup, $options);
-			if (isset($socialcam_thumbnails)) {	
-				foreach ($socialcam_thumbnails as $socialcam_thumbnail) {
-					if ($socialcam_thumbnail)
-						$thumbnails[] = $socialcam_thumbnail;
-				}
-			}
-		}
-	
-		// SOUNDCLOUD
-		if (isset($options['enable_soundcloud'])) {
-			$soundcloud_thumbnails = $this->find_soundcloud_widgets($markup, $options);
-			if (isset($soundcloud_thumbnails)) {	
-				foreach ($soundcloud_thumbnails as $soundcloud_thumbnail) {
-					if ($soundcloud_thumbnail)
-						$thumbnails[] = $soundcloud_thumbnail;
-				}
-			}
-		}					
 
-		// USTREAM	
-		if (isset($options['enable_ustream'])) {
-			$ustream_thumbnails = $this->find_ustream_widgets($markup, $options);
-			if (isset($ustream_thumbnails)) {
-				foreach ($ustream_thumbnails as $ustream_thumbnail) {
-					if ($ustream_thumbnail)
-						$thumbnails[] = $ustream_thumbnail;
+		// services
+		$services = array(
+					'etracks' => array(
+									'name' => '8tracks',
+									'patterns' => array(
+										'/8tracks.com\/mixes\/([0-9]+)\/player/i',
+										'/\[8tracks.*?url="https?:\/\/w*.?8tracks.com\/mixes\/([0-9]+)"/i'
+									),
+									'url' => 'http://8tracks.com/mixes/%MATCH%.jsonp?api_key=' . $options['etracks_api'],
+									'player' => 'http:\/\/8tracks.com\/mixes\/%MATCH%\/player_v3\/autoplay',
+									'queries' => array(
+										'img' => 'mix->cover_urls->' . ETRACKS_IMAGE_SIZE,
+										'wd' => 400,
+										'hd' => 400
+									),
+								),
+					'bambuser' => array(
+									'name' => 'Bambuser',
+									'patterns' => array(
+										'/static.bambuser.com\/r\/player.swf\?vid=([0-9]+)/i',
+										'/embed.bambuser.com\/broadcast\/([0-9]+)/i'
+									),
+									'url' => 'http://api.bambuser.com/broadcast/%MATCH%.json?api_key=' . $options['bambuser_api'],				
+									'player' => 'https:\/\/static.bambuser.com\/r\/player.swf?vid=%MATCH%&context=fb',									
+									'queries' => array(
+										'img' => 'result->preview',
+										'w' => 'result->width',
+										'h' => 'result->height',
+									),
+								),
+					'bandcamp_album' => array(
+									'name' => 'Bandcamp album',
+									'patterns' => array(
+										'/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//i'
+									),
+									'url' => 'http://api.bandcamp.com/api/album/2/info?album_id=%MATCH%&key=' . $options['bandcamp_api'],
+									'player' => 'http:\/\/bandcamp.com\/EmbeddedPlayer.swf\/size=venti\/album=%MATCH%\/',
+									'queries' => array(
+										'img' => BANDCAMP_IMAGE_SIZE,
+										'wd' => 400,
+										'hd' => 105,
+									),
+								),
+					'bandcamp_track' => array(
+									'name' => 'Bandcamp track',
+									'patterns' => array(
+										'/bandcamp.com\/EmbeddedPlayer\/v=2\/track=([0-9]+)\//i'
+									),
+									'url' => 'http://api.bandcamp.com/api/album/2/info?album_id=%MATCH%&key=' . $options['bandcamp_api'],
+									'player' => 'http://bandcamp.com/EmbeddedPlayer.swf/size=venti/track=%MATCH%/',
+									'queries' => array(
+										'img' => BANDCAMP_IMAGE_SIZE,
+										'wd' => 400,
+										'hd' => 105,
+									),
+								),
+					'bliptv' => array(
+									'name' => 'Blip.tv',
+									'patterns' => array(
+										'/blip.tv\/play\/([A-Za-z0-9]+)/i',
+										'/a.blip.tv\/api.swf#([A-Za-z0-9%]+)/i'
+									),
+									'url' => 'http://blip.tv/players/episode/%MATCH%?skin=json',
+									'queries' => array(
+										'img' => 'Post->thumbnailUrl',
+										'w' => 'Post->media->width',
+										'h' => 'Post->media->height',
+									),
+								),
+					'dailymotion' => array(
+									'name' => 'Dailymotion',
+									'patterns' => array(
+										'#<object[^>]+>.+?https?://w*.?dailymotion.com/swf/video/([A-Za-z0-9-_]+).+?</object>#s',
+										'#https?://w*.?dailymotion.com/embed/video/([A-Za-z0-9-_]+)#s',
+										'/\[dailymotion.*?]https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)\[\/dailymotion]/i'
+									),
+									'url' => 'https://api.dailymotion.com/video/%MATCH%?fields=thumbnail_url',
+									'player' => 'http://www.dailymotion.com/swf/video/%MATCH%?autoPlay=1',
+									'queries' => array(
+										'img' => 'thumbnail_url',
+										'wd' => 480,
+										'hd' => 360
+									),
+								),
+					'flickr' => array(
+									'name' => 'Flickr',
+									'patterns' => array(
+										'/<object.*?data=\"http:\/\/www.flickr.com\/apps\/video\/stewart.swf\?.*?>(.*?photo_id=([0-9]+).*?)<\/object>/smi'
+									),
+									'url' => 'http://www.flickr.com/services/rest/?method=flickr.photos.getInfo&photo_id=%MATCH%&format=json&nojsoncallback=1&api_key=' . $options['flickr_api'],
+									'queries' => array(
+										'img' => NULL,
+										//'w' => 'photo->video->width',
+										//'h' => 'photo->video->height',
+									),
+								),
+					'hulu' => array(
+									'name' => 'Hulu',
+									'patterns' => array(
+										'/hulu.com\/embed\/([A-Za-z0-9\-_]+)/i'
+									),
+									'url' => 'http://www.hulu.com/api/oembed.json?url=http://www.hulu.com/embed/%MATCH%',
+									'queries' => array(
+										'img' => 'thumbnail_url',
+										'w' => 'large_thumbnail_width',
+										'h' => 'large_thumbnail_height',
+									),
+								),
+					'internetarchive' => array(
+									'name' => 'Internet Archive',
+									'patterns' => array(
+										'/archive.org\/embed\/([A-Za-z0-9]+)/i'
+									),
+									'url' => 'http://archive.org/details/%MATCH%&output=json',
+									'query' => 'misc->image',
+									'queries' => array(
+										'img' => 'misc->image',
+									),
+								),
+					'justintv' => array(
+									'name' => 'Justin.tv/Twitch',
+									'patterns' => array(
+										'/(?:justin|twitch).tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/i'
+									),
+									'url' => 'http://api.justin.tv/api/stream/list.json?channel=%MATCH%',
+									'queries' => array(
+										'img' => 'channel->' . JUSTINTV_IMAGE_SIZE
+									),
+								),
+					'livestream' => array(
+									'name' => 'Livestream',
+									'patterns' => array(
+										'/cdn.livestream.com\/embed\/([A-Za-z0-9\-_]+)/i'
+									),
+									'url' => 'http://thumbnail.api.livestream.com/thumbnail?name==%MATCH%',
+									'queries' => array(
+										'img' => NULL
+									),
+								),
+					'mixcloud' => array(
+									'name' => 'Mixcloud',
+									'patterns' => array(
+										'/mixcloudLoader.swf\?feed=https?(?:%3A%2F%2F|:\/\/)www.mixcloud.com(?:%2F|\/)([A-Za-z0-9\-_\/\%]+)/i',
+										'/iframe\/\?feed=https?(?:%3A%2F%2F|:\/\/)www.mixcloud.com(?:%2F|\/)([A-Za-z0-9\-_\/\%]+)/i'
+									),
+									'url' => 'http://api.mixcloud.com/%MATCH%',
+									'player' => 'http://www.mixcloud.com/media/swf/player/mixcloudLoader.swf?feed=http%3A%2F%2Fwww.mixcloud.com%2Fapi%2F1%2Fcloudcast%2F%MATCH%.json&amp;autoplay=1&amp;fb_feed=1&amp;embed_uuid=&amp;embed_type=facebook_share',
+									'queries' => array(
+										'img' => 'pictures->' . MIXCLOUD_IMAGE_SIZE,
+										'wd' => 460,
+										'hd' => 460,
+									),
+								),
+					'myvideo' => array(
+									'name' => 'MyVideo',
+									'patterns' => array(
+										'/myvideo.(?:at|be|ch|de|nl|ro)\/(?:movie|embed)\/([0-9]+)/i'
+									),
+									'url' => 'https://api.myvideo.de/prod/mobile/api2_rest.php?method=myvideo.videos.get_details&movie_id=%MATCH%&o_format=json&dev_id=' . $options['myvideo_dev_api'] . '&website_id=' . $options['myvideo_web_api'],
+									'queries' => array(
+										'img' => 'response->myvideo->movie->movie_thumbnail'
+									),
+								),
+					'official' => array(
+									'name' => 'Official.fm',
+									'patterns' => array(
+										'/official.fm(?:%2F%2F|\/\/)feed(?:%2F|\/)tracks(?:%2F|\/)([A-Za-z0-9]+)/i'
+									),
+									'url' => 'http://api.official.fm/tracks/%MATCH%?fields=cover&api_version=2',
+									'player' => 'https://official.fm/flash/ofm_player.swf?referer=facebook.com&autoplay=true&feed=/feed/tracks/%MATCH%.json&skin_bg=000000&skin_fg=FFFFFF',
+									'queries' => array(
+										'img' => 'track->cover->urls->' . OFFICIAL_IMAGE_SIZE,
+										'wd' => 440,
+										'hd' => 240
+									),
+								),
+					'rdio' => array(
+									'name' => 'Rdio',
+									'patterns' => array(
+										'/rd.io\/i\/([A-Za-z0-9]+)/i'
+									),
+									'url' => 'http://www.rdio.com/api/oembed/?format=json&url=http://rd.io/x/%MATCH%',
+									'url' => 'https://rd.io/e/%MATCH%',
+									'queries' => array(
+										'img' => 'thumbnail_url',
+										'w' => 'width',
+										'h' => 'height'
+									),
+								),
+					'socialcam' => array(
+									'name' => 'Socialcam',
+									'patterns' => array(
+										'/socialcam.com\/videos\/([A-Za-z0-9]+)/i'
+									),
+									'url' => 'https://api.socialcam.com/v1/videos/%MATCH%.json?access_token=' . $options['socialcam_api'],
+									'queries' => array(
+										'img' => SOCIALCAM_IMAGE_SIZE . '->url'
+									),
+								),
+					'soundcloud_track' => array(
+									'name' => 'SoundCloud track',
+									'patterns' => array(
+										'/api.soundcloud.com(?:%2F|\/)tracks(?:%2F|\/)([0-9]+)/i'
+									),
+									'url' => 'http://api.soundcloud.com/tracks/%MATCH%.json?client_id=' . $options['soundcloud_api'],
+									'player' => 'http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F%MATCH%&amp;color=3b5998&amp;auto_play=true',
+									'queries' => array(
+										'img' => 'artwork_url',
+										'wd' => 460,
+										'hd' => 98,
+									),
+								),
+					
+					'soundcloud_playlist' => array(
+									'name' => 'SoundCloud playlist',
+									'patterns' => array(
+										'/api.soundcloud.com(?:%2F|\/)playlists(?:%2F|\/)([0-9]+)/i'
+									),
+									'url' => 'http://api.soundcloud.com/playlists/%MATCH%.json?client_id=' . $options['soundcloud_api'],
+									'player' => 'http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fapi.soundcloud.com%2Fplaylists%2F%MATCH%&amp;color=3b5998&amp;auto_play=true&amp;show_artwork=false&amp;origin=facebook',
+									'queries' => array(
+										'img' => 'artwork_url'
+									),
+								),
+					'ustream' => array(
+									'name' => 'Ustream',
+									'patterns' => array(
+										'/ustream.tv\/(?:embed\/|embed\/recorded\/)([0-9]+)/i'
+									),
+									'url' => 'http://api.ustream.tv/json/channel/%MATCH%/getInfo?key=' . $options['ustream_api'],
+									'queries' => array(
+										'img' => 'results->imageUrl->' . USTREAM_IMAGE_SIZE
+									),
+								),
+					'viddler' => array(
+									'name' => 'Viddler',
+									'patterns' => array(
+										'/viddler.com\/embed\/([A-Za-z0-9]+)/i'
+									),
+									'url' => 'http://api.viddler.com/api/v2/viddler.api.getDetails.json?video_id=%MATCH%&key=' . $options['viddler_api'],
+									'player' => 'http:\/\/www.ustream.tv\/flash\/viewer.swf?cid=%MATCH%&v3=1&bgcolor=000000&campaign=facebook',
+									'queries' => array(
+										'img' => 'video->thumbnail_url'
+									),
+								),
+					'vimeo' => array(
+									'name' => 'Vimeo',
+									'patterns' => array(
+										'#<object[^>]+>.+?https?://vimeo.com/moogaloop.swf\?clip_id=([A-Za-z0-9\-_]+)&.+?</object>#s',
+										'#https?://player.vimeo.com/video/([0-9]+)#s',
+										'/\[vimeo.*?]https?:\/\/w*.?vimeo.com\/([0-9]+)\[\/vimeo]/i'
+									),
+									'url' => 'http://vimeo.com/api/v2/video/%MATCH%.json',
+									'player' => 'http://vimeo.com/moogaloop.swf?clip_id=%MATCH%',
+ 									'queries' => array(
+										'img' => VIMEO_IMAGE_SIZE,
+										'w' => 'width',
+										'h' => 'height'
+									),
+								),
+					'youtube' => array(
+									'name' => 'YouTube',
+									'patterns' => array(
+										'#<object[^>]+>.+?https?://w*.?youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s',
+										'#https?://w*.?youtube.com/embed/([A-Za-z0-9\-_]+)#s',
+										'/\[youtube.*?]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/i',
+									),
+									'url' => 'http://img.youtube.com/vi/%MATCH%',
+									'player' => 'http://www.youtube.com/v/%MATCH%?autohide=1&amp;version=3',
+									'queries' => array(
+										'img' => NULL,
+										'wd' => 480,
+										'hd' => 360,
+									),
+								),
+
+					);
+
+		// media widgets
+		foreach($services as $key => $value) {
+			// SoundCloud special treatment
+			if(($key == "soundcloud_track") || ($key == "soundcloud_playlist")) {
+				$enabled = 'enable_soundcloud';
+			// Bandcamp special treatment
+			} else if(($key == "bandcamp_album") || ($key == "bandcamp_track")) {
+				$enabled = 'enable_bandcamp';
+			} else {
+				$enabled = 'enable_' . $key;
+			}
+			
+			if (isset($options[$enabled])) {
+				$tmp_thumbnails = $this->find_json_widgets($markup, $services[$key], $options);
+				if (isset($tmp_thumbnails)) {
+					foreach ($tmp_thumbnails as $tmp_thumbnail) {
+						if ($tmp_thumbnail)
+							$thumbnails[] = $tmp_thumbnail;
+					}
 				}
-			}	
+			}
 		}
 
-		// VIDDLER
-		if (isset($options['enable_viddler'])) {
-			$viddler_thumbnails = $this->find_viddler_widgets($markup, $options);
-			if (isset($viddler_thumbnails)) {
-				foreach ($viddler_thumbnails as $viddler_thumbnail) {
-					if ($viddler_thumbnail)
-						$thumbnails[] = $viddler_thumbnail;
-				}
-			}
-		}					
-	
-		// VIMEO
-		if (isset($options['enable_vimeo'])) {
-			$vimeo_thumbnails = $this->find_vimeo_widgets($markup, $options);
-			if (isset($vimeo_thumbnails)) {
-				foreach ($vimeo_thumbnails as $vimeo_thumbnail) {
-					if ($vimeo_thumbnail)
-						$thumbnails[] = $vimeo_thumbnail;
-				}
-			}
-		}					
-
-		// YOUTUBE
-		if (isset($options['enable_youtube'])) {
-			$youtube_thumbnails = $this->find_youtube_widgets($markup, $options);
-			if (isset($youtube_thumbnails)) {
-				foreach ($youtube_thumbnails as $youtube_thumbnail) {
-					if ($youtube_thumbnail)
-						$thumbnails[] = $youtube_thumbnail;
-				}
-			}
-		}
-		
 		return $thumbnails;
 	}	// end get_widget_thumbnails
-		
-	
-	public function find_etracks_widgets($markup, $options) {
-		
-		$api = $options['etracks_api'];
 
-		// 8tracks iFrame and embed players
-		preg_match_all( '/8tracks.com\/mixes\/([0-9]+)\/player/i', $markup, $matches1 );
-							
-		// 8tracks shortcode (Jetpack)
-		preg_match_all('/\[8tracks.*?url="https?:\/\/w*.?8tracks.com\/mixes\/([0-9]+)"/i', $markup, $matches2);
-											
-		$matches = array_merge($matches1[1], $matches2[1]);
-		$matches = array_unique($matches);
+	public function find_json_widgets($markup, $services, $options) {
 
-		// Now if we've found a 8tracks embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$service = "8tracks";
-			$json_url = "http://8tracks.com/mixes/$match.jsonp?api_key=$api";
-			$json_query = "mix->cover_urls->" . ETRACKS_IMAGE_SIZE;
-			$etracks_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($etracks_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $etracks_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
+		//init array
+		$matches = array();
+
+		foreach($services['patterns'] as $pattern) {
+			preg_match_all( $pattern, $markup, $tmp_matches );
+			
+			// Flickr special treatment
+			if($services['name'] == "Flickr") {
+				$matches = array_merge($matches, $tmp_matches[2]);
+			} else {
+				$matches = array_merge($matches, $tmp_matches[1]);
 			}
 			
-			if (isset($etracks_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($etracks_thumbnail);
-					if($exists) 
-						$etracks_thumbnails[] = $etracks_thumbnail;
-				} else {
-					$etracks_thumbnails[] = $etracks_thumbnail;
-				}
-			}
-		}
+			$matches = array_unique($matches);
 
-		if (isset($etracks_thumbnails))
-			return $etracks_thumbnails;
-	} // end find_etracks_widgets
-	
-	
-	public function find_bambuser_widgets($markup, $options) {
-
-		$api = $options['bambuser_api'];
-
-		// Bambuser embed players
-		preg_match_all( '/static.bambuser.com\/r\/player.swf\?vid=([0-9]+)/i', $markup, $matches1);
-		
-		// Bambuser iFrame players
-		preg_match_all( '/embed.bambuser.com\/broadcast\/([0-9]+)/i', $markup, $matches2);
-		
-		$matches = array_merge($matches1[1], $matches2[1]);
-		$matches = array_unique($matches);
-
-		// Now if we've found a Bambuser embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$service = "Bambuser";
-			$json_url = "http://api.bambuser.com/broadcast/$match.json?api_key=$api";
-			$json_query = "result->preview";
-			$bambuser_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($bambuser_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $bambuser_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($bambuser_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($bambuser_thumbnail);
-					if($exists) 
-						$bambuser_thumbnails[] = $bambuser_thumbnail;
-				} else {
-					$bambuser_thumbnails[] = $bambuser_thumbnail;
-				}
-			}
-		}
-
-		if (isset($bambuser_thumbnails))
-			return $bambuser_thumbnails;
-	} // end find_bambuser_widgets
-	
-	public function find_bandcamp_widgets($markup, $options) {
-		$service = "Bandcamp";
-		$api = $options["bandcamp_api"];
-
-		// Standard embed code for albums
-		preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//i', $markup, $matches);					
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Bandcamp ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://api.bandcamp.com/api/album/2/info?key=$api&album_id=$match";
-			$json_query = BANDCAMP_IMAGE_SIZE;
-			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($bandcamp_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $bandcamp_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($bandcamp_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($bandcamp_thumbnail);
-					if($exists) 
-						$bandcamp_thumbnails[] = $bandcamp_thumbnail;
-				} else {
-					$bandcamp_thumbnails[] = $bandcamp_thumbnail;
-				}
-			}
-		}
-
-		// Standard embed code for single tracks
-		preg_match_all('/bandcamp.com\/EmbeddedPlayer\/v=2\/track=([0-9]+)\//i', $markup, $matches);					
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Bandcamp ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			//$bandcamp_thumbnail = $this->get_bandcamp_parent_thumbnail($match, $bandcamp_api);
-			// get parent album id
-			$json_url = "http://api.bandcamp.com/api/track/1/info?key=$api&track_id=$match";
-			$json_query = "album_id";
-			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			// get album artwork
-			$json_url = "http://api.bandcamp.com/api/album/2/info?key=$api&album_id=$bandcamp_thumbnail";
-			$json_query = BANDCAMP_IMAGE_SIZE;
-			$bandcamp_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($bandcamp_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $bandcamp_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($bandcamp_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($bandcamp_thumbnail);
-					if($exists) 
-						$bandcamp_thumbnails[] = $bandcamp_thumbnail;
-				} else {
-					$bandcamp_thumbnails[] = $bandcamp_thumbnail;
-				}
-			}
-		}
-
-		if (isset($bandcamp_thumbnails))
-			return $bandcamp_thumbnails;
-	} // end find_bandcamp_widgets
-		
-	public function find_bliptv_widgets($markup, $options) {
-		$service = "Blip.tv";
-
-		// Blip.tv iFrame player
-		preg_match_all( '/blip.tv\/play\/([A-Za-z0-9]+)/i', $markup, $matches1 );
-	
-		// Blip.tv Flash player
-		preg_match_all( '/a.blip.tv\/api.swf#([A-Za-z0-9%]+)/i', $markup, $matches2 );
-	
-		$matches = array_merge($matches1[1], $matches2[1]);
-		$matches = array_unique($matches);
-
-		// Now if we've found a Blip.tv embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://blip.tv/players/episode/$match?skin=json";
-			$json_query = "Post->thumbnailUrl";
-			$bliptv_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($bliptv_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $bliptv_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($bliptv_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($bliptv_thumbnail);
-					if($exists) 
-						$bliptv_thumbnails[] = $bliptv_thumbnail;
-				} else {
-					$bliptv_thumbnails[] = $bliptv_thumbnail;
-				}
-			}
-		}
-
-		if (isset($bliptv_thumbnails))
-			return $bliptv_thumbnails;
-	} // end find_bliptv_widgets
-
-	public function find_dailymotion_widgets($markup, $options) {
-		$service = "Dailymotion";
-
-		// Dailymotion Flash player
-		preg_match_all('#<object[^>]+>.+?https?://w*.?dailymotion.com/swf/video/([A-Za-z0-9-_]+).+?</object>#s', $markup, $matches1);
-
-		// Dailymotion iFrame player
-		preg_match_all('#https?://w*.?dailymotion.com/embed/video/([A-Za-z0-9-_]+)#s', $markup, $matches2);
-
-		// Dailymotion shortcode (Viper's Video Quicktags)
-		preg_match_all('/\[dailymotion.*?]https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)\[\/dailymotion]/i', $markup, $matches3);
-
-		$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
-		$matches = array_unique($matches);
-
-		// Now if we've found a Dailymotion video ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "https://api.dailymotion.com/video/$match?fields=thumbnail_url";
-			$json_query = "thumbnail_url";
-			$dailymotion_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($dailymotion_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $dailymotion_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($dailymotion_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($dailymotion_thumbnail);
-					if($exists) 
-						$dailymotion_thumbnails[] = $dailymotion_thumbnail;
-				} else {
-					$dailymotion_thumbnails[] = $dailymotion_thumbnail;
-				}
-			}
 		}
 		
-		if (isset($dailymotion_thumbnails))
-			return $dailymotion_thumbnails;
-	} //end find_dailymotion_widgets
-
-	public function find_flickr_widgets($markup, $options) {
-		$service = "Flickr";
-		$api = $options['flickr_api'];
-
-		preg_match_all('/<object.*?data=\"http:\/\/www.flickr.com\/apps\/video\/stewart.swf\?.*?>(.*?photo_id=([0-9]+).*?)<\/object>/smi', $markup, $matches);
-		$matches = $matches[2];
-	
-		// Now if we've found a Flickr embed URL, let's set the thumbnail URL
+		// Now if we've found an embed code, let's get the thumbnail URL
 		foreach($matches as $match) {
-			$json_url = "http://www.flickr.com/services/rest/?method=flickr.photos.getInfo&photo_id=$match&format=json&api_key=$api&nojsoncallback=1";
-			$json_query = NULL;
-			$flickr_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($flickr_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $flickr_thumbnail\n";
+			
+		 	// Mixcloud special treatment
+			if($services['name'] == "Mixcloud") {
+				$match = str_replace('%2F', '/', $match);
+			}
+
+			$json_url = str_replace('%MATCH%', $match, $services['url']);
+			if(isset($services['player']))
+				$json_thumbnail['player'] = str_replace('%MATCH%', $match, $services['player']);
+
+			// Livestream special treatment
+			if($services['name'] == "Livestream") {
+				$json_thumbnail['img'] = $json_url;
+			// YouTube special treatment
+			} else if($services['name'] == "YouTube") {
+				$json_thumbnail['img'] = "http://img.youtube.com/vi/$match";
+			} else {
+				// Bandcamp special treatment
+				if($services['name'] == "Bandcamp track") {
+					$tmp_url = "http://api.bandcamp.com/api/track/1/info?track_id=$match&key=" . $options['bandcamp_api'];
+					$tmp_query = "album_id";
+					$match = $this->get_json_thumbnail($services, $tmp_url, $tmp_query);
+					$json_url = str_replace('%MATCH%', $match, $services['url']);
+				}
+				// Flickr special treatment
+				if($services['name'] == "Flickr") {
+					$json_thumbnail = $this->get_json_thumbnail($services, $json_url, NULL);
 				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
+					$json_thumbnail['img'] = $this->get_json_thumbnail($services, $json_url, $services['queries']['img']);
+
+					if(isset($services['queries']['wd'])){
+						$json_thumbnail['w'] = $services['queries']['wd'];
+					} else if(isset($services['queries']['w'])) {
+						$json_thumbnail['w'] = $this->get_json_thumbnail($services, $json_url, $services['queries']['w']);
+					}
+
+					if(isset($services['queries']['hd'])) {
+						$json_thumbnail['h'] = $services['queries']['hd'];
+					} else if(isset($services['queries']['h'])) {
+						$json_thumbnail['h'] = $this->get_json_thumbnail($services, $json_url, $services['queries']['h']);
+					}
 				}
 			}
 			
-			if (isset($flickr_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($flickr_thumbnail);
-					if($exists) 
-						$flickr_thumbnails[] = $flickr_thumbnail;
-				} else {
-					$flickr_thumbnails[] = $flickr_thumbnail;
-				}
+			// Official.fm special treatment
+			if($services['name'] == "Official.fm") {
+				$tmp = substr($json_thumbnail['img'], 0, 2);
+				if($tmp == "//")
+					$json_thumbnail['img'] = "http:" . $json_thumbnail['img'];
 			}
-		}
-
-		if (isset($flickr_thumbnails))
-			return $flickr_thumbnails;
-	} // end find_flickr_widgets
-	
-	public function find_hulu_widgets($markup, $options) {
-		$service = "Hulu";
-
-		// Hulu iFrame player
-		preg_match_all( '/hulu.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches );				
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Hulu embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://www.hulu.com/api/oembed.json?url=http://www.hulu.com/embed/$match";
-			$json_query = "thumbnail_url";
-			$hulu_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
+			
+			// debugger output
 			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($hulu_thumbnail) {
-					print "\n\t [$service]\n";
+				if (isset($json_thumbnail['img'])) {
+					print "\n\t [" . $services['name'] . "]\n";
 					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $hulu_thumbnail\n";
+					// YouTube special treatment
+					if($services['name'] == "YouTube") {
+						print "\t Request: http://img.youtube.com/vi/" . $match . "\n";
+						if (isset($options['add_embeds'])) {
+							print "\t Image: ".$json_thumbnail['img']."/0.jpg (ID:$match)\n";
+						} else {
+							print "\t Image #1: ".$json_thumbnail['img']."/0.jpg (ID:$match)\n";
+							print "\t Image #2: ".$json_thumbnail['img']."/1.jpg (ID:$match)\n";
+							print "\t Image #3: ".$json_thumbnail['img']."2.jpg (ID:$match)\n";
+						}
+					} else {
+						print "\t Request: $json_url\n";
+						print "\t Image: ".$json_thumbnail['img']."\n";
+						if( (isset($json_thumbnail['w'])) && (isset($json_thumbnail['h'])) )
+							print "\t Dimensions: " . $json_thumbnail['w'] . "×" .$json_thumbnail['h']. "\n";
+					}
+					
 				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
+					print "\n\t ERROR: " . $services['name'] . " request failed ($json_url)\n";
 				}
 			}
 			
-			if (isset($hulu_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($hulu_thumbnail);
-					if($exists) 
-						$hulu_thumbnails[] = $hulu_thumbnail;
-				} else {
-					$hulu_thumbnails[] = $hulu_thumbnail;
-				}
+			if (isset($json_thumbnail['img'])) {
+				// YouTube special treatment
+					if($services['name'] == "YouTube") {
+							$json_thumbnails[] = array(
+								'img' => $json_thumbnail['img'] . '/0.jpg',
+								'w' => $services['queries']['wd'],
+								'h' => $services['queries']['hd'],
+								'player' => str_replace('%MATCH%', $match, $services['player'])
+							);
+						if (!isset($options['add_embeds'])) {
+							$json_thumbnails[]['img'] = $json_thumbnail['img'] . '/1.jpg';
+							$json_thumbnails[]['img'] = $json_thumbnail['img'] . '/2.jpg';	
+						}
+						
+					} else if ($options['exec_mode'] == 1)  {
+						$exists = $this->remote_exists($json_thumbnail['img']);
+						if($exists) {
+							$json_thumbnails[] = $json_thumbnail;
+						}
+					} else {
+						$json_thumbnails[] = $json_thumbnail;
+					}
 			}
 		}
+
+		if (isset($json_thumbnails))
+			return $json_thumbnails;
 		
-		if (isset($hulu_thumbnails))
-			return $hulu_thumbnails;
-	} // end find_hulu_widgets
-	
-	public function find_internetarchive_widgets($markup, $options) {
-		$service = "Internet Archive";
-
-		// Internet Archive iFrame players
-		preg_match_all( '/archive.org\/embed\/([A-Za-z0-9]+)/i', $markup, $matches);
-											
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Internet Archive embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://archive.org/details/$match&output=json";
-			$json_query = "misc->image";
-			$internetarchive_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($internetarchive_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $internetarchive_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($internetarchive_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($internetarchive_thumbnail);
-					if($exists) 
-						$internetarchive_thumbnails[] = $internetarchive_thumbnail;
-				} else {
-					$internetarchive_thumbnails[] = $internetarchive_thumbnail;
-				}
-			}
-		}
-
-		if (isset($internetarchive_thumbnails))
-			return $internetarchive_thumbnails;
-	} // end find_internetarchive_widgets
-	
-	public function find_justintv_widgets($markup, $options) {
-		$service = "Justin.tv/Twitch";
-
-		// Justin.tv/Twitch.tv embed player
-		preg_match_all( '/(?:justin|twitch).tv\/widgets\/live_embed_player.swf\?channel=([A-Za-z0-9-_]+)/i', $markup, $matches );
-		
-		$matches = array_unique($matches[1]);
-		
-		// Now if we've found a Justin.tv/Twitch.tv embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://api.justin.tv/api/stream/list.json?channel=$match";
-			$json_query = "channel->" . JUSTINTV_IMAGE_SIZE;
-			$justintv_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($justintv_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $justintv_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($justintv_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($justintv_thumbnail);
-					if($exists) 
-						$justintv_thumbnails[] = $justintv_thumbnail;
-				} else {
-					$justintv_thumbnails[] = $justintv_thumbnail;
-				}
-			}
-		}
-
-		if (isset($justintv_thumbnails))
-			return $justintv_thumbnails;
-	} //end find_justintv_widgets
-	
-	public function find_livestream_widgets($markup, $options) {
-		$service = "Livestream";
-
-		// Standard embed code
-		preg_match_all('/cdn.livestream.com\/embed\/([A-Za-z0-9\-_]+)/i', $markup, $matches);
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Livestream ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$livestream_thumbnail = "http://thumbnail.api.livestream.com/thumbnail?name=$match";
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($livestream_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $livestream_thumbnail\n";
-					print "\t Image: $livestream_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($livestream_thumbnail)\n";
-				}
-			}
-			
-			if (isset($livestream_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($livestream_thumbnail);
-					if($exists) 
-						$livestream_thumbnails[] = $livestream_thumbnail;
-				} else {
-					$livestream_thumbnails[] = $livestream_thumbnail;
-				}
-			}
-		}
-
-		if (isset($livestream_thumbnails))
-			return $livestream_thumbnails;
-	} // end find_livestream_widgets
-	
-	public function find_mixcloud_widgets($markup, $options) {
-		$service = "Mixcloud";
-
-		// Standard embed code
-		preg_match_all('/mixcloudLoader.swf\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches1);
-
-		// iFrame embed code
-		preg_match_all('/iframe\/\?feed=https?%3A%2F%2Fwww.mixcloud.com%2F([A-Za-z0-9\-_\%]+)/i', $markup, $matches2);
-
-		$matches = array_merge($matches1[1], $matches2[1]);
-		$matches = array_unique($matches);
-
-		// Standard embed (API v1, undocumented)
-		// preg_match_all('/feed=http:\/\/www.mixcloud.com\/api\/1\/cloudcast\/([A-Za-z0-9\-_\%\/.]+)/i', $markup, $mixcloud_ids);					
-
-		// Now if we've found a Mixcloud ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$mixcloud_id = str_replace('%2F', '/', $match);
-			$json_url = "http://api.mixcloud.com/$match";
-			$json_query = "pictures->" . MIXCLOUD_IMAGE_SIZE;
-			$mixcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($mixcloud_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $mixcloud_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($mixcloud_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($mixcloud_thumbnail);
-					if($exists) 
-						$mixcloud_thumbnails[] = $mixcloud_thumbnail;
-				} else {
-					$mixcloud_thumbnails[] = $mixcloud_thumbnail;
-				}
-			}
-		}
-
-		if (isset($mixcloud_thumbnails))
-			return $mixcloud_thumbnails;
-	} // end find_mixcloud_widgets
-	
-	public function find_myvideo_widgets($markup, $options) {
-		$service = "MyVideo";
-
-		$dev_id = $options['myvideo_dev_api'];
-		$website_id = $options['myvideo_web_api'];
-
-		// Standard embed code
-		preg_match_all('/myvideo.(?:at|be|ch|de|nl|ro)\/movie\/([0-9]+)/i', $markup, $matches1);
-		
-		// iFrame embed code
-		preg_match_all('/myvideo.(?:at|be|ch|de|nl|ro)\/embed\/([0-9]+)/i', $markup, $matches2);
-		
-		$matches = array_merge($matches1[1], $matches2[1]);
-		$matches = array_unique($matches);
-
-		// Now if we've found a MyVideo ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "https://api.myvideo.de/prod/mobile/api2_rest.php?method=myvideo.videos.get_details&dev_id=$dev_id&website_id=$website_id&movie_id=$match&o_format=json";
-			$json_query = "response->myvideo->movie->movie_thumbnail";
-			$myvideo_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($myvideo_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $myvideo_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($myvideo_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($myvideo_thumbnail);
-					if($exists) 
-						$myvideo_thumbnails[] = $myvideo_thumbnail;
-				} else {
-					$myvideo_thumbnails[] = $myvideo_thumbnail;
-				}
-			}
-		}
-		
-		if (isset($myvideo_thumbnails))
-			return $myvideo_thumbnails;
-	} // end find_myvideo_widgets
-
-	public function find_official_widgets($markup, $options) {
-		$service = "Official.fm";
-
-		// Official.fm iFrame
-		preg_match_all( '/official.fm%2F%2Ffeed%2Ftracks%2F([A-Za-z0-9]+)/i', $markup, $matches );
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Official.fm embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://api.official.fm/tracks/$match?fields=cover&api_version=2";
-			$json_query = "track->cover->urls->" . OFFICIAL_IMAGE_SIZE;
-			$official_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			
-			// fix URL if necessary
-			$tmp = substr($official_thumbnail, 0, 2);
-			if($tmp == "//")
-				$official_thumbnail = "http:" . $official_thumbnail;
-			
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($official_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $official_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($official_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($official_thumbnail);
-					if($exists) 
-						$official_thumbnails[] = $official_thumbnail;
-				} else {
-					$official_thumbnails[] = $official_thumbnail;
-				}
-			}
-		}
-		
-		if (isset($official_thumbnails))
-			return $official_thumbnails;
-	} // end find_official_widgets
-	
-	public function find_rdio_widgets($markup, $options) {
-		$service = "Rdio";
-
-		// Rdio iFrame
-		preg_match_all( '/rd.io\/i\/([A-Za-z0-9]+)/i', $markup, $matches );
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Rdio embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://www.rdio.com/api/oembed/?format=json&url=http://rd.io/x/$match";
-			$json_query = "thumbnail_url";
-			$rdio_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($rdio_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $rdio_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($rdio_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($rdio_thumbnail);
-					if($exists) 
-						$rdio_thumbnails[] = $rdio_thumbnail;
-				} else {
-					$rdio_thumbnails[] = $rdio_thumbnail;
-				}
-			}
-		}
-
-		if (isset($rdio_thumbnails))
-			return $rdio_thumbnails;
-	} // end find_rdio_widgets
-	
-	public function find_socialcam_widgets($markup, $options) {
-		$service = "Socialcam";
-
-		$api = $options['socialcam_api'];
-
-		// Socialcam iFrame
-		preg_match_all( '/rd.io\/i\/([A-Za-z0-9]+)/i', $markup, $matches );
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Socialcam embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "https://api.socialcam.com/v1/videos/$match.json?access_token=$api";
-			$json_query = "thumbnail_url";
-			$json_query = SOCIALCAM_IMAGE_SIZE . "->url";
-			$socialcam_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($socialcam_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $socialcam_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($socialcam_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($socialcam_thumbnail);
-					if($exists) 
-						$socialcam_thumbnails[] = $socialcam_thumbnail;
-				} else {
-					$socialcam_thumbnails[] = $socialcam_thumbnail;
-				}
-			}
-		}
-		if (isset($socialcam_thumbnails))
-			return $socialcam_thumbnails;
-	} // end find_socialcam_widgets
-	
-	public function find_soundcloud_widgets($markup, $options) {
-		$service = "SoundCloud";
-		$api = $options['soundcloud_api'];
-
-		// Standard embed code for tracks (Flash and HTML5 player)
-		preg_match_all('/api.soundcloud.com%2Ftracks%2F([0-9]+)/i', $markup, $matches1);
-
-		// Shortcode for tracks (Flash and HTML5 player)
-		preg_match_all('/api.soundcloud.com\/tracks\/([0-9]+)/i', $markup, $matches2);
-
-		$matches = array_merge($matches1[1], $matches2[1]);
-		$matches = array_unique($matches);
-
-		// Now if we've found a SoundCloud ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://api.soundcloud.com/tracks/$match.json?client_id=$api";
-			$json_query = "artwork_url";
-			$soundcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
-
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($soundcloud_thumbnail) {
-					print "\n\t [$service track]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $soundcloud_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-				
-			}
-			
-			if (isset($soundcloud_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($soundcloud_thumbnail);
-					if($exists) 
-						$soundcloud_thumbnails[] = $soundcloud_thumbnail;
-				} else {
-					$soundcloud_thumbnails[] = $soundcloud_thumbnail;
-				}
-			}
-		}
-
-		// Standard embed code for playlists (Flash and HTML5 player)
-		preg_match_all('/api.soundcloud.com%2Fplaylists%2F([0-9]+)/i', $markup, $matches1);
-
-		// Shortcode for playlists (Flash and HTML5 player)
-		preg_match_all('/api.soundcloud.com\/playlists\/([0-9]+)/i', $markup, $matches2);
-
-		$matches = array_merge($matches1[1], $matches2[1]);
-		$matches = array_unique($matches);
-
-		// Now if we've found a SoundCloud ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://api.soundcloud.com/playlists/$match.json?client_id=$api";
-			$json_query = "artwork_url";
-			$soundcloud_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			$soundcloud_thumbnail = str_replace('-large.', '-' . SOUNDCLOUD_IMAGE_SIZE . '.', $soundcloud_thumbnail); // replace 100x100 default image
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($soundcloud_thumbnail) {
-					print "\n\t [$service playlist]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $soundcloud_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($soundcloud_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($soundcloud_thumbnail);
-					if($exists) 
-						$soundcloud_thumbnails[] = $soundcloud_thumbnail;
-				} else {
-					$soundcloud_thumbnails[] = $soundcloud_thumbnail;
-				}
-			}
-		}
-
-		if (isset($soundcloud_thumbnails))
-			return $soundcloud_thumbnails;
-	} // end find_soundcloud_widgets
-	
-	public function find_ustream_widgets($markup, $options) {
-		$service = "Ustream";
-		$api = $options['ustream_api'];
-
-		// Ustream iFrame player (recorded)
-		preg_match_all( '/ustream.tv\/(?:embed\/|embed\/recorded\/)([0-9]+)/i', $markup, $matches );
-		
-		$matches = array_unique($matches[1]);
-
-		// Now if we've found a Ustream embed URL, let's set the thumbnail URL
-		foreach($matches as $match) {					
-			$json_url = "http://api.ustream.tv/json/channel/$match/getInfo?key=$api";
-			$json_query = "results->imageUrl->" . USTREAM_IMAGE_SIZE;
-			$ustream_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);						
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($ustream_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $ustream_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($ustream_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($ustream_thumbnail);
-					if($exists) 
-						$ustream_thumbnails[] = $ustream_thumbnail;
-				} else {
-					$ustream_thumbnails[] = $ustream_thumbnail;
-				}
-			}
-		}
-
-		if (isset($ustream_thumbnails))
-			return $ustream_thumbnails;
-	} // end find_ustream_widgets
-	
-	public function find_viddler_widgets($markup, $options) {
-		$service = "Viddler";
-		$api = $options['viddler_api'];
-
-		preg_match_all( '/viddler.com\/embed\/([A-Za-z0-9]+)/i', $markup, $matches );
-
-		// Now if we've found a Viddler embed URL, let's set the thumbnail URL
-		foreach($matches[1] as $match) {
-			$json_url = "http://api.viddler.com/api/v2/viddler.api.getDetails.json?video_id=$match&key=$api";
-			$json_query = "video->thumbnail_url";
-			$viddler_thumbnail = $this->get_json_thumbnail($service, $json_url, $json_query);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($viddler_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $viddler_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($viddler_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($viddler_thumbnail);
-					if($exists) 
-						$viddler_thumbnails[] = $viddler_thumbnail;
-				} else {
-					$viddler_thumbnails[] = $viddler_thumbnail;
-				}
-			}
-		}
-
-		if (isset($viddler_thumbnails))
-			return $viddler_thumbnails;
-	} // end find_viddler_widgets
-	
-	public function find_vimeo_widgets($markup, $options) {
-		$service = "Vimeo";
-
-		// Vimeo Flash player ("old embed code")
-		preg_match_all('#<object[^>]+>.+?https?://vimeo.com/moogaloop.swf\?clip_id=([A-Za-z0-9\-_]+)&.+?</object>#s', $markup, $matches1);
-
-		// Vimeo iFrame player ("new embed code")
-		preg_match_all('#https?://player.vimeo.com/video/([0-9]+)#s', $markup, $matches2);
-
-		// Vimeo shortcode (Viper's Video Quicktags)
-		preg_match_all('/\[vimeo.*?]https?:\/\/w*.?vimeo.com\/([0-9]+)\[\/vimeo]/i', $markup, $matches3);
-
-		$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
-		$matches = array_unique($matches);
-
-		// Now if we've found a Vimeo ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$json_url = "http://vimeo.com/api/v2/video/$match.php";
-			$vimeo_thumbnail = $this->get_vimeo_thumbnail($match, VIMEO_IMAGE_SIZE);
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($vimeo_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: $json_url\n";
-					print "\t Image: $vimeo_thumbnail\n";
-				} else {
-					print "\n\t ERROR: $service request failed ($json_url)\n";
-				}
-			}
-			
-			if (isset($vimeo_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists = $this->remote_exists($vimeo_thumbnail);
-					if($exists) 
-						$vimeo_thumbnails[] = $vimeo_thumbnail;
-				} else {
-					$vimeo_thumbnails[] = $vimeo_thumbnail;
-				}
-			}
-		}
-		
-		if (isset($vimeo_thumbnails))
-			return $vimeo_thumbnails;
-	} // end find_vimeo_widgets
-	
-	public function find_youtube_widgets($markup, $options) {
-		$service = "YouTube";
-
-		// Checks for the old standard YouTube embed
-		preg_match_all('#<object[^>]+>.+?https?://w*.?youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s', $markup, $matches1);
-
-		// Checks for YouTube iframe, the new standard since at least 2011
-		preg_match_all('#https?://w*.?youtube.com/embed/([A-Za-z0-9\-_]+)#s', $markup, $matches2);
-
-		// YouTube shortcode (Viper's Video Quicktags)
-		preg_match_all('/\[youtube.*?]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/i', $markup, $matches3);
-
-		$matches = array_merge($matches1[1], $matches2[1], $matches3[1]);
-		$matches = array_unique($matches);
-
-		// Now if we've found a YouTube ID, let's set the thumbnail URL
-		foreach($matches as $match) {
-			$youtube_thumbnail = 'http://img.youtube.com/vi/' . $match; // no https connection
-			if((OGRAPHR_DEBUG == TRUE) && (is_single()) || (is_front_page())) {
-				if ($youtube_thumbnail) {
-					print "\n\t [$service]\n";
-					print "\t ID: $match\n";
-					print "\t Request: http://img.youtube.com/vi/" . $match . "\n";
-					print "\t Image #1: $youtube_thumbnail/0.jpg (ID:$match)\n";
-					print "\t Image #2: $youtube_thumbnail/1.jpg (ID:$match)\n";
-					print "\t Image #3: $youtube_thumbnail/2.jpg (ID:$match)\n";
-				} else {	
-					print "\n\t ERROR: $service request failed ($youtube_thumbnail/[012].jpg)\n";
-				}
-			}
-			
-			if (isset($youtube_thumbnail)) {
-				if ($options['exec_mode'] == 1)  {
-					$exists0 = $this->remote_exists($youtube_thumbnail . '/0.jpg');
-					$exists1 = $this->remote_exists($youtube_thumbnail . '/1.jpg');
-					$exists2 = $this->remote_exists($youtube_thumbnail . '/2.jpg');
-					if($exists0) 
-						$youtube_thumbnails[] = $youtube_thumbnail . '/0.jpg';
-					if($exists1) 
-						$youtube_thumbnails[] = $youtube_thumbnail . '/1.jpg';
-					if($exists2) 
-						$youtube_thumbnails[] = $youtube_thumbnail . '/2.jpg';
-				} else {
-					$youtube_thumbnails[] = $youtube_thumbnail . '/0.jpg';
-					$youtube_thumbnails[] = $youtube_thumbnail . '/1.jpg';
-					$youtube_thumbnails[] = $youtube_thumbnail . '/2.jpg';
-				}
-			}
-		}
-		
-		if (isset($youtube_thumbnails))
-			return $youtube_thumbnails;
-	} //end find_youtube_widgets
+	} //end find_json_widgets
 	
 	
 	// initialize
@@ -2186,7 +1556,29 @@ class OGraphr_Core {
 			if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
 			if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 			if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
-			if ( (!isset($options['last_update'])) || ($options['last_update'] != OGRAPHR_VERSION) ) { $options['last_update'] = OGRAPHR_VERSION;}
+
+			// 0.8 house keeping
+			if (isset($options['enable_eight_tracks'])) {
+				$options['enable_etracks'] = $options['enable_eight_tracks'];
+				unset($options['enable_eight_tracks']);
+			}
+			if (version_compare(OGRAPHR_VERSION, "0.8", '<')) {
+				//delete old, incompatible index data
+				$published = wp_count_posts();
+				$published = $published->publish;
+				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
+				$ographr_urls = get_posts( $args );
+				foreach($ographr_urls as $ographr_url) {
+					$ographr_id = $ographr_url->ID;
+					delete_post_meta($ographr_id, 'ographr_urls');
+					delete_post_meta($ographr_id, 'ographr_indexed');
+				}
+			}
+			
+
+			if ( (!isset($options['last_update'])) || ($options['last_update'] != OGRAPHR_VERSION) ) {
+				$options['last_update'] = OGRAPHR_VERSION;
+			}
 			update_option('ographr_options', $options);
 		}
 		
@@ -2224,14 +1616,14 @@ class OGraphr_Core {
 		// Debug
 		if ((OGRAPHR_DEBUG == TRUE) && (current_user_can('manage_options'))) {
 			echo '<div class="error">
-	       		<p>OGraphr is currently running in debug mode. You can disable it in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plugin editor</a>!</p>
+	       		<p>OGraphr is currently running in debug mode. You can disable it in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plug-in editor</a>!</p>
 	    		</div>';
 		}
 
 		// Beta
 		if ((OGRAPHR_BETA == TRUE) && (OGRAPHR_DEBUG == FALSE) && (current_user_can('manage_options'))) {
 			echo '<div class="updated">
-	       		<p>OGraphr is currently running with beta features enabled. You can disable this in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plugin editor</a>!</p>
+	       		<p>OGraphr is currently running with beta features enabled. You can disable this in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plug-in editor</a>!</p>
 	    		</div>';
 		}
 	}
@@ -2254,11 +1646,12 @@ class OGraphr_Core {
 		$widget_thumbnails = $core->get_widget_thumbnails($markup);
 		
 		if (is_array($widget_thumbnails))
-			foreach($widget_thumbnails as $widget_thumbnail)
-				$widget_thumbnail = htmlentities($widget_thumbnail);
+			foreach($widget_thumbnails as $widget_array)
+				foreach($widget_array as $widget_item)
+					$widget_item = htmlentities($widget_item);
 				
 		if(!(empty($widget_thumbnails))) {
-			$widget_thumbnails = serialize($widget_thumbnails);
+			$widget_thumbnails =  base64_encode(serialize($widget_thumbnails));
 			update_post_meta($post_id, 'ographr_urls', $widget_thumbnails);
 			
 			$indexed = date("U"); //Y-m-d H:i:s
@@ -2305,7 +1698,7 @@ class OGraphr_Core {
 			$posts_published = $posts_published->publish;
 			$args = array( 'numberposts' => $posts_published, 'meta_key' => 'ographr_urls' );
 			$myposts = get_posts( $args );
-			$posts_indexed = count($myposts) - 1;  // line differs from ograhr_save_stats!
+			$posts_indexed = count($myposts) - 1;  // line differs from ographr_save_stats!
 
 			$today = date("Y-m-d");
 
