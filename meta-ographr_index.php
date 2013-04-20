@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8
+Version: 0.8.1
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8");
+    define("OGRAPHR_VERSION", "0.8.1");
 	// force output of all values in comment tags
 	define("OGRAPHR_DEBUG", FALSE);
 	// enables features that are still marked beta
@@ -414,6 +414,7 @@ class OGraphr_Core {
 				if (isset($options['add_twitter_meta'])) { print "\t Twitter Cards are enabled\n"; }
 				if (isset($options['add_google_meta'])) { print "\t Google+ Meta Descriptions are enabled\n"; }
 				if (isset($options['add_link_rel'])) { print "\t Link Elements are enabled\n"; }
+				if (isset($options['add_embeds'])) { print "\t Media embeds are enabled\n"; }
 				
 				if ($options['filter_custom_urls']) {
 					foreach(preg_split("/((\r?\n)|(\n?\r))/", $options['filter_custom_urls']) as $line){
@@ -447,7 +448,7 @@ class OGraphr_Core {
 				// Did we retrieve those images before and did they expire?
 				if (($options['exec_mode'] == 1) && ($expiry >= $interval) )  {
 					$meta_values = get_post_meta($post_id, 'ographr_urls', true);
-					$meta_values = unserialize(base64_decode($meta_values));
+					$meta_values = json_decode($meta_values, true);
 					
 					if (is_array($meta_values))
 						foreach($meta_values as $meta_value)
@@ -497,7 +498,7 @@ class OGraphr_Core {
 						// 		$thumbnail['img'] = htmlentities($thumbnail['img']);
 						
 						if(!empty($thumbnails)) {
-							$thumbnails_db = base64_encode(serialize($thumbnails));
+							$thumbnails_db = json_encode($thumbnails);
 							update_post_meta($post_id, 'ographr_urls', $thumbnails_db);
 							
 							$indexed = date("U"); // Y-m-d H:i:s
@@ -801,7 +802,6 @@ class OGraphr_Core {
 		
 				// Add thumbnails
 				if (isset($thumbnails)) { // avoid error message when array is empty
-					//$thumbnails = array_unique($thumbnails); // unlikely, but hey!
 					$total_img = count($thumbnails);
 				}
 					
@@ -831,6 +831,8 @@ class OGraphr_Core {
 					}
 				}
 
+				//$opengraph_meta['og:image'] = array_unique($opengraph_meta['og:image']); // unlikely, but hey!
+
 				
 				// Add image-type if only one image has been found
 				if ( (isset($total_img)) && ($total_img == 1) ) {
@@ -843,13 +845,58 @@ class OGraphr_Core {
 				}
 
 				// Add video player
-				if ( (isset($total_img)) && ($total_img == 1) && (isset($options['add_embeds'])) && (isset($thumbnails[0]['player'])) ) {
-					$opengraph_meta['og:video'] = $thumbnails[0]['player'];
+				if ( (isset($total_img)) && ($total_img == 1) && (isset($options['add_embeds'])) && (isset($thumbnails[0]['w']))  && (isset($thumbnails[0]['h'])) ) {
+					
+					switch ($thumbnails[0]['service']) {
+					    case "8tracks":
+					    	$player = 'http:\/\/8tracks.com\/mixes\/' . $thumbnails[0]['id'] . '\/player_v3\/autoplay';
+					    	break;
+					    case "Bambuser":
+					    	$player = 'https:\/\/static.bambuser.com\/r\/player.swf?vid=' . $thumbnails[0]['id'] . '&context=fb';
+					    	break;
+					    case "Bandcamp album":
+					    	$player = 'http:\/\/bandcamp.com\/EmbeddedPlayer.swf\/size=venti\/album=' . $thumbnails[0]['id'] . '\/';
+					    	break;
+					    case "Bandcamp track":
+					    	$player = 'http:\/\/bandcamp.com\/EmbeddedPlayer.swf\/size=venti\/track=' . $thumbnails[0]['id'] . '\/';
+					    	break;
+					    case "Blip.tv":
+					    	$player = 'http://blip.tv/play/' . $thumbnails[0]['id'] . '.x?p=1';
+					    	break;
+					    case "Dailymotion":
+					    	$player = 'http://www.dailymotion.com/swf/video/' . $thumbnails[0]['id'] . '?autoPlay=1';
+					    	break;
+					    case "Mixcloud":
+					    	$player = 'http://www.mixcloud.com/media/swf/player/mixcloudLoader.swf?feed=http%3A%2F%2Fwww.mixcloud.com%2Fapi%2F1%2Fcloudcast%2F' . $thumbnails[0]['id'] . '.json&amp;autoplay=1&amp;fb_feed=1&amp;embed_uuid=&amp;embed_type=facebook_share';
+					    	break;
+					    case "Official.fm":
+					    	$player = 'https://official.fm/flash/ofm_player.swf?referer=facebook.com&autoplay=true&feed=/feed/tracks/' . $thumbnails[0]['id'] . '.json&skin_bg=000000&skin_fg=FFFFFF';
+					    	break;
+					    case "Rdio":
+					    	$player = 'https://rd.io/e/%MATCH%' . $thumbnails[0]['id'];
+					    	break;
+					    case "SoundCloud track":
+					    	$player = 'http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' . $thumbnails[0]['id'] . '&amp;color=3b5998&amp;auto_play=true';
+					    	break;
+					    case "SoundCloud playlist":
+					    	$player = 'http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fapi.soundcloud.com%2Fplaylists%2F' . $thumbnails[0]['id'] . '&amp;color=3b5998&amp;auto_play=true&amp;show_artwork=false&amp;origin=facebook';
+					    	break;
+					     case "Ustream":
+					    	$player = 'http:\/\/www.ustream.tv\/flash\/viewer.swf?cid=' . $thumbnails[0]['id'] . '&v3=1&bgcolor=000000&campaign=facebook';
+					    	break;
+					     case "Vimeo":
+					    	$player = 'http://vimeo.com/moogaloop.swf?clip_id' . $thumbnails[0]['id'];
+					    	break;
+					    case "YouTube":
+					        $player = 'http://www.youtube.com/v/' . $thumbnails[0]['id'] . '?autohide=1&amp;version=3';
+					        break;
+					}
+					$opengraph_meta['og:video'] = $player;
 					$opengraph_meta['og:video:width'] = $thumbnails[0]['w'];
 					$opengraph_meta['og:video:height'] = $thumbnails[0]['h'];
 					if( (isset($options['add_twitter_meta'])) && (OGRAPHR_BETA == TRUE) ){
 						$twitter_meta['twitter:card'] = "player"; // overwrite previous value
-						$twitter_meta["twitter:player"] = $thumbnails[0]['player'];
+						$twitter_meta["twitter:player"] = $player;
 						$twitter_meta["twitter:player:width"] = $thumbnails[0]['w'];
 						$twitter_meta["twitter:player:height"] = $thumbnails[0]['h'];
 					}
@@ -889,7 +936,6 @@ class OGraphr_Core {
 				
 				// Print Open Graph tags
 				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || (OGRAPHR_DEBUG) || (!isset($options['limit_opengraph'])) ) {
-					//print $opengraph_meta;
 					foreach($opengraph_meta as $key => $value) {
 						if ($key == "og:image") {
 							foreach($opengraph_meta['og:image'] as $val_image)
@@ -1113,7 +1159,6 @@ class OGraphr_Core {
 										'/\[8tracks.*?url="https?:\/\/w*.?8tracks.com\/mixes\/([0-9]+)"/i'
 									),
 									'url' => 'http://8tracks.com/mixes/%MATCH%.jsonp?api_key=' . $options['etracks_api'],
-									'player' => 'http:\/\/8tracks.com\/mixes\/%MATCH%\/player_v3\/autoplay',
 									'queries' => array(
 										'img' => 'mix->cover_urls->' . ETRACKS_IMAGE_SIZE,
 										'wd' => 400,
@@ -1126,8 +1171,7 @@ class OGraphr_Core {
 										'/static.bambuser.com\/r\/player.swf\?vid=([0-9]+)/i',
 										'/embed.bambuser.com\/broadcast\/([0-9]+)/i'
 									),
-									'url' => 'http://api.bambuser.com/broadcast/%MATCH%.json?api_key=' . $options['bambuser_api'],				
-									'player' => 'https:\/\/static.bambuser.com\/r\/player.swf?vid=%MATCH%&context=fb',									
+									'url' => 'http://api.bambuser.com/broadcast/%MATCH%.json?api_key=' . $options['bambuser_api'],									
 									'queries' => array(
 										'img' => 'result->preview',
 										'w' => 'result->width',
@@ -1140,7 +1184,6 @@ class OGraphr_Core {
 										'/bandcamp.com\/EmbeddedPlayer\/v=2\/album=([0-9]+)\//i'
 									),
 									'url' => 'http://api.bandcamp.com/api/album/2/info?album_id=%MATCH%&key=' . $options['bandcamp_api'],
-									'player' => 'http:\/\/bandcamp.com\/EmbeddedPlayer.swf\/size=venti\/album=%MATCH%\/',
 									'queries' => array(
 										'img' => BANDCAMP_IMAGE_SIZE,
 										'wd' => 400,
@@ -1153,7 +1196,6 @@ class OGraphr_Core {
 										'/bandcamp.com\/EmbeddedPlayer\/v=2\/track=([0-9]+)\//i'
 									),
 									'url' => 'http://api.bandcamp.com/api/album/2/info?album_id=%MATCH%&key=' . $options['bandcamp_api'],
-									'player' => 'http://bandcamp.com/EmbeddedPlayer.swf/size=venti/track=%MATCH%/',
 									'queries' => array(
 										'img' => BANDCAMP_IMAGE_SIZE,
 										'wd' => 400,
@@ -1181,7 +1223,6 @@ class OGraphr_Core {
 										'/\[dailymotion.*?]https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)\[\/dailymotion]/i'
 									),
 									'url' => 'https://api.dailymotion.com/video/%MATCH%?fields=thumbnail_url',
-									'player' => 'http://www.dailymotion.com/swf/video/%MATCH%?autoPlay=1',
 									'queries' => array(
 										'img' => 'thumbnail_url',
 										'wd' => 480,
@@ -1250,7 +1291,6 @@ class OGraphr_Core {
 										'/iframe\/\?feed=https?(?:%3A%2F%2F|:\/\/)www.mixcloud.com(?:%2F|\/)([A-Za-z0-9\-_\/\%]+)/i'
 									),
 									'url' => 'http://api.mixcloud.com/%MATCH%',
-									'player' => 'http://www.mixcloud.com/media/swf/player/mixcloudLoader.swf?feed=http%3A%2F%2Fwww.mixcloud.com%2Fapi%2F1%2Fcloudcast%2F%MATCH%.json&amp;autoplay=1&amp;fb_feed=1&amp;embed_uuid=&amp;embed_type=facebook_share',
 									'queries' => array(
 										'img' => 'pictures->' . MIXCLOUD_IMAGE_SIZE,
 										'wd' => 460,
@@ -1273,7 +1313,6 @@ class OGraphr_Core {
 										'/official.fm(?:%2F%2F|\/\/)feed(?:%2F|\/)tracks(?:%2F|\/)([A-Za-z0-9]+)/i'
 									),
 									'url' => 'http://api.official.fm/tracks/%MATCH%?fields=cover&api_version=2',
-									'player' => 'https://official.fm/flash/ofm_player.swf?referer=facebook.com&autoplay=true&feed=/feed/tracks/%MATCH%.json&skin_bg=000000&skin_fg=FFFFFF',
 									'queries' => array(
 										'img' => 'track->cover->urls->' . OFFICIAL_IMAGE_SIZE,
 										'wd' => 440,
@@ -1286,7 +1325,6 @@ class OGraphr_Core {
 										'/rd.io\/i\/([A-Za-z0-9]+)/i'
 									),
 									'url' => 'http://www.rdio.com/api/oembed/?format=json&url=http://rd.io/x/%MATCH%',
-									'url' => 'https://rd.io/e/%MATCH%',
 									'queries' => array(
 										'img' => 'thumbnail_url',
 										'w' => 'width',
@@ -1309,7 +1347,6 @@ class OGraphr_Core {
 										'/api.soundcloud.com(?:%2F|\/)tracks(?:%2F|\/)([0-9]+)/i'
 									),
 									'url' => 'http://api.soundcloud.com/tracks/%MATCH%.json?client_id=' . $options['soundcloud_api'],
-									'player' => 'http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F%MATCH%&amp;color=3b5998&amp;auto_play=true',
 									'queries' => array(
 										'img' => 'artwork_url',
 										'wd' => 460,
@@ -1323,7 +1360,6 @@ class OGraphr_Core {
 										'/api.soundcloud.com(?:%2F|\/)playlists(?:%2F|\/)([0-9]+)/i'
 									),
 									'url' => 'http://api.soundcloud.com/playlists/%MATCH%.json?client_id=' . $options['soundcloud_api'],
-									'player' => 'http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fapi.soundcloud.com%2Fplaylists%2F%MATCH%&amp;color=3b5998&amp;auto_play=true&amp;show_artwork=false&amp;origin=facebook',
 									'queries' => array(
 										'img' => 'artwork_url'
 									),
@@ -1344,7 +1380,6 @@ class OGraphr_Core {
 										'/viddler.com\/embed\/([A-Za-z0-9]+)/i'
 									),
 									'url' => 'http://api.viddler.com/api/v2/viddler.api.getDetails.json?video_id=%MATCH%&key=' . $options['viddler_api'],
-									'player' => 'http:\/\/www.ustream.tv\/flash\/viewer.swf?cid=%MATCH%&v3=1&bgcolor=000000&campaign=facebook',
 									'queries' => array(
 										'img' => 'video->thumbnail_url'
 									),
@@ -1357,7 +1392,6 @@ class OGraphr_Core {
 										'/\[vimeo.*?]https?:\/\/w*.?vimeo.com\/([0-9]+)\[\/vimeo]/i'
 									),
 									'url' => 'http://vimeo.com/api/v2/video/%MATCH%.json',
-									'player' => 'http://vimeo.com/moogaloop.swf?clip_id=%MATCH%',
  									'queries' => array(
 										'img' => VIMEO_IMAGE_SIZE,
 										'w' => 'width',
@@ -1372,7 +1406,6 @@ class OGraphr_Core {
 										'/\[youtube.*?]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/i',
 									),
 									'url' => 'http://img.youtube.com/vi/%MATCH%',
-									'player' => 'http://www.youtube.com/v/%MATCH%?autohide=1&amp;version=3',
 									'queries' => array(
 										'img' => NULL,
 										'wd' => 480,
@@ -1436,8 +1469,9 @@ class OGraphr_Core {
 			}
 
 			$json_url = str_replace('%MATCH%', $match, $services['url']);
-			if(isset($services['player']))
-				$json_thumbnail['player'] = str_replace('%MATCH%', $match, $services['player']);
+			
+			$json_thumbnail['service'] = $services['name'];
+			$json_thumbnail['id'] = $match;
 
 			// Livestream special treatment
 			if($services['name'] == "Livestream") {
@@ -1493,7 +1527,7 @@ class OGraphr_Core {
 						} else {
 							print "\t Image #1: ".$json_thumbnail['img']."/0.jpg (ID:$match)\n";
 							print "\t Image #2: ".$json_thumbnail['img']."/1.jpg (ID:$match)\n";
-							print "\t Image #3: ".$json_thumbnail['img']."2.jpg (ID:$match)\n";
+							print "\t Image #3: ".$json_thumbnail['img']."/2.jpg (ID:$match)\n";
 						}
 					} else {
 						print "\t Request: $json_url\n";
@@ -1510,12 +1544,13 @@ class OGraphr_Core {
 			if (isset($json_thumbnail['img'])) {
 				// YouTube special treatment
 					if($services['name'] == "YouTube") {
-							$json_thumbnails[] = array(
-								'img' => $json_thumbnail['img'] . '/0.jpg',
-								'w' => $services['queries']['wd'],
-								'h' => $services['queries']['hd'],
-								'player' => str_replace('%MATCH%', $match, $services['player'])
-							);
+						$json_thumbnails[] = array(
+							'service' => $services['name'],
+							'id' => $match,
+							'img' => $json_thumbnail['img'] . '/0.jpg',
+							'w' => $services['queries']['wd'],
+							'h' => $services['queries']['hd'],
+						);
 						if (!isset($options['add_embeds'])) {
 							$json_thumbnails[]['img'] = $json_thumbnail['img'] . '/1.jpg';
 							$json_thumbnails[]['img'] = $json_thumbnail['img'] . '/2.jpg';	
@@ -1651,7 +1686,7 @@ class OGraphr_Core {
 					$widget_item = htmlentities($widget_item);
 				
 		if(!(empty($widget_thumbnails))) {
-			$widget_thumbnails =  base64_encode(serialize($widget_thumbnails));
+			$widget_thumbnails = json_encode($widget_thumbnails);
 			update_post_meta($post_id, 'ographr_urls', $widget_thumbnails);
 			
 			$indexed = date("U"); //Y-m-d H:i:s
