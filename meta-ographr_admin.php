@@ -444,25 +444,28 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<!-- META TAGS -->
 								<tr valign="top"> 
 									<th align="left" scope="row"><label>Meta-tags:</label></th> 
-									<td colspan="2"><label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label>&nbsp;
+									<td colspan="2">
 
-									<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
+										<label><input name="ographr_options[add_title]" type="checkbox" value="1" <?php if (isset($options['add_title'])) { checked('1', $options['add_title']); } ?> /> Add page title </label>&nbsp;
 
-									<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" class="atoggle" data-atarget="select.link_type" data-astate="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add link </label>&nbsp;
-																	
-									<label><input name="ographr_options[add_author]" type="checkbox" value="1" <?php if (isset($options['add_author'])) { checked('1', $options['add_author']); } ?> /> Add author </label>&nbsp;
+										<label><input name="ographr_options[add_excerpt]" type="checkbox" value="1" <?php if (isset($options['add_excerpt'])) { checked('1', $options['add_excerpt']); } ?> /> Add excerpt </label>&nbsp;
 
-									<label><input name="ographr_options[add_section]" type="checkbox" value="1" <?php if (isset($options['add_section'])) { checked('1', $options['add_section']); } ?> /> Add category </label>&nbsp;
+										<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" class="atoggle" data-atarget="select.link_type" data-astate="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add link </label>&nbsp;
+																		
+										<label><input name="ographr_options[add_author]" type="checkbox" value="1" <?php if (isset($options['add_author'])) { checked('1', $options['add_author']); } ?> /> Add author </label>&nbsp;
 
-									<label><input name="ographr_options[add_tags]" type="checkbox" value="1" <?php if (isset($options['add_tags'])) { checked('1', $options['add_tags']); } ?> /> Add tags </label>&nbsp;
+										<label><input name="ographr_options[add_section]" type="checkbox" value="1" <?php if (isset($options['add_section'])) { checked('1', $options['add_section']); } ?> /> Add category </label>&nbsp;
 
-									<label><input name="ographr_options[add_pubtime]" type="checkbox" value="1" <?php if (isset($options['add_pubtime'])) { checked('1', $options['add_pubtime']); } ?> /> Add published time </label>&nbsp;
-									
-									<label class="advanced_opt"><input name="ographr_options[add_modtime]" type="checkbox" value="1" <?php if (isset($options['add_modtime'])) { checked('1', $options['add_modtime']); } ?> /> Add modified time </label>&nbsp;
+										<label><input name="ographr_options[add_tags]" type="checkbox" value="1" <?php if (isset($options['add_tags'])) { checked('1', $options['add_tags']); } ?> /> Add tags </label>&nbsp;
 
-									<label class="advanced_opt"><input name="ographr_options[add_embeds]" type="checkbox" value="1" <?php if (isset($options['add_embeds'])) { checked('1', $options['add_embeds']); } ?> /> Add embedded media </label>&nbsp;
+										<label><input name="ographr_options[add_pubtime]" type="checkbox" value="1" <?php if (isset($options['add_pubtime'])) { checked('1', $options['add_pubtime']); } ?> /> Add published time </label>&nbsp;
+										
+										<label class="advanced_opt"><input name="ographr_options[add_modtime]" type="checkbox" value="1" <?php if (isset($options['add_modtime'])) { checked('1', $options['add_modtime']); } ?> /> Add modified time </label>&nbsp;
 
-									</tr>
+										<label class="advanced_opt"><input name="ographr_options[add_embeds]" type="checkbox" value="1" <?php if (isset($options['add_embeds'])) { checked('1', $options['add_embeds']); } ?> /> Add embedded media </label>&nbsp;
+
+									</td>
+								</tr>
 							
 								<!-- TRIGGERS -->
 								<tr valign="top" class="advanced_opt"> 
@@ -508,11 +511,12 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 										<label><input name="ographr_options[enable_youtube]" type="checkbox" value="1" <?php if (isset($options['enable_youtube'])) { checked('1', $options['enable_youtube']); } ?> />&nbsp;YouTube</label>
 								
-									<? if((!isset($options['bandcamp_api'])) && (isset($options['enable_bandcamp']))) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
-									<? if((!isset($options['myvideo_dev_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_developer_key" style="color:red;">Developer API key</a></span>';} ?>
-									<? if((!isset($options['myvideo_web_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_website_key" style="color:red;">Website API key</a></span>';} ?>
-									<? if((!isset($options['socialcam_api'])) && (isset($options['enable_socialcam']))) { echo '<br/><span style="color:red;font-size:x-small;">Socialcam requires a valid <a href="#socialcam_api_key" style="color:red;">API key</a></span>';} ?>
-									<? if((!isset($options['viddler_api'])) && (isset($options['enable_viddler']))) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?></td> 
+										<? if((!isset($options['bandcamp_api'])) && (isset($options['enable_bandcamp']))) { echo '<br/><span style="color:red;font-size:x-small;">Bandcamp requires a valid <a href="#bandcamp_api_key" style="color:red;">API key</a></span>';} ?>
+										<? if((!isset($options['myvideo_dev_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_developer_key" style="color:red;">Developer API key</a></span>';} ?>
+										<? if((!isset($options['myvideo_web_api'])) && (isset($options['enable_myvideo']))) { echo '<br/><span style="color:red;font-size:x-small;">MyVideo requires a valid <a href="#myvideo_website_key" style="color:red;">Website API key</a></span>';} ?>
+										<? if((!isset($options['socialcam_api'])) && (isset($options['enable_socialcam']))) { echo '<br/><span style="color:red;font-size:x-small;">Socialcam requires a valid <a href="#socialcam_api_key" style="color:red;">API key</a></span>';} ?>
+										<? if((!isset($options['viddler_api'])) && (isset($options['enable_viddler']))) { echo '<br/><span style="color:red;font-size:x-small;">Viddler requires a valid <a href="#viddler_api_key" style="color:red;">API key</a></span>';} ?>
+									</td> 
 								</tr>
 								
 								<!-- ADVERTISEMENT -->
@@ -561,7 +565,6 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<input type="submit" class="button-primary" value="<?php _e('Save all changes') ?>" />
 								</div>		
 							</div>
-
 						</div>
 					
 						<!-- R E S T R I C T I O N S -->
@@ -795,7 +798,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<select name='ographr_options[data_expiry]' class="no_expiry" <?php if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?> >
 										<?php if (($options['exec_mode']) && (!isset($options['data_expiry']))) { $options['data_expiry'] = "-1";} ?>
 										<option value='-1' <?php selected('-1', $options['data_expiry']); ?> >never</option>
-										<?php if(OGRAPHR_DEBUG) { ?>
+										<?php if($options['debug_level'] > 0) { ?>
 											<option value='1' <?php selected('1', $options['data_expiry']); ?> >after 1 day</option>
 											<option value='2' <?php selected('2', $options['data_expiry']); ?> >after 2 days</option>
 											<option value='3' <?php selected('3', $options['data_expiry']); ?> >after 3 days</option>
@@ -1148,6 +1151,44 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								</div>		
 							</div>
 						</div>
+
+						<?php if(OGRAPHR_DEVMODE == TRUE) { ?>
+						<!-- D E V E L O P E R -->
+						<div class="postbox advanced_opt">
+							<h3 class="hndle">Developer Settings</h3>
+							<div class="inside">
+								<table width="100%" cellspacing="2" cellpadding="5"> 
+									<tbody>
+								
+									<!-- AGE -->	
+										<tr valign="center"> 
+										<th align="left" width="140px" scope="row"><label>Debug Level:</label></th> 
+										<td colspan="2">
+											<select name='ographr_options[debug_level]'>
+			 									<?php for ($i = 0; $i <= 3; $i++) {
+													print "<option value='$i'" . selected($i, $options['debug_level']) . ">$i</option>";
+												} ?> 
+											</select>
+										</td> 
+										<td>&nbsp;</td>
+										</tr>
+
+										<tr valign="center"> 
+										<th align="left" scope="row"><label>Beta:</label></th> 
+											<td colspan="2">
+												<label><input name="ographr_options[enable_beta]" type="checkbox" value="1" <?php if (isset($options['enable_beta'])) { checked('1', $options['enable_beta']); }; ?> /> Enable beta features </label>&nbsp;
+											</td> 
+										</tr>
+								
+									</tbody>
+							</table>
+
+								<div class="submit">
+									<input type="submit" class="button-primary" value="<?php _e('Save all changes') ?>" />
+								</div>		
+							</div>
+						</div>
+						<?php } ?>
 
 						<label class="outside advanced_opt"><input name="ographr_options[chk_default_options_db]" type="checkbox" value="1" class="advanced_opt atoggle" data-atarget="input.del_postmeta" data-astate="1" <?php if (isset($options['chk_default_options_db'])) { checked('1', $options['chk_default_options_db']); } ?> /> Restore defaults upon saving</label>&nbsp;
 						

@@ -4,15 +4,16 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5.1
-Stable tag: 0.8.1
+Stable tag: 0.8.2
+License: GPLv2
 
 Retrieves the images of audio/video players in your posts and embeds them as thumbnails on Facebook and other social networks.
 
 == Description ==
 
-This plugin adds several Open Graph meta-tags to the header of your theme. These include site name, a description (the excerpt of a post), the permalink, and images for embedded media players. The images will be retrieved from the audio player embedded in your post ("cover artwork") or snapshots from embedded videos. The plugin also supports other types of meta-tags, such as Google+ Snippets, Twitter Cards and canonical links.
+This plugin adds several Open Graph meta-tags to the header of your theme. These include meta information such as site name, a description (the excerpt of a post), the permalink, author, categories and images for your post. As a specialty, images from embedded video and audio players are retrieved as well. Other types of meta-tags are supported as well, including Google+ Snippets, Twitter Cards and canonical links.
 
-Currently, these media player are supported:
+Currently, these media embeds are supported:
 
 *  8tracks
 *  Bambuser
@@ -42,9 +43,10 @@ Open Graph tags will be used by social network sites such as Facebook, Twitter o
 
 == Installation ==
 
-1. Upload the folder `meta-ographr` with all its contents to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Review the preferences to make use of all features
+1. It is recommended to use PHP 5.2 (or later)
+2. Upload the folder `meta-ographr` with all its contents to the `/wp-content/plugins/` directory
+3. Activate the plugin through the 'Plugins' menu in WordPress
+4. Review the preferences to make use of all features
 
 == Frequently Asked Questions ==
 
@@ -84,6 +86,9 @@ Probably not. Link elements were a common way to add website thumbnails before F
 
 As beta features can be unstable, they can only be enabled through the plugin's source. Open the file `meta-ographr_index.php` and set `OGRAPHR_BETA` to `TRUE`. Note that with each new version, you have to re-enable this setting.
 
+= Why am I getting a class error when activating the plug-in? =
+There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug") in XCache that will make it impossible to run OGraphr (and many other Wordpress plug-ins) at the current moment. You can either disable XCache or hope for a future version to fix this. Sorry!
+
 == Screenshots ==
 
 1. a link with a Mixcloud player shared on Facebook
@@ -97,6 +102,12 @@ As beta features can be unstable, they can only be enabled through the plugin's 
 5. advanced settings page for OGraphr 0.7
 
 == Changelog ==
+
+= 0.8.2 =
+* added fallback method to store data on older PHP versions
+* added debugger options to developer settings menu
+* modified debugger output format
+* fixed behaviour for empty video players
 
 = 0.8.1 =
 * changed method to write/read data
