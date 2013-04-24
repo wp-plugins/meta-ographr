@@ -50,7 +50,7 @@ $ographr_meta_fields = array(
     ),
     array(  
         'label'=> 'Twitter Image:',  
-        'desc'=> 'Choose an image to be used for Twitter Cards',  
+        'desc'=> 'Images for Twitter Cards will only appear after saving the post',  
         'id'    => $prefix.'twitter_image',  
         'type'  => 'select',  
         'options' => NULL
@@ -236,12 +236,18 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							    echo '<select name="'.$field['id'].'" id="'.$field['id'].'">'; 
 							    if ($field['id'] == "ographr_twitter_image") {
 							    	$images = get_post_meta($post->ID, 'ographr_urls', true);
-									$images = unserialize($images);
-									$tmp[] = array('label' => '(none selected)', 'value' => NULL);
+									//$images = unserialize($images);
 
-									foreach ($images as $image) {
-										$tmp[] = array('label' => $image['img'], 'value' => $image['img']);
+									if (strnatcmp(phpversion(),'5.2.0') >= 0) {
+										$images = json_decode($images, true);
+									} else { // fallback for PHP <5.2			
+										$images = unserialize(base64_decode($images));
 									}
+
+									$tmp[] = array('label' => '(none selected)', 'value' => NULL);
+									if(is_array($images))
+										foreach ($images as $image) 
+											$tmp[] = array('label' => $image['img'], 'value' => $image['img']);
 
 									$field['options'] = $tmp;
 									unset($tmp);
@@ -333,12 +339,15 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 	    foreach ($ographr_meta_fields as $field) { 
 	    	//if( ($field['id'] == "ographr_country_mode") || ($field['id'] == "_ographr_country_code") ) && $ographr_meta_fields
     		$old = get_post_meta($post_id, $field['id'], true);  
-	        $new = $_POST[$field['id']];  
-	        if ($new && $new != $old) {  
-	            update_post_meta($post_id, $field['id'], $new);  
-	        } elseif ('' == $new && $old) {  
-	            delete_post_meta($post_id, $field['id'], $old);  
-	        }  	        
+    		if (isset($_POST[$field['id']])) {
+    			$new = $_POST[$field['id']];  
+		        if ($new && $new != $old) {  
+		            update_post_meta($post_id, $field['id'], $new);  
+		        } elseif ('' == $new && $old) {  
+		            delete_post_meta($post_id, $field['id'], $old);  
+		        } 
+    		}
+	         	        
 	    } // end foreach  
 	}  
     
@@ -546,7 +555,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<td colspan="2">
 									<label><input name="ographr_options[enable_plugin_on_front]" type="checkbox" class="atoggle" value="1" data-atarget="input.enable_triggers" data-astate="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?>/> Enable plug-in </label>&nbsp;
 								
-									<label><input name="ographr_options[enable_triggers_on_front]" type="checkbox" class="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!$options['enable_plugin_on_front']) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
+									<label><input name="ographr_options[enable_triggers_on_front]" type="checkbox" class="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!isset($options['enable_plugin_on_front'])) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
 									</td> 
 								</tr>
 
@@ -1155,6 +1164,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						<?php if(OGRAPHR_DEVMODE == TRUE) { ?>
 						<!-- D E V E L O P E R -->
 						<div class="postbox advanced_opt">
+							<a name="developer_settings"></a> 
 							<h3 class="hndle">Developer Settings</h3>
 							<div class="inside">
 								<table width="100%" cellspacing="2" cellpadding="5"> 
