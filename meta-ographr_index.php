@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.3
+Version: 0.8.4
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.3");
+    define("OGRAPHR_VERSION", "0.8.4");
 	// enables developer settings on Wordpress interface
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -185,6 +185,7 @@ class OGraphr_Core {
 							"filter_smilies" => "1",
 							"filter_themes" => "0",
 							"filter_gravatar" => "1",
+							"allow_admin_tag" => "0",
 							"restrict_age" => "_none",
 							"restrict_country" => "0",
 							"restrict_content" => "0",
@@ -429,6 +430,33 @@ class OGraphr_Core {
 					if (isset($options['add_link_rel'])) { print "\t Link Elements are enabled\n"; }
 					if (isset($options['add_embeds'])) { print "\t Media embeds are enabled\n"; }
 					
+					$tmp = get_post_meta($post->ID, 'ographr_restrict_age', true);
+					if( (isset($tmp)) && ($tmp != NULL) ){
+						print "\t Content suitable to audiences aged " . $tmp . "+ (local)\n";
+					} else if (isset($options['restrict_age'])) {
+						print "\t Content suitable to audiences aged " . $options['restrict_age'] . "+ (global)\n";
+					}
+					
+					$tmp = get_post_meta($post->ID, 'ographr_restrict_country', true);
+					if ($tmp == "on") {
+						$tmp_cmode = get_post_meta($post->ID, 'ographr_country_mode', true);
+						$tmp_ccode = get_post_meta($post->ID, 'ographr_country_code', true);
+						if( (isset($tmp_cmode)) && (isset($tmp_ccode)) ){
+							print "\t Visitors from " . $tmp_ccode . " are " . $tmp_cmode . " (local)\n";
+						} else if (isset($options['restrict_age'])) {
+							print "\t Visitors from " . $options['country_code'] . " are " . $options['country_mode'] . " (global)\n";
+						}
+						unset($tmp_cmode);
+						unset($tmp_ccode);
+					}
+
+					$tmp = get_post_meta($post->ID, 'ographr_restrict_content', true);
+					if( (isset($tmp)) && ($tmp != NULL) ){
+						print "\t Article contains alcohol (local)\n";
+					} else if (isset($options['restrict_content'])) {
+						print "\t Article contains alcohol (global)\n";
+					}
+
 					if ($options['filter_custom_urls']) {
 						foreach(preg_split("/((\r?\n)|(\n?\r))/", $options['filter_custom_urls']) as $line){
 							print "\t Custom filter: $line\n";
@@ -538,7 +566,7 @@ class OGraphr_Core {
 							}
 								
 						}
-						print "\n";
+						//print "\n";
 					}
 				} else {
 					if (($options['debug_level'] > 0) && ($options['exec_mode'] == 1) && ($expiry >= $interval)) {
@@ -561,7 +589,7 @@ class OGraphr_Core {
 					//write to db for future use
 					if (($options['exec_mode'] == 1) && ($total_img >= 1)) {
 						if ($options['debug_level'] > 0)
-							print "\t New data indexed and written to database ($total_img)\n\n";
+							print "\n\t New data indexed and written to database ($total_img)\n";
 						
 						if(!empty($thumbnails)) {
 							if (strnatcmp(phpversion(),'5.2.0') >= 0) {
@@ -584,7 +612,7 @@ class OGraphr_Core {
 				if($options['debug_level'] > 0) {	
 					$e_time = microtime();
 					$time = $e_time - $s_time;
-					print "\tBenchmark\n";
+					print "\n\tBenchmark\n";
 					print "\t Processed in " . abs($time) . " seconds\n";
 					print "-->\n";
 				}
@@ -638,8 +666,11 @@ class OGraphr_Core {
 
 							if (isset($add_author)) {
 								$author_id=$post->post_author;
-								$mywp['author_url'] = get_author_posts_url($author_id);
-								$article_meta['article:author'] = $mywp['author_url'];
+								$author_name = get_userdata($author_id);
+								if( ($author_name->user_login != "admin") || (isset($options['allow_admin_tag'])) ){
+									$mywp['author_url'] = get_author_posts_url($author_id);
+									$article_meta['article:author'] = $mywp['author_url'];
+								}								
 							}							
 
 							if (isset($add_section)) {
@@ -693,6 +724,9 @@ class OGraphr_Core {
 					} else if ($twitter_author_user == "%user_aim%") {
 						$mywp['twitter'] = get_the_author_meta('aim');
 						$twitter_author_user = str_replace("%user_aim%", $mywp['twitter'], $twitter_author_user);
+					} else if ($twitter_author_user == "%user_jabber%") {
+						$mywp['twitter'] = get_the_author_meta('jabber');
+						$twitter_author_user = str_replace("%user_jabber%", $mywp['twitter'], $twitter_author_user);
 					} else if ($twitter_author_user == "%user_yahoo%") {
 						$mywp['twitter'] = get_the_author_meta('yim');
 						$twitter_author_user = str_replace("%user_yahoo%", $mywp['twitter'], $twitter_author_user);
@@ -712,8 +746,10 @@ class OGraphr_Core {
 
 					// domain of your blog
 					$domain = get_site_url();
-					$domain = parse_url($domain, PHP_URL_HOST);
-					$twitter_meta['twitter:domain'] = "$domain";
+					if(isset($domain)) {
+						$domain = parse_url($domain, PHP_URL_HOST);
+						$twitter_meta['twitter:domain'] = "$domain";
+					}
 
 					// twitter site name
 					if (strlen($twitter_site_user) > 1) {
@@ -845,7 +881,7 @@ class OGraphr_Core {
 
 				if (isset($options['add_metabox'])) {
 					// Add age restriction
-					$age = get_post_meta($post->ID, 'ographr_restrict_age', true); 
+					$post_age = get_post_meta($post->ID, 'ographr_restrict_age', true); 
 					if ($age == NULL)
 						$age = $options['restrict_age'];
 					if ( (isset($age)) && ($age != "_none") ) {
@@ -1010,6 +1046,8 @@ class OGraphr_Core {
 						}
 					}
 				}
+
+				unset($thumbnails); // saving tiny amounts of RAM
 				
 				// Print Open Graph tags
 				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || ($options['debug_level'] > 0) || (!isset($options['limit_opengraph'])) ) {
@@ -1033,6 +1071,7 @@ class OGraphr_Core {
 							print "<meta property=\"$key\" content=\"$value\" />\n";
 						}
 					}
+					unset($opengraph_meta); // saving tiny amounts of RAM
 				}
 				
 				// Print Twitter Cards
@@ -1046,6 +1085,7 @@ class OGraphr_Core {
 								print "<meta property=\"$key\" content=\"$value\" />\n";
 						}
 					}
+					unset($twitter_meta); // saving tiny amounts of RAM
 				}
 
 				// Print Google+ Meta
@@ -1053,6 +1093,7 @@ class OGraphr_Core {
 					foreach($google_meta as $key => $value) {
 						print "<meta name=\"$key\" content=\"$value\" />\n";
 					}
+					unset($google_meta); // saving tiny amounts of RAM
 				if (isset($options['add_link_rel']))
 					print $link_rel;
 
@@ -1617,29 +1658,27 @@ class OGraphr_Core {
 			// debugger output
 			if(($options['debug_level'] > 0) && (is_single()) || (is_front_page())) {
 				if(isset($json_thumbnail['img'])){
-					print "\t [" . $services['name'] . "]\n";
+					print "\n\t [" . $services['name'] . "]\n";
 					print "\t ID: $match\n";
 					// YouTube special treatment
 					if($services['name'] == "YouTube") {
 						print "\t Request: http://img.youtube.com/vi/" . $match . "\n";
 						if (isset($options['add_embeds'])) {
-							print "\t Image: ".$json_thumbnail['img']."/0.jpg (ID:$match)\n";
+							print "\t Image: ".$json_thumbnail['img']."/0.jpg\n";
 						} else {
-							print "\t Image #1: ".$json_thumbnail['img']."/0.jpg (ID:$match)\n";
-							print "\t Image #2: ".$json_thumbnail['img']."/1.jpg (ID:$match)\n";
-							print "\t Image #3: ".$json_thumbnail['img']."/2.jpg (ID:$match)\n";
+							print "\t Image #1: ".$json_thumbnail['img']."/0.jpg\n";
+							print "\t Image #2: ".$json_thumbnail['img']."/1.jpg\n";
+							print "\t Image #3: ".$json_thumbnail['img']."/2.jpg\n";
 						}
-						print "\n";
 					} else {
 						print "\t Request: $json_url\n";
 						print "\t Image: ".$json_thumbnail['img']."\n";
 						if( (isset($json_thumbnail['w'])) && (isset($json_thumbnail['h'])) )
 							print "\t Dimensions: " . $json_thumbnail['w'] . "×" .$json_thumbnail['h']. "\n";
-						print "\n";
-					}
+						}
 					
 				} else {
-					print "\t ERROR: " . $services['name'] . " request failed ($json_url)\n\n";
+					print "\n\t ERROR: " . $services['name'] . " request failed ($json_url)\n";
 				}
 			}
 			

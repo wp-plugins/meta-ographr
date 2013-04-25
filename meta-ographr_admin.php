@@ -461,7 +461,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 
 										<label><input name="ographr_options[add_permalink]" type="checkbox" value="1" class="atoggle" data-atarget="select.link_type" data-astate="1" <?php if (isset($options['add_permalink'])) { checked('1', $options['add_permalink']); } ?> /> Add link </label>&nbsp;
 																		
-										<label><input name="ographr_options[add_author]" type="checkbox" value="1" <?php if (isset($options['add_author'])) { checked('1', $options['add_author']); } ?> /> Add author </label>&nbsp;
+										<label><input name="ographr_options[add_author]" type="checkbox"  class="atoggle" value="1" data-atarget="input.allow_admin_tag" data-astate="1" <?php if (isset($options['add_author'])) { checked('1', $options['add_author']); } ?> /> Add author </label>&nbsp;
 
 										<label><input name="ographr_options[add_section]" type="checkbox" value="1" <?php if (isset($options['add_section'])) { checked('1', $options['add_section']); } ?> /> Add category </label>&nbsp;
 
@@ -603,6 +603,15 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 										</td> 
 									</tr>
 
+									<!-- AUTHOR -->	
+									<tr valign="center"> 
+									<th align="left" width="140px" scope="row"><label>Author Links:</label></th> 
+									<td colspan="2">
+										<label><input class="allow_admin_tag" name="ographr_options[allow_admin_tag]" type="checkbox" value="1" <?php if (isset($options['allow_admin_tag'])) { checked('1', $options['allow_admin_tag']); }  if (!isset($options['add_author'])) { print 'disabled="disabled"';} ?> /> Allow author tag for user <em>admin</em>  </label><br/>
+									</td> 
+									<td>&nbsp;</td>
+									</tr>
+
 									<!-- AGE -->	
 									<tr valign="center"> 
 									<th align="left" width="140px" scope="row"><label>Audience:</label></th> 
@@ -669,7 +678,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<tr valign="top"> 
 										<th align="left" width="140px" scope="row"><label>Open Graph:</label></th> 
 										<td colspan="2">
-											<label><input name="ographr_options[limit_opengraph]" type="checkbox" value="1" <?php if (isset($options['limit_opengraph'])) { checked('1', $options['limit_opengraph']); } ?> /> Only add Open Graph tags on Facebook </label><br/>
+											<label><input name="ographr_options[limit_opengraph]" type="checkbox" value="1" <?php if (isset($options['limit_opengraph'])) { checked('1', $options['limit_opengraph']); } ?> /> Only add Open Graph tags on Facebook </label>
 											<small>Note that other websites such as Google+ are able to interprete Open Graph tags as well.</small>
 										</td> 
 									</tr>
@@ -1028,7 +1037,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<small>
 										<code>%user_twitter%</code> &#8211; use Twitter name saved in your <a href="<?php print get_admin_url() . "profile.php";?>">user profile</a> (requires plug-in, e.g. <a href="http://wordpress.org/extend/plugins/twitter-profile-field/" target="_blank">Twitter Profile Field</a>)<br/>
 										<code>%user_aim%</code> &#8211; abuse <em>AIM</em> name saved in your profile<br/>
-										<code>%user_yahoo%</code> &#8211; abuse <em>Yahoo! IM</em> name saved in your profile
+										<code>%user_jabber%</code> &#8211; abuse <em>Jabber</em> name saved in your profile<br/>
+										<code>%user_yahoo%</code> &#8211; abuse <em>Yahoo! IM</em> name saved in your profile										
 									<small>	
 								</td>
 								</tr>
@@ -1038,7 +1048,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<th align="left" width="140px" scope="row"><label>Author ID:</label></th> 
 								<td colspan="2">
 									<input type="text" size="75" name="ographr_options[twitter_author_id]" value="<?php echo $options['twitter_author_id']; ?>" /><br/>
-									<small>as above, you can use <code>%user_aim%</code> or <code>%user_yahoo%</code> &#8211; you can't use the same twice!<small>
+									<small>as above, you can use <code>%user_aim%</code>, <code>%user_jabber%</code> or <code>%user_yahoo%</code> &#8211; you can't use the same twice!<small>
 								</td>
 								</tr>
 
