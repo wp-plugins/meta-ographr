@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.4
+Version: 0.8.5
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.4");
+    define("OGRAPHR_VERSION", "0.8.5");
 	// enables developer settings on Wordpress interface
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -127,12 +127,13 @@ class OGraphr_Core {
 	public function ographr_set_defaults() {
 
 			// Set default locale to Wordpress language
-			if (WPLANG)
+			if (WPLANG != NULL)
 				$tmp_locale = WPLANG;
 			else
 				$tmp_locale = "_none";
 			
-			$options = array("exec_mode" => "1",
+			$options = array("last_update" => OGRAPHR_VERSION,
+							"exec_mode" => "1",
 							"data_expiry" => "-1",
 							"advanced_opt" => "0",
 							"website_title" => "%postname%",
@@ -525,12 +526,7 @@ class OGraphr_Core {
 				// Did we retrieve those images before and did they expire?
 				if (($options['exec_mode'] == 1) && ($expiry >= $interval) )  {
 					$meta_values = get_post_meta($post_id, 'ographr_urls', true);
-					if (strnatcmp(phpversion(),'5.2.0') >= 0) {
-						$meta_values = json_decode($meta_values, true);
-					} else { // fallback for PHP <5.2			
-						$meta_values = unserialize(base64_decode($meta_values));
-					}
-					
+					$meta_values = json_decode($meta_values, true);
 				}
 
 				if ( (isset($meta_values)) && (is_array($meta_values)) && (isset($thumbnails[0]['img'])) && ($expiry >= $interval) ) {
@@ -592,11 +588,7 @@ class OGraphr_Core {
 							print "\n\t New data indexed and written to database ($total_img)\n";
 						
 						if(!empty($thumbnails)) {
-							if (strnatcmp(phpversion(),'5.2.0') >= 0) {
-								$thumbnails_db = json_encode($thumbnails);
-							} else { // fallback for PHP <5.2
-								$thumbnails_db = base64_encode(serialize($thumbnails));
-							}
+							$thumbnails_db = json_encode($thumbnails);
 							update_post_meta($post_id, 'ographr_urls', $thumbnails_db);
 
 							$indexed = date("U"); // Y-m-d H:i:s
@@ -652,7 +644,7 @@ class OGraphr_Core {
 				//$twitter_creator_name = $options['twitter_creator_name'];
 
 				// suppress warnings
-				$article_meta = array();
+				$facebook_meta = array();
 				$opengraph_meta = array();
 				$google_meta = array();
 				$twitter_meta = array();
@@ -669,7 +661,7 @@ class OGraphr_Core {
 								$author_name = get_userdata($author_id);
 								if( ($author_name->user_login != "admin") || (isset($options['allow_admin_tag'])) ){
 									$mywp['author_url'] = get_author_posts_url($author_id);
-									$article_meta['article:author'] = $mywp['author_url'];
+									$facebook_meta['article:author'] = $mywp['author_url'];
 								}								
 							}							
 
@@ -677,7 +669,7 @@ class OGraphr_Core {
 								$mywp['categories'] = get_the_category();
 								if ($mywp['categories']) {
 									foreach($mywp['categories'] as $category) {
-										$article_meta['article:section'][] = $category->name;
+										$facebook_meta['article:section'][] = $category->name;
 								  }
 								}
 							}
@@ -686,19 +678,19 @@ class OGraphr_Core {
 								$mywp['tags'] = get_the_tags();
 								if ($mywp['tags']) {
 									foreach($mywp['tags'] as $tag) {
-										$article_meta['article:tag'][] = $tag->name;
+										$facebook_meta['article:tag'][] = $tag->name;
 								  }
 								}
 							}
 
 							if (isset($add_pubtime)) {
 								$mywp['published'] = get_the_date('Y-m-d');
-								$article_meta['article:published_time'] = $mywp['published'];
+								$facebook_meta['article:published_time'] = $mywp['published'];
 							}							
 
 							if (isset($add_modtime)) {
 								$mywp['modified'] = get_the_modified_date('Y-m-d');
-								$article_meta['article:modified_time'] = $mywp['modified'];
+								$facebook_meta['article:modified_time'] = $mywp['modified'];
 							}
 
 						endwhile;
@@ -941,10 +933,7 @@ class OGraphr_Core {
 						}
 					}
 				}
-
-				//$opengraph_meta['og:image'] = array_unique($opengraph_meta['og:image']); // unlikely, but hey!
-
-				
+		
 				// Add image-type if only one image has been found
 				if ( (isset($total_img)) && ($total_img == 1) ) {
 					$ext = preg_replace('/(?!.*\.(bmp|gif|jpe|jpeg|jpg|png|webp))(\?|&).*\Z/i', '', $thumbnails[0]['img']); // remove suffix (might need improvement)
@@ -1018,12 +1007,12 @@ class OGraphr_Core {
 			
 				// Add Facebook ID
 				if ($fb_admins = $options['fb_admins']) {
-					$opengraph_meta['fb:admins'] = $fb_admins;
+					$facebook_meta['fb:admins'] = $fb_admins;
 				}
 
 				// Add Facebook Application ID
 				if ($fb_app_id = $options['fb_app_id']) {
-					$opengraph_meta['fb:app_id'] = $fb_app_id;
+					$facebook_meta['fb:app_id'] = $fb_app_id;
 				}
 				
 				// Add Link elements
@@ -1051,6 +1040,8 @@ class OGraphr_Core {
 				
 				// Print Open Graph tags
 				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || ($options['debug_level'] > 0) || (!isset($options['limit_opengraph'])) ) {
+					if(is_array($opengraph_meta['og:image']))
+						$opengraph_meta['og:image'] = array_unique($opengraph_meta['og:image']); // unlikely, but hey!
 					foreach($opengraph_meta as $key => $value) {
 						if ($key == "og:image") {
 							foreach($opengraph_meta['og:image'] as $val_image)
@@ -1059,24 +1050,31 @@ class OGraphr_Core {
 								print "<meta property=\"$key\" content=\"$value\" />\n";
 						}
 					}
+					unset($opengraph_meta); // saving tiny amounts of RAM
+				}
+				
+				// Print Facebook-specific tags
+				if( (preg_match(FACEBOOK_USERAGENT, $user_agent)) || ($options['debug_level'] > 0) ){
 					// Print OG article tags
-					foreach($article_meta as $key => $value) {
+					foreach($facebook_meta as $key => $value) {
 						if ($key == "article:section") {
-							foreach($article_meta['article:section'] as $value)
+							foreach($facebook_meta['article:section'] as $value)
 								print "<meta property=\"$key\" content=\"$value\" />\n";
 						} else if ($key == "article:tag") {
-							foreach($article_meta['article:tag'] as $value)
+							foreach($facebook_meta['article:tag'] as $value)
 								print "<meta property=\"$key\" content=\"$value\" />\n";
 						} else {
 							print "<meta property=\"$key\" content=\"$value\" />\n";
 						}
 					}
-					unset($opengraph_meta); // saving tiny amounts of RAM
+					unset($facebook_meta); // saving tiny amounts of RAM
 				}
 				
 				// Print Twitter Cards
 				if ((isset($options['add_twitter_meta'])) && ((preg_match(TWITTER_USERAGENT, $user_agent)) || ($options['debug_level'] > 0))) {
 					//print $twitter_meta;
+					if(is_array($twitter_meta['og:image']))
+						$twitter_meta['og:image'] = array_unique($twitter_meta['og:image']); // unlikely, but hey!
 					foreach($twitter_meta as $key => $value) {
 						if ($key == "twitter:image") {
 							foreach($twitter_meta['twitter:image'] as $val_image)
@@ -1719,8 +1717,9 @@ class OGraphr_Core {
 		//global $options;
 		$options = get_option('ographr_options');
 		
-		if(empty($options))
+		if( empty($options) ) {
 			$options = $this->ographr_set_defaults();
+		}			
 
 		// Get API keys
 		if ( (!$options['etracks_api']) || (!$options['bambuser_api']) || (!$options['flickr_api']) || (!$options['myvideo_dev_api']) || (!$options['myvideo_web_api']) || (!$options['socialcam_api']) || (!$options['soundcloud_api']) || (!$options['ustream_api']) || ($options['last_update'] != OGRAPHR_VERSION) ) {
@@ -1732,9 +1731,10 @@ class OGraphr_Core {
 			if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
 			if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 			if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
-
 			
-			if (version_compare(OGRAPHR_VERSION, "0.8", '<')) {
+			if (!$options['last_update']) { $options['last_update'] = OGRAPHR_VERSION; }
+	
+			if (version_compare($options['last_update'], "0.8", '<')) {
 				if (isset($options['enable_eight_tracks'])) {
 					$options['enable_etracks'] = $options['enable_eight_tracks'];
 					unset($options['enable_eight_tracks']);
@@ -1750,19 +1750,16 @@ class OGraphr_Core {
 					delete_post_meta($ographr_id, 'ographr_indexed');
 				}
 			}
-			if (version_compare(OGRAPHR_VERSION, "0.8.2", '<')) {
+			if (version_compare($options['last_update'], "0.8.2", '<')) {
 				if (!isset($options['enable_beta'])) {
 					$options['enable_beta'] = 0;
 				}
 			}
-			
 
-			if ( (!isset($options['last_update'])) || ($options['last_update'] != OGRAPHR_VERSION) ) {
-				$options['last_update'] = OGRAPHR_VERSION;
-			}
 			update_option('ographr_options', $options);
 		}
-		
+
+			
 		
 	}
 
@@ -1835,17 +1832,13 @@ class OGraphr_Core {
 
 		$widget_thumbnails = $core->get_widget_thumbnails($markup);
 		
-		if (is_array($widget_thumbnails))
-			foreach($widget_thumbnails as $widget_array)
-				foreach($widget_array as $widget_item)
-					$widget_item = htmlentities($widget_item);
-				
+		// if (is_array($widget_thumbnails))
+		// 	foreach($widget_thumbnails as $widget_array)
+		// 		foreach($widget_array as $widget_item)
+		// 			$widget_item = htmlentities($widget_item);
+
 		if(!(empty($widget_thumbnails))) {
-			if (strnatcmp(phpversion(),'5.2.0') >= 0) {
-				$widget_thumbnails = json_encode($widget_thumbnails);
-			} else { // fallback for PHP <5.2
-				$widget_thumbnails =  base64_encode(serialize($widget_thumbnails));
-			}
+			$widget_thumbnails = json_encode($widget_thumbnails);
 			update_post_meta($post_id, 'ographr_urls', $widget_thumbnails);
 			
 			$indexed = date("U"); //Y-m-d H:i:s

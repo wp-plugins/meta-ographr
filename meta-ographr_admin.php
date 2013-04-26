@@ -678,7 +678,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<tr valign="top"> 
 										<th align="left" width="140px" scope="row"><label>Open Graph:</label></th> 
 										<td colspan="2">
-											<label><input name="ographr_options[limit_opengraph]" type="checkbox" value="1" <?php if (isset($options['limit_opengraph'])) { checked('1', $options['limit_opengraph']); } ?> /> Only add Open Graph tags on Facebook </label>
+											<label><input name="ographr_options[limit_opengraph]" type="checkbox" value="1" <?php if (isset($options['limit_opengraph'])) { checked('1', $options['limit_opengraph']); } ?> /> Only add Open Graph tags on Facebook </label><br/>
 											<small>Note that other websites such as Google+ are able to interprete Open Graph tags as well.</small>
 										</td> 
 									</tr>
