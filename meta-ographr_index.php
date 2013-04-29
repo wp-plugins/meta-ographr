@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.5
+Version: 0.8.6
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.5");
+    define("OGRAPHR_VERSION", "0.8.6");
 	// enables developer settings on Wordpress interface
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -79,8 +79,8 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 	define("SOUNDCLOUD_IMAGE_SIZE", "t300x300");
 	
 // VIMEO
-	// default snapshot size (small=100, medium=200, large=640)
-	define("VIMEO_IMAGE_SIZE", "thumbnail_medium");
+	// default snapshot size (thumbnail_small=100, thumbnail_medium=200, thumbnail_large=640)
+	define("VIMEO_IMAGE_SIZE", "thumbnail_large");
 	
 // USTREAM
 	// no need to change this unless you want to use your own Ustream.fm API key (-> http://developer.ustream.tv/apikey/generate)
@@ -320,7 +320,7 @@ class OGraphr_Core {
 		$options = get_option('ographr_options');
 		global $post;
 
-		if($options['debug_level'] > 0) {
+		if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) {
 			$s_time = microtime();
 		}
 
@@ -389,8 +389,8 @@ class OGraphr_Core {
 			}
 			
 			// debugging?
-			if($options['debug_level'] > 0) {
-				print "\n<!--\tOGRAPHR DEBUGGER [".$options['debug_level']."]\n";
+			if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) {
+				print "<!--\tOGRAPHR DEBUGGER [".$options['debug_level']."]\n";
 				if($options['debug_level'] >= 2) {
 					print "\n\tSoftware\n";
 					print "\t OGraphr " . OGRAPHR_VERSION;
@@ -531,7 +531,7 @@ class OGraphr_Core {
 
 				if ( (isset($meta_values)) && (is_array($meta_values)) && (isset($thumbnails[0]['img'])) && ($expiry >= $interval) ) {
 					$thumbnails = array_merge($thumbnails, $meta_values);
-					if($options['debug_level'] > 0) {
+					if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) {
 						foreach($thumbnails as $thumbnail) {
 							if (isset($thumbnail['img'])) {
 								if (filter_var($thumbnail['img'], FILTER_VALIDATE_URL)) {
@@ -548,7 +548,7 @@ class OGraphr_Core {
 					}
 				} else if ( (isset($meta_values)) && (is_array($meta_values)) && (!isset($thumbnails)) && ($expiry >= $interval) ) {
 					$thumbnails = $meta_values;
-					if($options['debug_level'] > 0) {
+					if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) {
 						foreach($thumbnails as $thumbnail) {
 							if(isset($thumbnail['img'])){
 								if(filter_var($thumbnail['img'], FILTER_VALIDATE_URL)) {
@@ -565,9 +565,9 @@ class OGraphr_Core {
 						//print "\n";
 					}
 				} else {
-					if (($options['debug_level'] > 0) && ($options['exec_mode'] == 1) && ($expiry >= $interval)) {
+					if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && ($options['exec_mode'] == 1) && ($expiry >= $interval) ){
 						print "\t Empty post-meta, retrieving images\n\n";
-					} else if (($options['debug_level'] > 0) && ($options['exec_mode'] == 1) && ($expiry < $interval)) {
+					} else if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && ($options['exec_mode'] == 1) && ($expiry < $interval) ) {
 						print "\t Data expired, indexing\n\n";
 					}
 					
@@ -584,7 +584,7 @@ class OGraphr_Core {
 					
 					//write to db for future use
 					if (($options['exec_mode'] == 1) && ($total_img >= 1)) {
-						if ($options['debug_level'] > 0)
+						if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) )
 							print "\n\t New data indexed and written to database ($total_img)\n";
 						
 						if(!empty($thumbnails)) {
@@ -601,7 +601,7 @@ class OGraphr_Core {
 		
 		}
 				// close debugger tag
-				if($options['debug_level'] > 0) {	
+				if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) {	
 					$e_time = microtime();
 					$time = $e_time - $s_time;
 					print "\n\tBenchmark\n";
@@ -610,7 +610,7 @@ class OGraphr_Core {
 				}
 								
 				// Let's print all this
-				if(($options['add_comment']) && ($options['debug_level'] == 0)) {
+				if(($options['add_comment']) && ($options['debug_level'] == 0) || ( ($options['debug_level'] > 0) && (!current_user_can('edit_plugins')) ) ){
 					print "<!-- OGraphr v" . OGRAPHR_VERSION . " - http://ographr.whyeye.org -->\n";
 				}
 		
@@ -651,7 +651,7 @@ class OGraphr_Core {
 				$link_rel = NULL;
 
 				// only enter the loop if required!			
-				if ( (isset($add_author)) || (isset($add_section)) || (isset($add_tags)) || (isset($add_pubtime)) || (isset($add_modtime)) ) {
+				if( ( (isset($add_author)) || (isset($add_section)) || (isset($add_tags)) || (isset($add_pubtime)) || (isset($add_modtime)) )  && ($options['fb_type'] == 'article') ){
 
 					if ((have_posts()) && (is_single())) {
 						while (have_posts()) : the_post();
@@ -922,7 +922,7 @@ class OGraphr_Core {
 						if( ($thumbnail['img']) && (filter_var($thumbnail['img'], FILTER_VALIDATE_URL)) ){
 							$opengraph_meta['og:image'][] = $thumbnail['img'];
 							if (isset($options['add_metabox'])) {
-								$tmp = get_post_meta($post->ID, 'ographr_twitter_image', true);
+								$tmp = get_post_meta($post->ID, 'ographr_primary_image', true);
 								if ( ((isset($options['add_twitter_meta'])) && (!isset($tmp))) || ((isset($options['add_twitter_meta'])) && (($tmp == "_none") || ($tmp == NULL)) ) )  {
 									$twitter_meta["twitter:image"][] = $thumbnail['img'];
 								} else {
@@ -949,55 +949,70 @@ class OGraphr_Core {
 					
 					switch ($thumbnails[0]['service']) {
 					    case "8tracks":
-					    	$player = 'http:\/\/8tracks.com\/mixes\/' . $thumbnails[0]['id'] . '\/player_v3\/autoplay';
+					    	$player = 'https:\/\/8tracks.com\/mixes\/' . $thumbnails[0]['id'] . '\/player_v3\/autoplay'; // = HTML5 player
 					    	break;
 					    case "Bambuser":
 					    	$player = 'https:\/\/static.bambuser.com\/r\/player.swf?vid=' . $thumbnails[0]['id'] . '&context=fb';
+					    	$player_html5 = 'https://embed.bambuser.com/broadcast/' . $thumbnails[0]['id'];
 					    	break;
 					    case "Bandcamp album":
 					    	$player = 'http:\/\/bandcamp.com\/EmbeddedPlayer.swf\/size=venti\/album=' . $thumbnails[0]['id'] . '\/';
+					    	$player_html5 = 'https://bandcamp.com/EmbeddedPlayer/v=2/album=' . $thumbnails[0]['id'] . '/size=venti/';
 					    	break;
 					    case "Bandcamp track":
 					    	$player = 'http:\/\/bandcamp.com\/EmbeddedPlayer.swf\/size=venti\/track=' . $thumbnails[0]['id'] . '\/';
+					    	$player_html5 = 'https://bandcamp.com/EmbeddedPlayer/v=2/track=' . $thumbnails[0]['id'] . '/size=venti/';
 					    	break;
 					    case "Blip.tv":
 					    	$player = 'http://blip.tv/play/' . $thumbnails[0]['id'] . '.x?p=1';
+					    	$player_html5 = 'https://blip.tv/play/' . $thumbnails[0]['id'] . '.html?p=1';
 					    	break;
 					    case "Dailymotion":
 					    	$player = 'http://www.dailymotion.com/swf/video/' . $thumbnails[0]['id'] . '?autoPlay=1';
+					    	$player_html5 = 'https://www.dailymotion.com/embed/video/' . $thumbnails[0]['id'];
 					    	break;
 					    case "Mixcloud":
-					    	$player = 'http://www.mixcloud.com/media/swf/player/mixcloudLoader.swf?feed=http%3A%2F%2Fwww.mixcloud.com%2Fapi%2F1%2Fcloudcast%2F' . $thumbnails[0]['id'] . '.json&amp;autoplay=1&amp;fb_feed=1&amp;embed_uuid=&amp;embed_type=facebook_share';
+					    	$player = 'http://www.mixcloud.com/media/swf/player/mixcloudLoader.swf?feed=http%3A%2F%2Fwww.mixcloud.com%2Fapi%2F1%2Fcloudcast%2F' . str_replace('/', '%2F', $thumbnails[0]['id']) . '.json&amp;autoplay=1&amp;fb_feed=1&amp;embed_uuid=&amp;embed_type=facebook_share';
+					    	$player_html5 = 'https://www.mixcloud.com/widget/iframe/?feed=http%3A%2F%2Fwww.mixcloud.com%2F' . str_replace('/', '%2F', $thumbnails[0]['id']) . '&amp;embed_type=widget_standard';
 					    	break;
 					    case "Official.fm":
 					    	$player = 'https://official.fm/flash/ofm_player.swf?referer=facebook.com&autoplay=true&feed=/feed/tracks/' . $thumbnails[0]['id'] . '.json&skin_bg=000000&skin_fg=FFFFFF';
+					    	$player_html5 = 'https://official.fm/player?width=435&height=200&artwork=1&artwork_left=1&tracklist=1&feed=%2Ffeed%2Ftracks%2F' . $thumbnails[0]['id'] . '.json&skin_bg=000000&skin_fg=FFFFFF';
 					    	break;
 					    case "Rdio":
-					    	$player = 'https://rd.io/e/%MATCH%' . $thumbnails[0]['id'];
+					    	$player = 'https://rd.io/e/%MATCH%' . $thumbnails[0]['id']; // = HTML5 player
 					    	break;
 					    case "SoundCloud track":
 					    	$player = 'http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' . $thumbnails[0]['id'] . '&amp;color=3b5998&amp;auto_play=true';
+					    	$player_html5 = 'https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F' . $thumbnails[0]['id'];
 					    	break;
 					    case "SoundCloud playlist":
 					    	$player = 'http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fapi.soundcloud.com%2Fplaylists%2F' . $thumbnails[0]['id'] . '&amp;color=3b5998&amp;auto_play=true&amp;show_artwork=false&amp;origin=facebook';
+					    	$player_html5 = 'https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Fplaylists%2F4498423' . $thumbnails[0]['id'];
 					    	break;
 					     case "Ustream":
 					    	$player = 'http:\/\/www.ustream.tv\/flash\/viewer.swf?cid=' . $thumbnails[0]['id'] . '&v3=1&bgcolor=000000&campaign=facebook';
+					    	$player_html5 = 'https://www.ustream.tv/embed/' . $thumbnails[0]['id'];
 					    	break;
 					     case "Vimeo":
 					    	$player = 'http://vimeo.com/moogaloop.swf?clip_id' . $thumbnails[0]['id'];
+					    	$player_html5 = 'https://player.vimeo.com/video/' . $thumbnails[0]['id'];
 					    	break;
 					    case "YouTube":
 					        $player = 'http://www.youtube.com/v/' . $thumbnails[0]['id'] . '?autohide=1&amp;version=3';
+					        $player_html5 = 'https://www.youtube.com/embed/' . $thumbnails[0]['id'];
 					        break;
 					}
 					if (isset($player)) {
 						$opengraph_meta['og:video'] = $player;
 						$opengraph_meta['og:video:width'] = $thumbnails[0]['w'];
 						$opengraph_meta['og:video:height'] = $thumbnails[0]['h'];
-						if( (isset($options['add_twitter_meta'])) && (isset($options['enable_beta'])) ){
+						if (isset($options['add_twitter_meta'])) {
 							$twitter_meta['twitter:card'] = "player"; // overwrite previous value
-							$twitter_meta["twitter:player"] = $player;
+							if(isset($player_html5))
+								$twitter_meta["twitter:player"] = $player_html5;
+							else
+								$twitter_meta["twitter:player"] = $player;
 							$twitter_meta["twitter:player:width"] = $thumbnails[0]['w'];
 							$twitter_meta["twitter:player:height"] = $thumbnails[0]['h'];
 						}
@@ -1039,7 +1054,7 @@ class OGraphr_Core {
 				unset($thumbnails); // saving tiny amounts of RAM
 				
 				// Print Open Graph tags
-				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || ($options['debug_level'] > 0) || (!isset($options['limit_opengraph'])) ) {
+				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) || (!isset($options['limit_opengraph'])) ) {
 					if(is_array($opengraph_meta['og:image']))
 						$opengraph_meta['og:image'] = array_unique($opengraph_meta['og:image']); // unlikely, but hey!
 					foreach($opengraph_meta as $key => $value) {
@@ -1054,7 +1069,7 @@ class OGraphr_Core {
 				}
 				
 				// Print Facebook-specific tags
-				if( (preg_match(FACEBOOK_USERAGENT, $user_agent)) || ($options['debug_level'] > 0) ){
+				if( (preg_match(FACEBOOK_USERAGENT, $user_agent)) || ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) ){
 					// Print OG article tags
 					foreach($facebook_meta as $key => $value) {
 						if ($key == "article:section") {
@@ -1071,7 +1086,7 @@ class OGraphr_Core {
 				}
 				
 				// Print Twitter Cards
-				if ((isset($options['add_twitter_meta'])) && ((preg_match(TWITTER_USERAGENT, $user_agent)) || ($options['debug_level'] > 0))) {
+				if ((isset($options['add_twitter_meta'])) && ((preg_match(TWITTER_USERAGENT, $user_agent)) || ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) )) {
 					//print $twitter_meta;
 					if(is_array($twitter_meta['og:image']))
 						$twitter_meta['og:image'] = array_unique($twitter_meta['og:image']); // unlikely, but hey!
@@ -1087,7 +1102,7 @@ class OGraphr_Core {
 				}
 
 				// Print Google+ Meta
-				if ((isset($options['add_google_meta'])) && ((preg_match(GOOGLEPLUS_USERAGENT, $user_agent)) || ($options['debug_level'] > 0)))
+				if ((isset($options['add_google_meta'])) && ((preg_match(GOOGLEPLUS_USERAGENT, $user_agent)) || ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) )))
 					foreach($google_meta as $key => $value) {
 						print "<meta name=\"$key\" content=\"$value\" />\n";
 					}
@@ -1109,7 +1124,7 @@ class OGraphr_Core {
 		if  (isset($options['add_post_images'])) {
 			preg_match_all('/<img.+?src=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
 			foreach($matches[1] as $match) {
-			  	if(($options['debug_level'] > 0) && (is_single()) || (is_front_page())) {
+			  	if(( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && (is_single()) || (is_front_page())) {
 					print "\t Image tag: $match\n";
 				}
 			
@@ -1171,7 +1186,7 @@ class OGraphr_Core {
 			preg_match_all('/<video.+?poster=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
 			foreach($matches[1] as $match) {
 				$match = preg_replace('/^\/\/+?/', 'http://', $match); // fix Viddler thumbnail URL
-			  	if( ($options['debug_level'] > 0) && (is_single()) || (is_front_page()) ) {
+			  	if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && (is_single()) || (is_front_page()) ) {
 					print "\t Video poster: $match\n";
 				}
 			
@@ -1215,7 +1230,7 @@ class OGraphr_Core {
 			if (isset($attached_thumbnails)) {
 			foreach ($attached_thumbnails as $attached_thumbnail) {
 				// investigate, produces error when exec_mode == 1
-				if (($options['debug_level'] > 0) && ($options['exec_mode'] == 2)) {
+				if ( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && ($options['exec_mode'] == 2)) {
 						print "\t Attached image: $attached_thumbnail[0]\n";
 					}
 					$thumbnails[]['img'] = $attached_thumbnail[0];
@@ -1229,7 +1244,7 @@ class OGraphr_Core {
 			preg_match_all('/jwplayer\(.*?(?:image:[\s]*?)[\'"]([^\'"]+)[\'"].*?\)/smi', $markup, $matches);
 			
 			foreach($matches[1] as $match) {
-				if(($options['debug_level'] > 0 == TRUE) && (is_single()) || (is_front_page())) {
+				if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && (is_single()) || (is_front_page())) {
 					print "\t JW Player: $match\n";
 				}
 			
@@ -1250,7 +1265,7 @@ class OGraphr_Core {
 			preg_match_all('/(?:nvb.addVariable\([\'"]image_src[\'"],[\s])[\'"]([^\'"]+)[\'"].*?\)/smi', $markup, $matches);
 
 			foreach($matches[1] as $match) {
-				if(($options['debug_level'] > 0) && (is_single()) || (is_front_page())) {
+				if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && (is_single()) || (is_front_page())) {
 					print "\t NVB Player: $match\n";
 				}
 			
@@ -1654,7 +1669,7 @@ class OGraphr_Core {
 			}
 			
 			// debugger output
-			if(($options['debug_level'] > 0) && (is_single()) || (is_front_page())) {
+			if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && (is_single()) || (is_front_page())) {
 				if(isset($json_thumbnail['img'])){
 					print "\n\t [" . $services['name'] . "]\n";
 					print "\t ID: $match\n";
@@ -1731,9 +1746,7 @@ class OGraphr_Core {
 			if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
 			if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 			if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
-			
-			if (!$options['last_update']) { $options['last_update'] = OGRAPHR_VERSION; }
-	
+				
 			if (version_compare($options['last_update'], "0.8", '<')) {
 				if (isset($options['enable_eight_tracks'])) {
 					$options['enable_etracks'] = $options['enable_eight_tracks'];
@@ -1755,6 +1768,21 @@ class OGraphr_Core {
 					$options['enable_beta'] = 0;
 				}
 			}
+			if (version_compare($options['last_update'], "0.8.6", '<')) {
+				$published = wp_count_posts();
+				$published = $published->publish;
+				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_twitter_image' );
+				$ographr_urls = get_posts( $args );
+				foreach($ographr_urls as $ographr_url) {
+					$ographr_id = $ographr_url->ID;
+					$tmp = get_post_meta($ographr_id, 'ographr_twitter_image', true);
+					update_post_meta($ographr_id, 'ographr_primary_image', $tmp);
+					delete_post_meta($ographr_id, 'ographr_twitter_image');
+				}
+			}
+
+			//save current version to db
+			$options['last_update'] = OGRAPHR_VERSION;
 
 			update_option('ographr_options', $options);
 		}

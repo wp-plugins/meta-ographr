@@ -49,9 +49,9 @@ $ographr_meta_fields = array(
         'type'  => 'checkbox'  
     ),
     array(  
-        'label'=> 'Twitter Image:',  
-        'desc'=> 'Images for Twitter Cards will only appear after saving the post',  
-        'id'    => $prefix.'twitter_image',  
+        'label'=> 'Primary Image:',  
+        'desc'=> 'Images will only appear after saving the post',  
+        'id'    => $prefix.'primary_image',  
         'type'  => 'select',  
         'options' => NULL
     ),
@@ -127,7 +127,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 			delete_post_meta($ographr_id, 'ographr_country_code');
 			delete_post_meta($ographr_id, 'ographr_country_mode');
 			delete_post_meta($ographr_id, 'ographr_restrict_country');
-			delete_post_meta($ographr_id, 'ographr_twitter_image');
+			delete_post_meta($ographr_id, 'ographr_primary_image');
 		}
 		$today = date("Y-m-d");
 		$yesterday = strtotime("yesterday");
@@ -234,7 +234,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							// select 
 							case 'select':  
 							    echo '<select name="'.$field['id'].'" id="'.$field['id'].'">'; 
-							    if ($field['id'] == "ographr_twitter_image") {
+							    if ($field['id'] == "ographr_primary_image") {
 							    	$images = get_post_meta($post->ID, 'ographr_urls', true);
 									//$images = unserialize($images);
 
@@ -333,12 +333,12 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 	            return $post_id;  
 	        } elseif (!current_user_can('edit_post', $post_id)) {  
 	            return $post_id;  
-	    }  
+	    } 
 	      
 	    // loop through fields and save the data  
-	    foreach ($ographr_meta_fields as $field) { 
-	    	//if( ($field['id'] == "ographr_country_mode") || ($field['id'] == "_ographr_country_code") ) && $ographr_meta_fields
-    		$old = get_post_meta($post_id, $field['id'], true);  
+	    foreach ($ographr_meta_fields as $field) {    		
+      		
+			$old = get_post_meta($post_id, $field['id'], true);
     		if (isset($_POST[$field['id']])) {
     			$new = $_POST[$field['id']];  
 		        if ($new && $new != $old) {  
@@ -347,6 +347,16 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		            delete_post_meta($post_id, $field['id'], $old);  
 		        } 
     		}
+
+    		if( ( ($field['id'] == "ographr_country_mode") || ($field['id'] == "ographr_country_code") ) && ($_POST['ographr_restrict_country'] != "on")) {
+    			delete_post_meta($post_id, "ographr_restrict_country"); 
+    			delete_post_meta($post_id, "ographr_country_mode"); 
+    			delete_post_meta($post_id, "ographr_country_code"); 
+    		}
+    		if ($_POST['ographr_restrict_content'] != "on")
+				delete_post_meta($post_id, "ographr_restrict_content"); 
+    		if ($_POST['ographr_disable_plugin'] != "on")
+				delete_post_meta($post_id, "ographr_disable_plugin"); 
 	         	        
 	    } // end foreach  
 	}  
