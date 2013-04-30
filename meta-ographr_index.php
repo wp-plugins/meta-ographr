@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.6
+Version: 0.8.7
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,8 +28,8 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.6");
-	// enables developer settings on Wordpress interface
+    define("OGRAPHR_VERSION", "0.8.7");
+	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
 	define("OGRAPHR_UATEST", FALSE);
@@ -135,19 +135,19 @@ class OGraphr_Core {
 			$options = array("last_update" => OGRAPHR_VERSION,
 							"exec_mode" => "1",
 							"data_expiry" => "-1",
-							"advanced_opt" => "0",
+							"advanced_opt" => NULL,
 							"website_title" => "%postname%",
-							"website_thumbnail" => "",
+							"website_thumbnail" => NULL,
 							"enable_plugin_on_front" => "1",
-							"enable_triggers_on_front" => "0",
-							"website_description" => "",
-							"not_always" => "0",
-							"add_adminbar" => "0",
-							"add_metabox" => "0",
-							"add_graph" => "0",
+							"enable_triggers_on_front" => NULL,
+							"website_description" => NULL,
+							"not_always" => NULL,
+							"add_adminbar" => NULL,
+							"add_metabox" => NULL,
+							"add_graph" => NULL,
 							"add_prefix" => "1",
-							"fill_curves" => "0",
-							"smooth_curves" => "0",
+							"fill_curves" => NULL,
+							"smooth_curves" => NULL,
 							"add_comment" => "1",
 							"add_title" => "1",
 							"add_excerpt" => "1",
@@ -155,7 +155,7 @@ class OGraphr_Core {
 							"add_permalink" => "1",
 							"enable_etracks" => "1",
 							"enable_bambuser" => "1",
-							"enable_bandcamp" => "0",
+							"enable_bandcamp" => NULL,
 							"enable_bliptv" => "1",
 							"enable_dailymotion" => "1",
 							"enable_flickr" => "1",
@@ -164,13 +164,13 @@ class OGraphr_Core {
 							"enable_justintv" => "1",
 							"enable_livestream" => "1",
 							"enable_mixcloud" => "1",
-							"enable_myvideo" => "0",
+							"enable_myvideo" => NULL,
 							"enable_official" => "1",
 							"enable_rdio" => "1",
-							"enable_socialcam" => "0",
+							"enable_socialcam" => NULL,
 							"enable_soundcloud" => "1",
 							"enable_ustream" => "1",
-							"enable_viddler" => "0",
+							"enable_viddler" => NULL,
 							"enable_vimeo" => "1",
 							"enable_youtube" => "1",
 							"add_post_images" => "1",
@@ -178,44 +178,46 @@ class OGraphr_Core {
 							"enable_jwplayer" => "1",
 							"enable_nvbplayer" => "1",
 							"add_attached_image" => "1",
-							"add_post_thumbnail" => "0",
+							"add_post_thumbnail" => NULL,
 							"link_type" => "permalink",
-							"add_twitter_meta" => "0",
-							"add_google_meta" => "0",
-							"add_link_rel" => "0",
+							"add_twitter_meta" => NULL,
+							"add_google_meta" => NULL,
+							"add_link_rel" => NULL,
 							"filter_smilies" => "1",
-							"filter_themes" => "0",
+							"filter_themes" => NULL,
 							"filter_gravatar" => "1",
-							"allow_admin_tag" => "0",
+							"allow_admin_tag" => NULL,
 							"restrict_age" => "_none",
-							"restrict_country" => "0",
-							"restrict_content" => "0",
-							"facebook_ua" => "0",
-							"gplus_ua" => "0",
-							"linkedin_ua" => "0",
-							"twitter_ua" => "0",
-							"limit_opengraph" => "0",
-							"disable_jetpack" => "0",
+							"restrict_country" => NULL,
+							"restrict_content" => NULL,
+							"facebook_ua" => NULL,
+							"gplus_ua" => NULL,
+							"linkedin_ua" => NULL,
+							"twitter_ua" => NULL,
+							"limit_opengraph" => NULL,
+							"disable_jetpack" => NULL,
 							"fb_site_name" => "%sitename%",
 							"fb_type" => "_none",
-							"add_author" => "0",
-							"add_section" => "0",
-							"add_tags" => "0",
-							"add_pubtime" => "0",
-							"add_modtime" => "0",
-							"add_embeds" => "0",
+							"add_author" => NULL,
+							"add_section" => NULL,
+							"add_tags" => NULL,
+							"add_pubtime" => NULL,
+							"add_modtime" => NULL,
+							"add_embeds" => NULL,
 							"app_universal" => "1",
-							"app_iphone_name" => "",
-							"app_iphone_id" => "",
-							"app_iphone_url" => "",
-							"app_ipad_name" => "",
-							"app_ipad_id" => "",
-							"app_ipad_url" => "",
-							"app_android_name" => "",
-							"app_android_id" => "",
-							"app_android_url" => "",
+							"app_iphone_name" => NULL,
+							"app_iphone_id" => NULL,
+							"app_iphone_url" => NULL,
+							"app_ipad_name" => NULL,
+							"app_ipad_id" => NULL,
+							"app_ipad_url" => NULL,
+							"app_android_name" => NULL,
+							"app_android_id" => NULL,
+							"app_android_url" => NULL,
 							"debug_level" => "0",
-							"enable_beta" => "",
+							"enable_beta" => NULL,
+							"ua_testdrive" => NULL,
+							"always_devmode" => NULL,
 			);
 		
 			return $options;
@@ -1052,6 +1054,15 @@ class OGraphr_Core {
 				}
 
 				unset($thumbnails); // saving tiny amounts of RAM
+
+				// write user agent to description
+				if (isset($options['ua_testdrive'])) {
+					$opengraph_meta['og:description'] = $user_agent;
+					if (isset($options['add_google_meta']))
+						$google_meta['description'] = $user_agent;
+					if (isset($options['add_twitter_meta']))
+						$twitter_meta['twitter:description'] = $user_agent;
+				}
 				
 				// Print Open Graph tags
 				if (( (isset($options['limit_opengraph'])) && (preg_match(FACEBOOK_USERAGENT, $user_agent)) ) || ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) || (!isset($options['limit_opengraph'])) ) {
@@ -1763,11 +1774,7 @@ class OGraphr_Core {
 					delete_post_meta($ographr_id, 'ographr_indexed');
 				}
 			}
-			if (version_compare($options['last_update'], "0.8.2", '<')) {
-				if (!isset($options['enable_beta'])) {
-					$options['enable_beta'] = 0;
-				}
-			}
+			
 			if (version_compare($options['last_update'], "0.8.6", '<')) {
 				$published = wp_count_posts();
 				$published = $published->publish;
@@ -1829,10 +1836,8 @@ class OGraphr_Core {
        			echo ' Activate the developer mode in the <a href="'.get_admin_url().'plugin-editor.php?file=meta-ographr%2Fmeta-ographr_index.php&plugin=meta-ographr%2Fmeta-ographr_index.php">plug-in editor</a> to control your debug level!</p></div>';
        		}
 	       		
-		}
-
-		// Beta
-		if ( ($options['debug_level'] == 0) && (isset($options['enable_beta'])) && (current_user_can('manage_options')) ) {
+		} else if( (isset($options['enable_beta'])) && ($options['enable_beta'] != 0) && (current_user_can('manage_options')) ) {
+			print_r($options['enable_beta']);
 			echo '<div class="updated">
 	       		<p>OGraphr is currently running with beta features enabled.';
 	    	if(OGRAPHR_DEVMODE == TRUE) {

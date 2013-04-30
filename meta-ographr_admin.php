@@ -1181,7 +1181,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							</div>
 						</div>
 
-						<?php if(OGRAPHR_DEVMODE == TRUE) { ?>
+						<?php if( (OGRAPHR_DEVMODE == TRUE) || (isset($options['always_devmode'])) ){ ?>
 						<!-- D E V E L O P E R -->
 						<div class="postbox advanced_opt">
 							<a name="developer_settings"></a> 
@@ -1207,6 +1207,20 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 										<th align="left" scope="row"><label>Beta:</label></th> 
 											<td colspan="2">
 												<label><input name="ographr_options[enable_beta]" type="checkbox" value="1" <?php if (isset($options['enable_beta'])) { checked('1', $options['enable_beta']); }; ?> /> Enable beta features </label>&nbsp;
+											</td> 
+										</tr>
+
+										<tr valign="center"> 
+										<th align="left" scope="row"><label>User Agent:</label></th> 
+											<td colspan="2">
+												<label><input name="ographr_options[ua_testdrive]" type="checkbox" value="1" <?php if (isset($options['ua_testdrive'])) { checked('1', $options['ua_testdrive']); }; ?> /> Enable User Agent test </label>&nbsp;
+											</td> 
+										</tr>
+
+										<tr valign="center"> 
+										<th align="left" scope="row"><label>Display:</label></th> 
+											<td colspan="2">
+												<label><input name="ographr_options[always_devmode]" type="checkbox" value="1" <?php if (isset($options['always_devmode'])) { checked('1', $options['always_devmode']); }; ?> /> Always show developer settings </label>&nbsp;
 											</td> 
 										</tr>
 								
