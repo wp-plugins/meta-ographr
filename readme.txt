@@ -4,7 +4,7 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5.1
-Stable tag: 0.8.7
+Stable tag: 0.8.7.1
 License: GPLv2
 
 Retrieves the images of audio/video players in your posts and embeds them as thumbnails on Facebook and other social networks.
@@ -84,7 +84,7 @@ Probably not. Link elements were a common way to add website thumbnails before F
 
 = How can I use new features marked as beta? =
 
-As beta features can be unstable, they can only be enabled through the plugin's source. Open the file `meta-ographr_index.php` and set `OGRAPHR_BETA` to `TRUE`. Note that with each new version, you have to re-enable this setting.
+As beta features can be unstable, they can only be enabled through the plugin's source. Open the file `meta-ographr_index.php` and set `OGRAPHR_DEVMODE` to `TRUE`. From now on, you will see developer settings on the plugin options page, where you can enable beta features.
 
 = Why am I getting a class error when activating the plug-in? =
 There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug") in XCache that will make it impossible to run OGraphr (and many other Wordpress plug-ins) at the current moment. You can either disable XCache or hope for a future version to fix this. Sorry!
@@ -102,6 +102,9 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 5. advanced settings page for OGraphr 0.7
 
 == Changelog ==
+
+= 0.8.7.1 =
+* fixed minor display bug in beta warning
 
 = 0.8.7 =
 * added option to always display developer settings
