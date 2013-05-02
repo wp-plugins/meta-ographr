@@ -4,7 +4,7 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5.1
-Stable tag: 0.8.7.1
+Stable tag: 0.8.8
 License: GPLv2
 
 Retrieves the images of audio/video players in your posts and embeds them as thumbnails on Facebook and other social networks.
@@ -103,6 +103,11 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 
 == Changelog ==
 
+= 0.8.8 =
+* removed some old update functions
+* upgraded jqPlot and plugins to 1.0.8 r1250
+* fixed javascript behaviour on option page
+
 = 0.8.7.1 =
 * fixed minor display bug in beta warning
 
@@ -123,7 +128,7 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 = 0.8.5 =
 * re-added duplicate checker
 * seperated Facebook-specific tags from Open Graph tags, limited display to Facebook scrapers
-* removed PHP <5.2 fallback query, plugin requires PHP 5.2+ anyway
+* removed legacy PHP fallback queries
 * fixed glitch on settings page
 
 = 0.8.4 =

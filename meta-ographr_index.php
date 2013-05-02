@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.7.1
+Version: 0.8.8
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.7.1");
+    define("OGRAPHR_VERSION", "0.8.8");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -1763,16 +1763,6 @@ class OGraphr_Core {
 					$options['enable_etracks'] = $options['enable_eight_tracks'];
 					unset($options['enable_eight_tracks']);
 				}
-				//delete old, incompatible index data
-				$published = wp_count_posts();
-				$published = $published->publish;
-				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
-				$ographr_urls = get_posts( $args );
-				foreach($ographr_urls as $ographr_url) {
-					$ographr_id = $ographr_url->ID;
-					delete_post_meta($ographr_id, 'ographr_urls');
-					delete_post_meta($ographr_id, 'ographr_indexed');
-				}
 			}
 			
 			if (version_compare($options['last_update'], "0.8.6", '<')) {
@@ -1956,6 +1946,24 @@ class OGraphr_Core {
 						'parent' => 'ographr',
 	                    'title' => 'Settings',
 						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+	                ),
+					array(
+	                    'id' => 'ographr-home',
+						'parent' => 'ographr',
+	                    'title' => 'Website',
+						'href' => 'http://wordpress.org/extend/plugins/meta-ographr/'
+	                )
+	            );
+
+	        foreach ($menu_items as $menu_item) {
+	            $wp_admin_bar->add_menu($menu_item);
+	        }
+	    }	
+	}
+
+}; // end of class
+
+?>=meta-ographr/meta-ographr_admin.php')
 	                ),
 					array(
 	                    'id' => 'ographr-home',

@@ -168,8 +168,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 		$options = get_option('ographr_options');
 		
 		wp_register_style( 'OGraphr_Stylesheet', plugins_url('/inc/style.min.css', __FILE__) );
-		wp_register_script( 'OGraphr_JScript', plugins_url('/inc/scripts.min.js', __FILE__), array('jquery'), null, true );
-		
+		wp_register_script( 'OGraphr_JScript', plugins_url('/inc/scripts.min.js', __FILE__), array('jquery'), null, true );			
 		
 		if (isset($options['add_graph'])) {
 			wp_register_style( 'JQPlot_Stylesheet', plugins_url('/inc/jquery.jqplot.min.css', __FILE__) );
@@ -811,7 +810,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<th align="left" scope="row"><label>Image Retrieval:</label></th> 
 									<td colspan="2">
 										<div id="enable_expiry">
-											<label><input name="ographr_options[exec_mode]" type="radio" class="atoggle" data-atarget=".no_expiry" data-astate="1" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?>  />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
+											<label><input name="ographr_options[exec_mode]" type="radio" class="atoggle only_once" data-atarget=".no_expiry" data-astate="1" value="1" <?php if (isset($options['exec_mode'])) { checked('1', $options['exec_mode']); } ?>  />&nbsp;Only once when saving a post (default, better performance)&nbsp;</label><br/>
 
 											<label><input name="ographr_options[exec_mode]" type="radio" class="atoggle" data-atarget=".no_expiry" data-astate="0" value="2" <?php if (isset($options['exec_mode'])) { checked('2', $options['exec_mode']); } ?>  />&nbsp;Everytime your site is visited (slow, more accurate)&nbsp;</label><br/>
 											<small>Retrieving images <em>on-post</em> decreases the loadtime of your page significantly, but on the downside the results might be outdated at some point. Should you choose to retrieve images <em>on-view</em>, it is recommended to <a href="#user_agents">restrict access</a> to decrease load times for human readers.</small>
@@ -931,7 +930,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<td colspan="2">
 										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>&nbsp;
 										<label><input name="ographr_options[add_metabox]" type="checkbox" value="1" <?php if (isset($options['add_metabox'])) { checked('1', $options['add_metabox']); } ?> /> Add settings for each article</label>&nbsp;
-										<label><input name="ographr_options[add_graph]" class="atoggle no_expiry" data-atarget=".disable_graph" data-astate="1" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); }; if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?>/> Add visual graph</label>&nbsp;
+										<label><input name="ographr_options[add_graph]" id="add_graph" class="atoggle no_expiry" data-atarget=".disable_graph" data-astate="1" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); }; if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?>/> Add visual graph</label>&nbsp;
 									</td>
 								</tr>
 								
