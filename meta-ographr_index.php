@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.8
+Version: 0.8.9
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.8");
+    define("OGRAPHR_VERSION", "0.8.9");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -372,7 +372,7 @@ class OGraphr_Core {
 			}
 		
 			if (($web_thumb) && (!$options['not_always']))
-				$thumbnails[] = $web_thumb;		
+				$thumbnails[]['img'] = $web_thumb;		
 			
 			// Get date et al
 			$today = date("U"); // Y-m-d H:i:s
@@ -519,7 +519,6 @@ class OGraphr_Core {
 						print "\t Default Thumbnail: $web_thumb\n";
 					}
 				}
-				
 			}
 			
 			// Let's get started!
@@ -537,7 +536,8 @@ class OGraphr_Core {
 						foreach($thumbnails as $thumbnail) {
 							if (isset($thumbnail['img'])) {
 								if (filter_var($thumbnail['img'], FILTER_VALIDATE_URL)) {
-									print "\t Post meta: " . $thumbnail['img'];
+									if ($thumbnail['img'] != $web_thumb)
+										print "\t Post meta: " . $thumbnail['img'];
 								if( (isset($thumbnail['w'])) && (isset($thumbnail['h'])) )
 									print " (" . $thumbnail['w'] . "×" . $thumbnail['h'] . ")";
 								print "\n";
@@ -546,7 +546,7 @@ class OGraphr_Core {
 								print "\t no images\n";
 							}
 						}
-						print "\n";
+						//print "\n";
 					}
 				} else if ( (isset($meta_values)) && (is_array($meta_values)) && (!isset($thumbnails)) && ($expiry >= $interval) ) {
 					$thumbnails = $meta_values;
@@ -568,9 +568,9 @@ class OGraphr_Core {
 					}
 				} else {
 					if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && ($options['exec_mode'] == 1) && ($expiry >= $interval) ){
-						print "\t Empty post-meta, retrieving images\n\n";
+						print "\n\t Empty post-meta, retrieving images\n\n";
 					} else if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && ($options['exec_mode'] == 1) && ($expiry < $interval) ) {
-						print "\t Data expired, indexing\n\n";
+						print "\n\t Data expired, indexing\n\n";
 					}
 					
 					// Get Widget Thumbnails (fallback)
@@ -838,7 +838,7 @@ class OGraphr_Core {
 		
 				// Add permalink
 				if (($options['add_permalink']) && (is_front_page()) && ($link = get_option('home'))) {
-					print "<meta property=\"og:url\" content=\"$link\" />\n";
+					$opengraph_meta['og:url'] = $link;
 					if (isset($options['add_twitter_meta']))
 						$twitter_meta['twitter:url'] = $link;
 				} else if( (!is_category()) && (!is_archive()) && (!is_search()) ) {
@@ -910,7 +910,7 @@ class OGraphr_Core {
 					$total_img = count($thumbnails);
 				}
 					
-				if ( (isset($total_img)) && ($total_img == 0) && ($web_thumb)) {
+				if ( ((!isset($total_img)) || ($total_img == 0)) && (!empty($web_thumb))) {
 					//print "<meta property=\"og:image\" content=\"$web_thumb\" />\n";
 					$opengraph_meta['og:image'][] = $web_thumb;
 					if (isset($options['add_twitter_meta']))
@@ -1034,7 +1034,7 @@ class OGraphr_Core {
 				
 				// Add Link elements
 				if (isset($options['add_link_rel'])) {
-					if (($total_img == 0) && ($web_thumb)) {
+					if (($total_img == 0) && (isset($web_thumb))) {
 						$ext = pathinfo($web_thumb, PATHINFO_EXTENSION);
 						if (($ext == "jpg") || ($ext == "jpe"))
 							$ext = "jpeg";
@@ -1101,12 +1101,14 @@ class OGraphr_Core {
 					//print $twitter_meta;
 					if(is_array($twitter_meta['og:image']))
 						$twitter_meta['og:image'] = array_unique($twitter_meta['og:image']); // unlikely, but hey!
-					foreach($twitter_meta as $key => $value) {
-						if ($key == "twitter:image") {
-							foreach($twitter_meta['twitter:image'] as $val_image)
-								print "<meta property=\"$key\" content=\"$val_image\" />\n";
-						} else {
-								print "<meta property=\"$key\" content=\"$value\" />\n";
+					if(is_array($twitter_meta['twitter:image'])) {
+						foreach($twitter_meta as $key => $value) {
+							if ($key == "twitter:image") {
+								foreach($twitter_meta['twitter:image'] as $val_image)
+									print "<meta property=\"$key\" content=\"$val_image\" />\n";
+							} else {
+									print "<meta property=\"$key\" content=\"$value\" />\n";
+							}
 						}
 					}
 					unset($twitter_meta); // saving tiny amounts of RAM
@@ -1147,14 +1149,12 @@ class OGraphr_Core {
 				// filter Wordpress smilies
 				preg_match('/\/wp-includes\/images\/smilies\/icon_.+/i', $match, $filter);
 				if ((!isset($options['filter_smilies'])) || (!$filter[0])) {
-					//$thumbnails[] = $match;
 					$no_smilies = TRUE;
 				}
 			
 				// filter Wordpress theme images
 				preg_match('/\/wp-content\/themes\//i', $match, $filter);
 				if ((!isset($options['filter_themes'])) || (!$filter[0])) {
-					//$thumbnails[] = $match;
 					$no_themes = TRUE;
 				}
 			
@@ -1162,13 +1162,11 @@ class OGraphr_Core {
 				$pattern = '/https?:\/\/w*.?gravatar.com\/avatar\/.*/i';
 				preg_match($pattern, $match, $filter);
 				if ((!isset($options['filter_gravatar'])) || (!$filter[0])) {
-					//$thumbnails[] = $match;
 					$no_gravatar = TRUE;
 				}
 			
 				// filter custom URLs
 				foreach(preg_split("/((\r?\n)|(\n?\r))/", preg_quote($options['filter_custom_urls'], '/')) as $line) {
-					//print "<!-- \$line=$line -->\n";
 					preg_match("/$line/", $match, $filter);
 					foreach($filter as $key => $value) {
 						if ($value) {
@@ -1235,7 +1233,7 @@ class OGraphr_Core {
 		}
 
 		// Get attachment images
-		if  (isset($options['add_attached_image'])) {
+		if (isset($options['add_attached_image'])) {
 			$attached_thumbnails = $this->get_attached_img();
 
 			if (isset($attached_thumbnails)) {
@@ -1757,26 +1755,44 @@ class OGraphr_Core {
 			if (!$options['socialcam_api']) { $socialcam_api = $options['socialcam_api']; }
 			if (!$options['soundcloud_api']) { $options['soundcloud_api'] = SOUNDCLOUD_API_KEY; $soundcloud_api = $options['soundcloud_api']; }
 			if (!$options['ustream_api']) { $options['ustream_api'] = USTREAM_API_KEY; $ustream_api = $options['ustream_api']; }
-				
-			if (version_compare($options['last_update'], "0.8", '<')) {
-				if (isset($options['enable_eight_tracks'])) {
-					$options['enable_etracks'] = $options['enable_eight_tracks'];
-					unset($options['enable_eight_tracks']);
-				}
-			}
 			
-			if (version_compare($options['last_update'], "0.8.6", '<')) {
-				$published = wp_count_posts();
-				$published = $published->publish;
-				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_twitter_image' );
-				$ographr_urls = get_posts( $args );
-				foreach($ographr_urls as $ographr_url) {
-					$ographr_id = $ographr_url->ID;
-					$tmp = get_post_meta($ographr_id, 'ographr_twitter_image', true);
-					update_post_meta($ographr_id, 'ographr_primary_image', $tmp);
-					delete_post_meta($ographr_id, 'ographr_twitter_image');
+			//upgrades
+			if(isset($options['last_update'])) {
+				if (version_compare($options['last_update'], "0.8", '<')) {
+					if (isset($options['enable_eight_tracks'])) {
+						$options['enable_etracks'] = $options['enable_eight_tracks'];
+						unset($options['enable_eight_tracks']);
+					}
+				}
+				
+				if (version_compare($options['last_update'], "0.8.6", '<')) {
+					$published = wp_count_posts();
+					$published = $published->publish;
+					$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_twitter_image' );
+					$ographr_urls = get_posts( $args );
+					foreach($ographr_urls as $ographr_url) {
+						$ographr_id = $ographr_url->ID;
+						$tmp = get_post_meta($ographr_id, 'ographr_twitter_image', true);
+						update_post_meta($ographr_id, 'ographr_primary_image', $tmp);
+						delete_post_meta($ographr_id, 'ographr_twitter_image');
+					}
+				}
+
+				if (version_compare($options['last_update'], "0.8.9", '<')) {
+					//delete old, incompatible index data
+					$published = wp_count_posts();
+					$published = $published->publish;
+					$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
+					$ographr_urls = get_posts( $args );
+					foreach($ographr_urls as $ographr_url) {
+						$ographr_id = $ographr_url->ID;
+						delete_post_meta($ographr_id, 'ographr_urls');
+						delete_post_meta($ographr_id, 'ographr_indexed');
+					}
 				}
 			}
+
+			
 
 			//save current version to db
 			$options['last_update'] = OGRAPHR_VERSION;
@@ -1841,7 +1857,7 @@ class OGraphr_Core {
 	// Save thumbnails as postdata
 	public function ographr_save_postmeta($post_id) {
 		global $core;
-		//global $options;
+
 		$options = get_option('ographr_options');
 
 		if($options['exec_mode'] == 2) {
@@ -1962,23 +1978,4 @@ class OGraphr_Core {
 	}
 
 }; // end of class
-
-?>=meta-ographr/meta-ographr_admin.php')
-	                ),
-					array(
-	                    'id' => 'ographr-home',
-						'parent' => 'ographr',
-	                    'title' => 'Website',
-						'href' => 'http://wordpress.org/extend/plugins/meta-ographr/'
-	                )
-	            );
-
-	        foreach ($menu_items as $menu_item) {
-	            $wp_admin_bar->add_menu($menu_item);
-	        }
-	    }	
-	}
-
-}; // end of class
-
 ?>

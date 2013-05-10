@@ -1533,4 +1533,3 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 	}
 
 }; // end of class
-
