@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.9
+Version: 0.8.10
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.9");
+    define("OGRAPHR_VERSION", "0.8.10");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -185,6 +185,8 @@ class OGraphr_Core {
 							"add_link_rel" => NULL,
 							"filter_smilies" => "1",
 							"filter_themes" => NULL,
+							"filter_plugins" => NULL,
+							"filter_uploads" => NULL,
 							"filter_gravatar" => "1",
 							"allow_admin_tag" => NULL,
 							"restrict_age" => "_none",
@@ -393,6 +395,7 @@ class OGraphr_Core {
 			// debugging?
 			if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) {
 				print "<!--\tOGRAPHR DEBUGGER [".$options['debug_level']."]\n";
+
 				if($options['debug_level'] >= 2) {
 					print "\n\tSoftware\n";
 					print "\t OGraphr " . OGRAPHR_VERSION;
@@ -428,6 +431,8 @@ class OGraphr_Core {
 					if (isset($options['filter_gravatar'])) { print "\t Avatars are filtered\n"; }
 					if (isset($options['filter_smilies'])) { print "\t Emoticons are filtered \n"; }
 					if (isset($options['filter_themes'])) { print "\t Themes are filtered\n"; }
+					if (isset($options['filter_plugins'])) { print "\t Plug-ins are filtered\n"; }
+					if (isset($options['filter_uploads'])) { print "\t Uploads are filtered\n"; }
 					if (isset($options['add_twitter_meta'])) { print "\t Twitter Cards are enabled\n"; }
 					if (isset($options['add_google_meta'])) { print "\t Google+ Meta Descriptions are enabled\n"; }
 					if (isset($options['add_link_rel'])) { print "\t Link Elements are enabled\n"; }
@@ -1095,12 +1100,13 @@ class OGraphr_Core {
 					}
 					unset($facebook_meta); // saving tiny amounts of RAM
 				}
+
 				
 				// Print Twitter Cards
 				if ((isset($options['add_twitter_meta'])) && ((preg_match(TWITTER_USERAGENT, $user_agent)) || ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) )) {
 					//print $twitter_meta;
-					if(is_array($twitter_meta['og:image']))
-						$twitter_meta['og:image'] = array_unique($twitter_meta['og:image']); // unlikely, but hey!
+					if(is_array($twitter_meta['twitter:image']))
+						$twitter_meta['twitter:image'] = array_unique($twitter_meta['twitter:image']); // unlikely, but hey!
 					if(is_array($twitter_meta['twitter:image'])) {
 						foreach($twitter_meta as $key => $value) {
 							if ($key == "twitter:image") {
@@ -1143,6 +1149,8 @@ class OGraphr_Core {
 			
 				$no_smilies = FALSE;
 				$no_themes = FALSE;
+				$no_plugins = FALSE;
+				$no_uploads = FALSE;
 				$no_gravatar = FALSE;
 				$no_custom_url = TRUE;
 			
@@ -1156,6 +1164,22 @@ class OGraphr_Core {
 				preg_match('/\/wp-content\/themes\//i', $match, $filter);
 				if ((!isset($options['filter_themes'])) || (!$filter[0])) {
 					$no_themes = TRUE;
+				}
+			
+				// filter Wordpress plug-in images
+				preg_match('/\/wp-content\/plugins\//i', $match, $filter);
+				if ((!isset($options['filter_plugins'])) || (!$filter[0])) {
+					$no_plugins = TRUE;
+				}
+
+				// filter Wordpress upload directory
+				$upload_dir = wp_upload_dir();
+				$blog_url = get_option('home');
+				$pattern = str_replace($blog_url, NULL, $upload_dir['baseurl']);
+				$pattern = str_replace("/", "\/", $pattern);
+				preg_match("/$pattern\//i", $match, $filter);
+				if ((!isset($options['filter_uploads'])) || (!$filter[0])) {
+					$no_uploads = TRUE;
 				}
 			
 				// filter Gravatar
@@ -1175,7 +1199,7 @@ class OGraphr_Core {
 					}				
 				}
 			
-				if (($no_gravatar) && ($no_themes) && ($no_smilies) && ($no_custom_url)) {
+				if (($no_gravatar) && ($no_themes) && ($no_plugins) && ($no_uploads) && ($no_smilies) && ($no_custom_url)) {
 					if (isset($match)) {
 						if ($options['exec_mode'] == 1)  {
 							$exists = $this->remote_exists($match);

@@ -601,6 +601,10 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 											<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude emoticons </label>&nbsp;
 											
 											<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude themes </label>&nbsp;
+											
+											<label><input name="ographr_options[filter_plugins]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_plugins'])) { checked('1', $options['filter_plugins']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude plug-ins </label>&nbsp;
+
+											<label><input name="ographr_options[filter_uploads]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_uploads'])) { checked('1', $options['filter_uploads']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude uploads </label>&nbsp;
 										</td> 
 									</tr>
 								
@@ -1250,10 +1254,10 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<h3 class="hndle">Navigator</h3>
 							<div class="inside">
 							<ul>
-								<li><strong><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">Website</a></strong></li>
+								<li><strong><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">Project page</a></strong></li>
 								<li><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/faq/" title="Frequently Asked Questions" target="_blank">FAQ</a></li>
 								<li><a class="lwp" href="http://wordpress.org/tags/meta-ographr?forum_id=10" target="_blank">Need help?</a></li>
-								<li class="advanced_opt"><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/changelog/" target="_blank">Changes</a></li>
+								<li class="advanced_opt"><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/changelog/" target="_blank">Changelog</a></li>
 								<li class="advanced_opt"><a class="lwp" href="http://plugins.svn.wordpress.org/meta-ographr/" target="_blank">SVN</a></li>
 							
 								<li><a class="lhome" href="http://whyeye.org" target="_blank">whyEye.org</a></li>
@@ -1266,12 +1270,12 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 						</div>
 
 						<div class="postbox">
-							<h3 class="hndle">Humble Mumble</h3>
+							<h3 class="hndle">Donations</h3>
 							<div class="inside">
-							<p style="font-size:8pt;">If you want to support this plug-in, why not buy me a coffee?</p>
+							<p style="font-size:8pt;">If you like this plug-in, please consider a small donation to support its development!</p>
 							<ul>
-								<li><strong><a class="lpaypal" href="http://whyeye.org/donate/" target="_blank">Buy coffee!</a></strong></li>
-								<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/" target="_blank">Wishful thinking</a></li>
+								<li><strong><a class="lpaypal" href="http://whyeye.org/donate/" target="_blank">Buy me a coffee!</a></strong></li>
+								<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/" target="_blank">My wishlist</a></li>
 							</ul>			
 							</div>
 
