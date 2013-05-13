@@ -1,10 +1,10 @@
 === OGraphr ===
 Contributors: yathosho
-Donate link: http://whyeye.org/donate
+Donate link: https://flattr.com/thing/ec467d2d2efd7a56e2b6f000b8cc5fff
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5.1
-Stable tag: 0.8.10
+Stable tag: 0.8.11
 License: GPLv2
 
 Retrieves the images of audio/video players in your posts and embeds them as thumbnails on Facebook and other social networks.
@@ -102,6 +102,11 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 5. advanced settings page for OGraphr 0.7
 
 == Changelog ==
+
+= 0.8.11 =
+* fixed activation warning, added PHP version check on plugin activation
+* removed unsupported ages from age restrictions
+* replaced donation option
 
 = 0.8.10 =
 * added filters for plugin and upload directories

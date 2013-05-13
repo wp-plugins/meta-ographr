@@ -37,9 +37,11 @@ $ages = array(
 		'label' => "all ages", 'value' => "_none"
 		),
 	);
-for ($i = 3; $i <= 25; $i++) {
-	$ages[] = array( "label" => "$i+", "value" => "$i");
-} 
+$ages[] = array( "label" => "13+", "value" => "13");
+$ages[] = array( "label" => "17+", "value" => "17");
+$ages[] = array( "label" => "18+", "value" => "18");
+$ages[] = array( "label" => "19+", "value" => "19");
+$ages[] = array( "label" => "21+", "value" => "21");
 
 $ographr_meta_fields = array(  
     array(  
@@ -631,9 +633,11 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<td colspan="2">
 										<select name='ographr_options[restrict_age]'>
 											<option value='_none' <?php selected('_none', $options['restrict_age']); ?> >all ages</option>
-		 									<?php for ($i = 3; $i <= 25; $i++) {
-												print "<option value='$i'" . selected($i, $options['restrict_age']) . ">$i+</option>";
-											} ?> 
+		 									<option value='13' <?php selected('13', $options['restrict_age']); ?> >13+</option>
+		 									<option value='17' <?php selected('17', $options['restrict_age']); ?> >17+</option>
+		 									<option value='18' <?php selected('18', $options['restrict_age']); ?> >18+</option>
+		 									<option value='19' <?php selected('19', $options['restrict_age']); ?> >19+</option>
+		 									<option value='21' <?php selected('21', $options['restrict_age']); ?> >21+</option>
 										</select>
 									</td> 
 									<td>&nbsp;</td>
@@ -1274,7 +1278,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<div class="inside">
 							<p style="font-size:8pt;">If you like this plug-in, please consider a small donation to support its development!</p>
 							<ul>
-								<li><strong><a class="lpaypal" href="http://whyeye.org/donate/" target="_blank">Buy me a coffee!</a></strong></li>
+								<li><strong><a class="lflattr" href="https://flattr.com/submit/auto?user_id=idleberg&url=http://wordpress.org/extend/plugins/meta-ographr/&title=OGraphr&description=A%20plug-in%20for%20Wordpress%20that%20retrieves%20images%20from%20streaming%20services%20and%20inserts%20them%20as%20Open%20Graph%20tags&language=en_GB&tags=opengraph,metatags,wordpress&hidden=0&category=software" target="_blank">Flattr this!</a></strong></li>
 								<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/" target="_blank">My wishlist</a></li>
 							</ul>			
 							</div>
