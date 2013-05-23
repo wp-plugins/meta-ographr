@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.12
+Version: 0.8.13
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.12");
+    define("OGRAPHR_VERSION", "0.8.13");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -62,11 +62,11 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 	
 // MIXCLOUD
 	// default artwork size (small=25x25, thumbnail=50x50, medium_mobile=80x80, medium=150x150, large=300x300, extra_large=600x600)
-	define("MIXCLOUD_IMAGE_SIZE", "large");
+	define("MIXCLOUD_IMAGE_SIZE", "extra_large");
 
 // OFFICIAL.FM
 	// default artwork size (tiny=40x40, small=120x120, medium=300x300, large=600x600)
-	define("OFFICIAL_IMAGE_SIZE", "medium");
+	define("OFFICIAL_IMAGE_SIZE", "large");
 
 // SOCIALCAM
 	// default artwork size (main_thumb, small_thumb)
@@ -76,7 +76,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 	// no need to change this unless you want to use your own SoundCloud API key (-> http://soundcloud.com/you/apps)
 	define("SOUNDCLOUD_API_KEY", "15fd95172fa116c0837c4af8e45aa702");
 	// default artwork size (mini=16x16, tiny=20x20, small=32x32, badge=47x47, t67x67, large=100x100, t300x300, crop=400x400, t500x500)
-	define("SOUNDCLOUD_IMAGE_SIZE", "t300x300");
+	define("SOUNDCLOUD_IMAGE_SIZE", "t500x500");
 	
 // VIMEO
 	// default snapshot size (thumbnail_small=100, thumbnail_medium=200, thumbnail_large=640)
@@ -940,7 +940,7 @@ class OGraphr_Core {
 						}
 					}
 				}
-		
+
 				// Add image-type if only one image has been found
 				if ( (isset($total_img)) && ($total_img == 1) ) {
 					$ext = preg_replace('/(?!.*\.(bmp|gif|jpe|jpeg|jpg|png|webp))(\?|&).*\Z/i', '', $thumbnails[0]['img']); // remove suffix (might need improvement)
@@ -1600,7 +1600,7 @@ class OGraphr_Core {
 				if (isset($tmp_thumbnails)) {
 					foreach ($tmp_thumbnails as $tmp_thumbnail) {
 						if ($tmp_thumbnail)
-							$thumbnails[]['img'] = $tmp_thumbnail;
+							$thumbnails[] = $tmp_thumbnail;
 					}
 				}
 			}
@@ -2012,4 +2012,5 @@ class OGraphr_Core {
 	}
 
 }; // end of class
+?>s
 ?>
