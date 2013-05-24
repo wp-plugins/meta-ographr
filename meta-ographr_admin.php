@@ -564,9 +564,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<tr valign="center" class="advanced_opt"> 
 									<th align="left" scope="row"><label>Functionality:</label></th> 
 									<td colspan="2">
-									<label><input name="ographr_options[enable_plugin_on_front]" type="checkbox" class="atoggle" value="1" data-atarget="input.enable_triggers" data-astate="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?>/> Enable plug-in </label>&nbsp;
+									<label title="Enable plug-in on front page"><input name="ographr_options[enable_plugin_on_front]" type="checkbox" class="atoggle" value="1" data-atarget="input.enable_triggers" data-astate="1" <?php if (isset($options['enable_plugin_on_front'])) { checked('1', $options['enable_plugin_on_front']); } ?>/> Enable plug-in </label>&nbsp;
 								
-									<label><input name="ographr_options[enable_triggers_on_front]" type="checkbox" class="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!isset($options['enable_plugin_on_front'])) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
+									<labeltitle="Enable plug-in triggers on front page"><input name="ographr_options[enable_triggers_on_front]" type="checkbox" class="enable_triggers" value="1" <?php if (isset($options['enable_triggers_on_front'])) { checked('1', $options['enable_triggers_on_front']); }; if (!isset($options['enable_plugin_on_front'])) { print 'disabled="disabled"';} ?> /> Enable triggers </label>&nbsp;
 									</td> 
 								</tr>
 
@@ -598,15 +598,17 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<tr valign="center"> 
 										<th align="left" width="140px" scope="row"><label>Filters:</label></th> 
 										<td colspan="2">
-											<label><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?>/> Exclude avatars </label>&nbsp;
+											<label title="Filter Gravatar images"><input name="ographr_options[filter_gravatar]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_gravatar'])) { checked('1', $options['filter_gravatar']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?>/> Exclude avatars </label>&nbsp;
 											
-											<label><input name="ographr_options[filter_smilies]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude emoticons </label>&nbsp;
+											<label title="Filter Wordpress emoticons"><input name="ographr_options[filter_smilies]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_smilies'])) { checked('1', $options['filter_smilies']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude emoticons </label>&nbsp;
 											
-											<label><input name="ographr_options[filter_themes]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude themes </label>&nbsp;
+											<label title="Filter images belonging to themes"><input name="ographr_options[filter_themes]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_themes'])) { checked('1', $options['filter_themes']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude themes </label>&nbsp;
 											
-											<label><input name="ographr_options[filter_plugins]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_plugins'])) { checked('1', $options['filter_plugins']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude plug-ins </label>&nbsp;
+											<label title="Filter images belonging to plugins"><input name="ographr_options[filter_plugins]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_plugins'])) { checked('1', $options['filter_plugins']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude plug-ins </label>&nbsp;
 
-											<label><input name="ographr_options[filter_uploads]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_uploads'])) { checked('1', $options['filter_uploads']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude uploads </label>&nbsp;
+											<label title="Filter images from the uploads folder"><input name="ographr_options[filter_uploads]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_uploads'])) { checked('1', $options['filter_uploads']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude uploads </label>&nbsp;
+											
+											<label title="Filter images from the Wordpress includes directory"><input name="ographr_options[filter_includes]" type="checkbox" value="1" class="disable_filters" <?php if (isset($options['filter_includes'])) { checked('1', $options['filter_includes']); }; if(!$options['add_post_images']) print 'disabled="disabled"'; ?> /> Exclude includes </label>&nbsp;
 										</td> 
 									</tr>
 								
@@ -704,7 +706,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<tr valign="center"> 
 										<th align="left" width="140px" scope="row"><label>Jetpack:</label></th> 
 										<td colspan="2">
-											<label><input name="ographr_options[disable_jetpack]" type="checkbox" value="1" <?php if (isset($options['disable_jetpack'])) { checked('1', $options['disable_jetpack']); } if (!is_plugin_active('jetpack/jetpack.php')) { print 'disabled="disabled"'; } ?> /> Disable Jetpack's Open Graph Tags function </label>
+											<label title="Disable Jetpack's Open Graph tags to avoid duplicate tags"><input name="ographr_options[disable_jetpack]" type="checkbox" value="1" <?php if (isset($options['disable_jetpack'])) { checked('1', $options['disable_jetpack']); } if (!is_plugin_active('jetpack/jetpack.php')) { print 'disabled="disabled"'; } ?> /> Disable Jetpack's Open Graph Tags function </label>
 										</td> 
 									</tr>
 							
@@ -867,17 +869,17 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<th align="left" scope="row"><label>More Triggers:</label></th> 
 									<td colspan="2">
 
-										<label><input name="ographr_options[enable_videoposter]" type="checkbox" value="1" <?php if (isset($options['enable_videoposter'])) { checked('1', $options['enable_videoposter']); } ?> /> Video posters </label>&nbsp;
+										<label title="Add poster images from HTML5 video-players"><input name="ographr_options[enable_videoposter]" type="checkbox" value="1" <?php if (isset($options['enable_videoposter'])) { checked('1', $options['enable_videoposter']); } ?> /> Video posters </label>&nbsp;
 
-										<label><input name="ographr_options[enable_jwplayer]" type="checkbox" value="1" <?php if (isset($options['enable_jwplayer'])) { checked('1', $options['enable_jwplayer']); } ?> /> JW Player </label>&nbsp;
+										<label title="Add poster images from JW Player"><input name="ographr_options[enable_jwplayer]" type="checkbox" value="1" <?php if (isset($options['enable_jwplayer'])) { checked('1', $options['enable_jwplayer']); } ?> /> JW Player </label>&nbsp;
 										
-										<label><input name="ographr_options[enable_nvbplayer]" type="checkbox" value="1" <?php if (isset($options['enable_nvbplayer'])) { checked('1', $options['enable_nvbplayer']); } ?> /> NVB Player </label>&nbsp;
+										<label title="Add poster images from NVB Player"><input name="ographr_options[enable_nvbplayer]" type="checkbox" value="1" <?php if (isset($options['enable_nvbplayer'])) { checked('1', $options['enable_nvbplayer']); } ?> /> NVB Player </label>&nbsp;
 
-										<label><input name="ographr_options[add_post_images]" type="checkbox" class="atoggle" data-atarget="input.disable_filters, textarea.disable_filters" data-astate="1" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
+										<label title="Add image tags from your post"><input name="ographr_options[add_post_images]" type="checkbox" class="atoggle" data-atarget="input.disable_filters, textarea.disable_filters" data-astate="1" value="1" <?php if (isset($options['add_post_images'])) { checked('1', $options['add_post_images']); } ?> /> Post images </label>&nbsp;
 
-										<label><input name="ographr_options[add_attached_image]" type="checkbox" value="1" class="atoggle" data-atarget="input.post_thumbnail" data-astate="0" <?php if (isset($options['add_attached_image'])) { checked('1', $options['add_attached_image']); } ?> /> Attached images </label>&nbsp;
+										<label title="Add images uploaded through Wordpress"><input name="ographr_options[add_attached_image]" type="checkbox" value="1" class="atoggle" data-atarget="input.post_thumbnail" data-astate="0" <?php if (isset($options['add_attached_image'])) { checked('1', $options['add_attached_image']); } ?> /> Attached images </label>&nbsp;
 										
-										<label><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" class="post_thumbnail" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); }; if ($options['add_attached_image']) { print 'disabled="disabled"'; } ?> /> Featured image <a href="http://codex.wordpress.org/Post_Thumbnails" title="Wordpress Codex: Post Thumbnails" target="_blank" id="help_link">?</a></label>&nbsp;
+										<label title="Add featured images from your post"><input name="ographr_options[add_post_thumbnail]" type="checkbox" value="1" class="post_thumbnail" <?php if (isset($options['add_post_thumbnail'])) { checked('1', $options['add_post_thumbnail']); }; if ($options['add_attached_image']) { print 'disabled="disabled"'; } ?> /> Featured image <a href="http://codex.wordpress.org/Post_Thumbnails" title="Wordpress Codex: Post Thumbnails" target="_blank" id="help_link">?</a></label>&nbsp;
 									</td>
 								</tr>
 
@@ -936,9 +938,9 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 								<tr valign="center"> 
 									<th align="left" scope="row"><label>Interface:</label></th> 
 									<td colspan="2">
-										<label><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>&nbsp;
-										<label><input name="ographr_options[add_metabox]" type="checkbox" value="1" <?php if (isset($options['add_metabox'])) { checked('1', $options['add_metabox']); } ?> /> Add settings for each article</label>&nbsp;
-										<label><input name="ographr_options[add_graph]" id="add_graph" class="atoggle no_expiry" data-atarget=".disable_graph" data-astate="1" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); }; if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?>/> Add visual graph</label>&nbsp;
+										<label title="Add an OGraphr menu to your admin bar"><input name="ographr_options[add_adminbar]" type="checkbox" value="1" <?php if (isset($options['add_adminbar'])) { checked('1', $options['add_adminbar']); } ?> /> Add menu to admin bar</label>&nbsp;
+										<label title="Add post-specific options to each post"><input name="ographr_options[add_metabox]" type="checkbox" value="1" <?php if (isset($options['add_metabox'])) { checked('1', $options['add_metabox']); } ?> /> Add settings for each article</label>&nbsp;
+										<label title="Add a graph of indexed posts to the options page"><input name="ographr_options[add_graph]" id="add_graph" class="atoggle no_expiry" data-atarget=".disable_graph" data-astate="1" type="checkbox" value="1" <?php if (isset($options['add_graph'])) { checked('1', $options['add_graph']); }; if ($options['exec_mode'] == 2) print 'disabled="disabled"'; ?>/> Add visual graph</label>&nbsp;
 									</td>
 								</tr>
 								
@@ -1258,13 +1260,13 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<h3 class="hndle">Navigator</h3>
 							<div class="inside">
 							<ul>
-								<li><strong><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/" target="_blank">Project page</a></strong></li>
+								<li><strong><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/" title="Visit the plug-in page on Wordpress.com" target="_blank">Project page</a></strong></li>
 								<li><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/faq/" title="Frequently Asked Questions" target="_blank">FAQ</a></li>
-								<li><a class="lwp" href="http://wordpress.org/tags/meta-ographr?forum_id=10" target="_blank">Need help?</a></li>
-								<li class="advanced_opt"><a class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/changelog/" target="_blank">Changelog</a></li>
-								<li class="advanced_opt"><a class="lwp" href="http://plugins.svn.wordpress.org/meta-ographr/" target="_blank">SVN</a></li>
+								<li><a class="lwp" href="http://wordpress.org/tags/meta-ographr?forum_id=10" title="Seek help on the OGraphr support forum on Wordpress.com" target="_blank">Need help?</a></li>
+								<li class="advanced_opt"><a title="Read what changed over the last versions" class="lwp" href="http://wordpress.org/extend/plugins/meta-ographr/changelog/" target="_blank">Changelog</a></li>
+								<li class="advanced_opt"><a class="lwp" href="http://plugins.svn.wordpress.org/meta-ographr/" title="Browse the Subversion repository for older releases of this plug-in" target="_blank">SVN</a></li>
 							
-								<li><a class="lhome" href="http://whyeye.org" target="_blank">whyEye.org</a></li>
+								<li><a class="lhome" href="http://whyeye.org" title="Find more software on the author's website" target="_blank">whyEye.org</a></li>
 								<li>&nbsp;</li>
 								<li><a href="https://twitter.com/whyeye_org" class="twitter-follow-button" data-show-count="false" data-show-screen-name="false">Follow @whyeye_org</a>
 								<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script></li>
@@ -1278,8 +1280,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							<div class="inside">
 							<p style="font-size:8pt;">If you like this plug-in, please consider a small donation to support its development!</p>
 							<ul>
-								<li><strong><a class="lflattr" href="https://flattr.com/submit/auto?user_id=idleberg&url=http://wordpress.org/extend/plugins/meta-ographr/&title=OGraphr&description=A%20plug-in%20for%20Wordpress%20that%20retrieves%20images%20from%20streaming%20services%20and%20inserts%20them%20as%20Open%20Graph%20tags&language=en_GB&tags=opengraph,metatags,wordpress&hidden=0&category=software" target="_blank">Flattr this!</a></strong></li>
-								<li><a class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/" target="_blank">My wishlist</a></li>
+								<li><strong><a title="Donate money via Flattr"class="lflattr" href="https://flattr.com/submit/auto?user_id=idleberg&url=http://wordpress.org/extend/plugins/meta-ographr/&title=OGraphr&description=A%20plug-in%20for%20Wordpress%20that%20retrieves%20images%20from%20streaming%20services%20and%20inserts%20them%20as%20Open%20Graph%20tags&language=en_GB&tags=opengraph,metatags,wordpress&hidden=0&category=software" target="_blank">Flattr this!</a></strong></li>
+								<li><a title="My Amazon Wishlist" class="lamazon" href="http://www.amazon.de/registry/wishlist/PPAO8XTAGS4V/" target="_blank">My wishlist</a></li>
 							</ul>			
 							</div>
 

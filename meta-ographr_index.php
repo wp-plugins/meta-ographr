@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.13
+Version: 0.8.14
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.13");
+    define("OGRAPHR_VERSION", "0.8.14");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -187,6 +187,7 @@ class OGraphr_Core {
 							"filter_themes" => NULL,
 							"filter_plugins" => NULL,
 							"filter_uploads" => NULL,
+							"filter_includes" => "1",
 							"filter_gravatar" => "1",
 							"allow_admin_tag" => NULL,
 							"restrict_age" => "_none",
@@ -1138,9 +1139,11 @@ class OGraphr_Core {
 		
 		//global $options;
 		$options = get_option('ographr_options');
+
+		$blog_url = get_option('home');
 			
 		// Get images in post
-		if  (isset($options['add_post_images'])) {
+		if (isset($options['add_post_images'])) {
 			preg_match_all('/<img.+?src=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
 			foreach($matches[1] as $match) {
 			  	if(( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && (is_single()) || (is_front_page())) {
@@ -1151,6 +1154,7 @@ class OGraphr_Core {
 				$no_themes = FALSE;
 				$no_plugins = FALSE;
 				$no_uploads = FALSE;
+				$no_includes = FALSE;
 				$no_gravatar = FALSE;
 				$no_custom_url = TRUE;
 			
@@ -1174,12 +1178,17 @@ class OGraphr_Core {
 
 				// filter Wordpress upload directory
 				$upload_dir = wp_upload_dir();
-				$blog_url = get_option('home');
 				$pattern = str_replace($blog_url, NULL, $upload_dir['baseurl']);
 				$pattern = str_replace("/", "\/", $pattern);
 				preg_match("/$pattern\//i", $match, $filter);
 				if ((!isset($options['filter_uploads'])) || (!$filter[0])) {
 					$no_uploads = TRUE;
+				}
+
+				// filter Wordpress include directory
+				preg_match('/\/wp-includes\//i', $match, $filter);
+				if ((!isset($options['filter_includes'])) || (!$filter[0])) {
+					$no_includes = TRUE;
 				}
 			
 				// filter Gravatar
@@ -1199,8 +1208,9 @@ class OGraphr_Core {
 					}				
 				}
 			
-				if (($no_gravatar) && ($no_themes) && ($no_plugins) && ($no_uploads) && ($no_smilies) && ($no_custom_url)) {
+				if (($no_gravatar) && ($no_themes) && ($no_plugins) && ($no_uploads) && ($no_includes) && ($no_smilies) && ($no_custom_url)) {
 					if (isset($match)) {
+						$match = $this->ographr_rel2abs($match, $blog_url);
 						if ($options['exec_mode'] == 1)  {
 							$exists = $this->remote_exists($match);
 							if($exists)
@@ -1219,6 +1229,7 @@ class OGraphr_Core {
 			preg_match_all('/<video.+?poster=[\'"]([^\'"]+)[\'"].*?>/i', $markup, $matches);
 			foreach($matches[1] as $match) {
 				$match = preg_replace('/^\/\/+?/', 'http://', $match); // fix Viddler thumbnail URL
+				$match = $this->ographr_rel2abs($match, $blog_url);
 			  	if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && (is_single()) || (is_front_page()) ) {
 					print "\t Video poster: $match\n";
 				}
@@ -1275,8 +1286,9 @@ class OGraphr_Core {
 		// JWPlayer
 		if (isset($options['enable_jwplayer'])) {
 			preg_match_all('/jwplayer\(.*?(?:image:[\s]*?)[\'"]([^\'"]+)[\'"].*?\)/smi', $markup, $matches);
-			
+
 			foreach($matches[1] as $match) {
+				$match = $this->ographr_rel2abs($match, $blog_url);
 				if( ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) && (is_single()) || (is_front_page())) {
 					print "\t JW Player: $match\n";
 				}
@@ -1861,6 +1873,33 @@ class OGraphr_Core {
 		return $links;
 	}
 
+	public function ographr_rel2abs($rel, $base) {
+	    /* return if already absolute URL */
+	    if (parse_url($rel, PHP_URL_SCHEME) != '') return $rel;
+
+	    /* queries and anchors */
+	    if ($rel[0]=='#' || $rel[0]=='?') return $base.$rel;
+
+	    /* parse base URL and convert to local variables:
+	       $scheme, $host, $path */
+	    extract(parse_url($base));
+
+	    /* remove non-directory element from path */
+	    $path = preg_replace('#/[^/]*$#', '', $path);
+
+	    /* destroy path if relative url points to root */
+	    if ($rel[0] == '/') $path = '';
+
+	    /* dirty absolute URL */
+	    $abs = "$host$path/$rel";
+
+	    /* replace '//' or '/./' or '/foo/../' with '/' */
+	    $re = array('#(/\.?/)#', '#/(?!\.\.)[^/]+/\.\./#');
+	    for($n=1; $n>0; $abs=preg_replace($re, '/', $abs, -1, $n)) {}
+
+	    /* absolute URL is ready! */
+	    return $scheme.'://'.$abs;
+	}
 
 	public function ographr_admin_notice(){
 	    //global $options;
@@ -2012,5 +2051,4 @@ class OGraphr_Core {
 	}
 
 }; // end of class
-?>s
 ?>
