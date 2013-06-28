@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.15
+Version: 0.8.16
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.15");
+    define("OGRAPHR_VERSION", "0.8.16");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -844,6 +844,7 @@ class OGraphr_Core {
 		
 				// Add permalink
 				if (($options['add_permalink']) && (is_front_page()) && ($link = get_option('home'))) {
+					if (substr($link, -1) !== '/') $link = $link . '/';
 					$opengraph_meta['og:url'] = $link;
 					if (isset($options['add_twitter_meta']))
 						$twitter_meta['twitter:url'] = $link;
@@ -854,6 +855,7 @@ class OGraphr_Core {
 						} else {
 							$link = get_permalink();
 						}
+						if (substr($link, -1) !== '/') $link = $link . '/';
 						$opengraph_meta['og:url'] = $link;
 						if (isset($options['add_twitter_meta']))
 							$twitter_meta['twitter:url'] = $link;
