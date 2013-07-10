@@ -651,8 +651,8 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									<td colspan="2">
 										<label><input name="ographr_options[restrict_country]" type="checkbox" value="1" class="atoggle" data-atarget="select.restrict_country" data-astate="1" <?php if (isset($options['restrict_country'])) { checked('1', $options['restrict_country']); } ?> /></label>&nbsp;
 										<select name='ographr_options[country_mode]' class="restrict_country" <?php if (!isset($options['restrict_country'])) print 'disabled="disabled"'; ?> >
-											<option value='allowed' <?php selected('allowed', $options['country_mode']); ?> >allowed</option>
-											<option value='disallowed' <?php selected('disallowed', $options['country_mode']); ?> >disallowed</option>
+											<option value='allowed' <?php if(isset($options['country_mode'])) selected('allowed', $options['country_mode']); ?> >allowed</option>
+											<option value='disallowed' <?php if(isset($options['country_mode'])) selected('disallowed', $options['country_mode']); ?> >disallowed</option>
 										</select>
 										&nbsp;in&nbsp;
 										<select name='ographr_options[country_code]' class="restrict_country" <?php if (!isset($options['restrict_country'])) print 'disabled="disabled"'; ?> >
@@ -883,7 +883,14 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 									</td>
 								</tr>
 
-								<!-- LANGUAGE -->
+								<!-- CANONICAL URL -->
+								<tr valign="center"> 
+									<th align="left" scope="row"><label>Canonical URL:</label></th> 
+									<td colspan="2">
+								<label><input name="ographr_options[add_trailing_slash]" type="checkbox" value="1" <?php if (isset($options['add_trailing_slash'])) { checked('1', $options['add_trailing_slash']); } ?> /> Add trailing slash to URL if missing </label><br/>
+								<small>To avoid warnings in the Facebook <a href="http://developers.facebook.com/tools/debug" target="_blank">debug tool</a>, make sure to check the effect of this option!</small>
+								
+								<!-- LINK TYPE -->
 								<tr valign="center"> 
 									<th align="left" scope="row"><label>Link Type:</label></th> 
 									<td colspan="2">
@@ -923,7 +930,7 @@ class OGraphr_Admin_Core extends OGraphr_Core {
 							
 								<!-- GOOGLE SNIPPETS -->
 								<tr valign="center"> 
-									<th align="left" scope="row"><label> Alternative tags:</label></th> 
+									<th align="left" scope="row"><label>Alternative tags:</label></th> 
 									<td colspan="2">
 										<label><input name="ographr_options[add_twitter_meta]" type="checkbox" value="1" <?php if (isset($options['add_twitter_meta'])) { checked('1', $options['add_twitter_meta']); } ?> /> Twitter Cards <a href="https://dev.twitter.com/docs/cards" title="Twitter Documentation: Twitter Cards" target="_blank" id="help_link">?</a></label>&nbsp;
 										

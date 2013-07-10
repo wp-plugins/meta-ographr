@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.16
+Version: 0.8.17
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.16");
+    define("OGRAPHR_VERSION", "0.8.17");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -179,6 +179,7 @@ class OGraphr_Core {
 							"enable_nvbplayer" => "1",
 							"add_attached_image" => "1",
 							"add_post_thumbnail" => NULL,
+							"add_trailing_slash" => NULL,
 							"link_type" => "permalink",
 							"add_twitter_meta" => NULL,
 							"add_google_meta" => NULL,
@@ -844,7 +845,7 @@ class OGraphr_Core {
 		
 				// Add permalink
 				if (($options['add_permalink']) && (is_front_page()) && ($link = get_option('home'))) {
-					if (substr($link, -1) !== '/') $link = $link . '/';
+					if( (isset($options['add_trailing_slash'])) && (substr($link, -1) !== '/') ) $link = $link . '/';
 					$opengraph_meta['og:url'] = $link;
 					if (isset($options['add_twitter_meta']))
 						$twitter_meta['twitter:url'] = $link;
@@ -855,20 +856,17 @@ class OGraphr_Core {
 						} else {
 							$link = get_permalink();
 						}
-						if (substr($link, -1) !== '/') $link = $link . '/';
+						if( (isset($options['add_trailing_slash'])) && (substr($link, -1) !== '/') ) $link = $link . '/';
 						$opengraph_meta['og:url'] = $link;
 						if (isset($options['add_twitter_meta']))
 							$twitter_meta['twitter:url'] = $link;
 					}
 				}
-
-
 			
 				// Add site name
 				if ($site_name) {
 					$opengraph_meta['og:site_name'] = $site_name;
-				}
-				
+				}				
 				
 				// Add locale
 				$locale = $options['locale'];
@@ -883,7 +881,7 @@ class OGraphr_Core {
 
 				if (isset($options['add_metabox'])) {
 					// Add age restriction
-					$post_age = get_post_meta($post->ID, 'ographr_restrict_age', true); 
+					$age = get_post_meta($post->ID, 'ographr_restrict_age', true); 
 					if ($age == NULL)
 						$age = $options['restrict_age'];
 					if ( (isset($age)) && ($age != "_none") ) {
@@ -893,8 +891,8 @@ class OGraphr_Core {
 					// Add country restriction
 					$tmp = get_post_meta($post->ID, 'ographr_restrict_country', true);
 					if ($tmp != "on") {
-						$mode = $options['country_mode'];
-						$code = $options['country_code'];
+						if (isset($options['country_mode'])) $mode = $options['country_mode'];
+						if (isset($options['country_code'])) $code = $options['country_code'];
 					} else {
 						$mode = get_post_meta($post->ID, 'ographr_country_mode', true);
 						$code = get_post_meta($post->ID, 'ographr_country_code', true);
@@ -906,7 +904,7 @@ class OGraphr_Core {
 					// Add content restriction
 					$content = get_post_meta($post->ID, 'ographr_restrict_content', true); 
 					if ($content == NULL)
-						$content = $options['restrict_content'];
+						if (isset($options['restrict_content'])) $content = $options['restrict_content'];
 					if(isset($content)){
 						$opengraph_meta['og:restrictions:content'] = 'alcohol';
 					}
