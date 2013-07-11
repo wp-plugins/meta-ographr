@@ -4,7 +4,7 @@ Donate link: http://whyeye.org/donate
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam
 Requires at least: 3.0
 Tested up to: 3.5.2
-Stable tag: 0.8.17
+Stable tag: 0.8.18
 License: GPLv2
 
 Retrieves the images of audio/video players in your posts and embeds them as thumbnails on Facebook and other social networks.
@@ -102,6 +102,11 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 5. advanced settings page for OGraphr 0.7
 
 == Changelog ==
+
+= 0.8.18 =
+* fixed bug in Twitter Card output
+* improved debugger output for age restrictions
+* removed localization for save button
 
 = 0.8.17 =
 * adding a trailing slash to URLs is now optional

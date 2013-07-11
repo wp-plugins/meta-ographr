@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: http://ographr.whyeye.org
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.17
+Version: 0.8.18
 Author: Jan T. Sott
 Author URI: http://whyeye.org
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.17");
+    define("OGRAPHR_VERSION", "0.8.18");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -91,7 +91,11 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 // JUSTIN.TV
 	// default snapshot size (small=100, medium=200, large=640)
 	define("JUSTINTV_IMAGE_SIZE", "image_url_large");
-	
+
+// TWITTER CARD
+	// default size for Twitter Card (summary=120x120, summary_large_image=438x?)
+	define("TWITTER_CARD_TYPE", "summary");
+
 // USER-AGENTS
 	// facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)
 	define('FACEBOOK_USERAGENT', '/facebookexternalhit/i');
@@ -442,9 +446,13 @@ class OGraphr_Core {
 					
 					$tmp = get_post_meta($post->ID, 'ographr_restrict_age', true);
 					if( (isset($tmp)) && ($tmp != NULL) ){
-						print "\t Content suitable to audiences aged " . $tmp . "+ (local)\n";
-					} else if (isset($options['restrict_age'])) {
-						print "\t Content suitable to audiences aged " . $options['restrict_age'] . "+ (global)\n";
+						print "\t Content suitable for audiences aged " . $tmp . "+ (local)\n";
+					} else if (isset($options['restrict_age'])){
+						if ($options['restrict_age'] == "_none") {
+							print "\t Content suitable for all audiences (global)\n";
+						} else {
+							print "\t Content suitable for audiences aged " . $options['restrict_age'] . "+ (global)\n";
+						}						
 					}
 					
 					$tmp = get_post_meta($post->ID, 'ographr_restrict_country', true);
@@ -743,7 +751,7 @@ class OGraphr_Core {
 					}
 
 					// type of twitter card
-					$twitter_meta['twitter:card'] = "summary";
+					$twitter_meta['twitter:card'] = TWITTER_CARD_TYPE;
 
 					// domain of your blog
 					$domain = get_site_url();
@@ -917,7 +925,6 @@ class OGraphr_Core {
 				}
 					
 				if ( ((!isset($total_img)) || ($total_img == 0)) && (!empty($web_thumb))) {
-					//print "<meta property=\"og:image\" content=\"$web_thumb\" />\n";
 					$opengraph_meta['og:image'][] = $web_thumb;
 					if (isset($options['add_twitter_meta']))
 						$twitter_meta['twitter:image'] = $web_thumb;
@@ -932,10 +939,10 @@ class OGraphr_Core {
 							if (isset($options['add_metabox'])) {
 								$tmp = get_post_meta($post->ID, 'ographr_primary_image', true);
 								if ( ((isset($options['add_twitter_meta'])) && (!isset($tmp))) || ((isset($options['add_twitter_meta'])) && (($tmp == "_none") || ($tmp == NULL)) ) )  {
-									$twitter_meta["twitter:image"][] = $thumbnail['img'];
+									$twitter_meta["twitter:image"] = $thumbnail['img'];
 								} else {
 									if ($tmp != "_none")
-										$twitter_meta['twitter:image'][0] = $tmp; // a bit repetitive though
+										$twitter_meta['twitter:image'] = $tmp; // a bit repetitive though
 								}
 							}	
 						}
@@ -1026,8 +1033,7 @@ class OGraphr_Core {
 						}
 					}					
 				}
-						
-			
+							
 				// Add Facebook ID
 				if ($fb_admins = $options['fb_admins']) {
 					$facebook_meta['fb:admins'] = $fb_admins;
@@ -1101,22 +1107,11 @@ class OGraphr_Core {
 					}
 					unset($facebook_meta); // saving tiny amounts of RAM
 				}
-
 				
 				// Print Twitter Cards
 				if ((isset($options['add_twitter_meta'])) && ((preg_match(TWITTER_USERAGENT, $user_agent)) || ( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) )) {
-					//print $twitter_meta;
-					if(is_array($twitter_meta['twitter:image']))
-						$twitter_meta['twitter:image'] = array_unique($twitter_meta['twitter:image']); // unlikely, but hey!
-					if(is_array($twitter_meta['twitter:image'])) {
-						foreach($twitter_meta as $key => $value) {
-							if ($key == "twitter:image") {
-								foreach($twitter_meta['twitter:image'] as $val_image)
-									print "<meta property=\"$key\" content=\"$val_image\" />\n";
-							} else {
-									print "<meta property=\"$key\" content=\"$value\" />\n";
-							}
-						}
+					foreach($twitter_meta as $key => $value) {
+						print "<meta name=\"$key\" content=\"$value\" />\n";
 					}
 					unset($twitter_meta); // saving tiny amounts of RAM
 				}
@@ -2041,6 +2036,17 @@ class OGraphr_Core {
 						'parent' => 'ographr',
 	                    'title' => 'Website',
 						'href' => 'http://wordpress.org/extend/plugins/meta-ographr/'
+	                )
+	            );
+
+	        foreach ($menu_items as $menu_item) {
+	            $wp_admin_bar->add_menu($menu_item);
+	        }
+	    }	
+	}
+
+}; // end of class
+?>	'href' => 'http://wordpress.org/extend/plugins/meta-ographr/'
 	                )
 	            );
 
