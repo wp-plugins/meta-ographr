@@ -99,9 +99,9 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 
 3. a link with a Vimeo player shared on Twitter
 
-4. standard settings page for OGraphr 0.7
+4. standard settings page for OGraphr 0.8.22
 
-5. advanced settings page for OGraphr 0.7
+5. advanced settings page for OGraphr 0.8.22
 
 == Changelog ==
 
