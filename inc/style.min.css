@@ -1,0 +1,16 @@
+input.required{background-color:#ffd}
+table#poststuff{border:0 none;margin:0;padding:0;width:100%}
+table#poststuff fieldset{border:0 none;margin:0;padding:0}
+table#poststuff td.left,table#poststuff td.right{vertical-align:top}
+table#poststuff td.left{padding:0 8px 0 0}
+table#poststuff td.right{padding:0 0 0 8px;width:210px}
+td.right ul,td.right ul li{list-style:none;margin:0;padding:0}
+td.right ul li{margin:0;padding:0}
+table#poststuff p{margin:0;padding:5px 0}
+input.yi_warning:hover{background:#ce0000;color:#fff}
+table#poststuff ul{list-style:none}
+table#poststuff ul.mybullet{list-style-type:disc;padding-left:20px}
+#help_link{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAACXBIWXMAAAsTAAALEwEAmpwYAAABOWlDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjarZGxSsNQFIa/G0XFoVYI4uBwJ1FQbNXBjElbiiBYq0OSrUlDldIk3NyqfQhHtw4u7j6Bk6PgoPgEvoHi1MEhSHASwW/6zs/hcOAHo2LXnYZRhkGsVbvpSNfz5ewTM0wBQCfMUrvVOgCIkzjiJwI+XxEAz5t23WnwN+bDVGlgAmx3oywEUQH6FzrVIMaAGfRTDeIOMNVJuwbiASj1cn8BSkHub0BJuZ4P4gMwe67ngzEHmEHuK4Cpo0sNUEvSkTrrnWpZtSxL2t0kiOTxKNPRIJP7cZioNFEdHXWB/D8AFvPFdtORa1XL2lvnn3E9X+b2foQAxNJjkRWEQ3X+3YWx8/tc3Bgvw+EtTE+KbPcKbjZg4brIVqtQ3oL78RfCs0/+HAmzJwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6AAAUggAARVYAAA6lwAAF2/XWh+QAAACNUlEQVR42gTB3UtTYQAH4N/7nnl2jstzlPmVTZ0uUtkozVKhpqxchOmNKRRasIsupJvSi4z+AIsQKii9s6skMLoqCLsQQjFiLTXWEsLj1Knb3Hbch9vcztvzEHPPBCghUJNpkstrrg5bzcAZc2krAKwrYffymn9Op6MzskFgGmMg9TeeQk2mLaZyeerBkN0p8BxCsRQoAYxyIVKZY7x6tzi/E1RHigzCPxpLpPnqiuLpybFeZySWxOZeDG1WE6oriuH2BXCc0zA51uesKpOmD5NpnuY17dbD4cvdv/4G8OTNF1SVSiiWRFy0mTA6bMf7+d/wbR5g9I69O5/XbnOOvrvPHBcsp5+/XQAhBOv+A0zMfIOOo+jrbMIP3y4Wfiq4edUGZTsi0obashY1kcbmngpZKkQ0mcXgtbMYd3XBuxFCIJwEIxxAKMynSlp0DAwEAM9zEAUeDBT3B9sh6gvw+oMboBwqjBL0fAEYY6DrSsgjF4mwWiqRzeVhLDHgu3cHUx/diMSzKJENaKgrg6jXYWv/0EOX1/yzwUgC9/rboTGCo0weV1rNcLbVAzoOgiig32HFqm8bSyvKLFdY5/D6NoIdQz3NlvONJuyE4rBZypHJaQgcHMHVew4kl8Wjl5++qvGjce6k7bq2H00sLXqUpnZrtaW3sxGHqWMwQtDVbMLqHz8ev/g879+Njkgn9GFi7pkAIQRqIk00jbkuNdcO1FTKrQCwFYy7Fz3KHAVmpCKBMcbwfwBoXucbGv0zEAAAAABJRU5ErkJggg==);display:inline-block;height:12px;line-height:12px;text-indent:-9999px;width:12px}
+table#poststuff .info,table#poststuff td small{color:#555;font-size:.85em}
+.horizontal{margin:0 auto}
+.horizontal>li{float:left;margin-right:10px;min-width:120px}
