@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: https://github.com/idleberg/OGraphr
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.23
+Version: 0.8.24
 Author: Jan T. Sott
 Author URI: https://github.com/idleberg
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.23");
+    define("OGRAPHR_VERSION", "0.8.24");
 	// enables developer settings on Wordpress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -124,7 +124,7 @@ register_activation_hook( __FILE__, array(&$core, 'ographr_activate') );
 
 $options = get_option('ographr_options');
 if (isset($options['disable_jetpack']))
-	add_filter( 'jetpack_enable_opengraph', '__return_false', 99 );
+	add_filter( 'jetpack_enable_open_graph', '__return_false', 99 );
 
 if ( is_admin() ) {
 	require_once dirname( __FILE__ ) . '/meta-ographr_admin.php';
@@ -1451,7 +1451,7 @@ class OGraphr_Core {
 									'name' => 'Dailymotion',
 									'patterns' => array(
 										'#<object[^>]+>.+?https?://w*.?dailymotion.com/swf/video/([A-Za-z0-9-_]+).+?</object>#s',
-										'#https?://w*.?dailymotion.com/embed/video/([A-Za-z0-9-_]+)#s',
+										'#//w*.?dailymotion.com/embed/video/([A-Za-z0-9-_]+)#s',
 										'/\[dailymotion.*?]https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)\[\/dailymotion]/i',
 										'/^(?:href\=){0,1}https?:\/\/w*.?dailymotion.com\/video\/([A-Za-z0-9-_]+)/i',
 									),
@@ -1631,7 +1631,7 @@ class OGraphr_Core {
 					'viddler' => array(
 									'name' => 'Viddler',
 									'patterns' => array(
-										'/viddler.com\/embed\/([A-Za-z0-9]+)/i'
+										'//viddler.com\/embed\/([A-Za-z0-9]+)/i'
 									),
 									'url' => 'http://api.viddler.com/api/v2/viddler.api.getDetails.json?video_id=%MATCH%&key=' . $options['viddler_api'],
 									'queries' => array(
@@ -1642,7 +1642,7 @@ class OGraphr_Core {
 									'name' => 'Vimeo',
 									'patterns' => array(
 										'#<object[^>]+>.+?https?://vimeo.com/moogaloop.swf\?clip_id=([A-Za-z0-9\-_]+)&.+?</object>#s',
-										'#https?://player.vimeo.com/video/([0-9]+)#s',
+										'#//player.vimeo.com/video/([0-9]+)#s',
 										'/\[vimeo.*?]https?:\/\/w*.?vimeo.com\/([0-9]+)\[\/vimeo]/i',
 										'/^(?:href\=){0,1}https?:\/\/w*.?vimeo.com\/([A-Za-z0-9\-_]+)/i',
 									),
@@ -1657,7 +1657,7 @@ class OGraphr_Core {
 									'name' => 'YouTube',
 									'patterns' => array(
 										'#<object[^>]+>.+?https?://w*.?youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s',
-										'#https?://w*.?youtube.com/embed/([A-Za-z0-9\-_]+)#s',
+										'#//w*.?youtube.com/embed/([A-Za-z0-9\-_]+)#s',
 										'/\[youtube.*?]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/i',
 										'/^(?:href\=){0,1}https?:\/\/w*.?(?:youtube.com|youtu.be)\/(?:watch\/\?v=|v\/)([A-Za-z0-9\-_]+)/i',
 									),
