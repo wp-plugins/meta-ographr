@@ -4,7 +4,7 @@ Donate link: https://www.gittip.com/idleberg/
 Tags: opengraph,open-graph,open graph,open graph meta,metatags,facebook,google+,google snippets,twitter cards,thumbnails,soundcloud,mixcloud,bandcamp,vimeo,youtube,dailymotion,blip.tv,hulu,internet archive,archive.org,myvideo,official.fm,ustream,viddler,html5,livestream video,jwplayer,nvbplayer,flickr,justin.tv,twitch.tv,8tracks,bambuser,rdio,socialcam,spotify,muzu.tv
 Requires at least: 3.0
 Tested up to: 4.0
-Stable tag: 0.8.27
+Stable tag: 0.8.28
 License: GPLv2, MIT
 
 Retrieves the images of audio/video players in your posts and embeds them as thumbnails on Facebook and other social networks.
@@ -15,31 +15,31 @@ This plugin adds several Open Graph meta-tags to the header of your theme. These
 
 Currently, these media embeds are supported:
 
-*  8tracks
-*  Bambuser
-*  Bandcamp
-*  Blip.tv
-*  DailyMotion
-*  Flickr videos
-*  Hulu
-*  Internet Archive
-*  Justin.tv/Twitch.tv
-*  Livestream
-*  Mixcloud
-*  Muzu.tv
-*  MyVideo
-*  Official.fm
-*  Rdio
-*  Socialcam
-*  SoundCloud
-*  Spotify
-*  Ustream
-*  Viddler
-*  Vimeo
-*  YouTube
-*  JW Player
-*  NVB Player
-*  Standard HTML5 video-tags
+* 8tracks
+* Bambuser
+* Bandcamp
+* Blip.tv
+* DailyMotion
+* Flickr videos
+* Hulu
+* Internet Archive
+* Justin.tv/Twitch.tv
+* Livestream
+* Mixcloud
+* Muzu.tv
+* MyVideo
+* Official.fm
+* Rdio
+* Socialcam
+* SoundCloud
+* Spotify
+* Ustream
+* Viddler
+* Vimeo
+* YouTube
+* JW Player
+* NVB Player
+* Standard HTML5 video-tags
 
 Open Graph tags will be used by social network sites such as Facebook, Twitter or Google+ to style a shared link or webpages "liked" by any user. Images supposedly attract more attention, so you might find this plug-in useful.
 
@@ -107,6 +107,10 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 5. advanced settings page for OGraphr 0.8
 
 == Changelog ==
+
+= 0.8.28 =
+* added more quicklinks to top-menu
+* improved build tools
 
 = 0.8.27 =
 * displays link to screenshot guidelines if no screenshot was found

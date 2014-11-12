@@ -3,7 +3,7 @@
 Plugin Name: OGraphr
 Plugin URI: https://github.com/idleberg/OGraphr
 Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.27
+Version: 0.8.28
 Author: Jan T. Sott
 Author URI: https://github.com/idleberg
 License: GPLv2 
@@ -28,7 +28,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.27");
+    define("OGRAPHR_VERSION", "0.8.28");
 	// enables developer settings on WordPress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
@@ -2099,36 +2099,48 @@ class OGraphr_Core {
 		global $wp_admin_bar;
 
 	    if (current_user_can('manage_options')) {				
-				$published = wp_count_posts();
-				$published = $published->publish;
-				$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
-				$myposts = get_posts( $args );
-				$harvested = count($myposts);
-				
-	            $menu_items = array(
-	                array(
-	                    'id' => 'ographr',
-	                    'title' => "OGraphr [$harvested/$published]",
-						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
-	                ),
-					array(
-	                    'id' => 'ographr-settings',
-						'parent' => 'ographr',
-	                    'title' => 'Settings',
-						'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
-	                ),
-					array(
-	                    'id' => 'ographr-home',
-						'parent' => 'ographr',
-	                    'title' => 'Website',
-						'href' => 'http://wordpress.org/extend/plugins/meta-ographr/'
-	                )
-	            );
+	    		$published = wp_count_posts();
+	    		$published = $published->publish;
+	    		$args = array( 'numberposts' => $published, 'meta_key' => 'ographr_urls' );
+	    		$myposts = get_posts( $args );
+	    		$harvested = count($myposts);
+	    		
+	    		$menu_items = array(
+	    			array(
+	    				'id' => 'ographr',
+	    				'title' => "OGraphr [$harvested/$published]",
+	    				'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+	    			),
+	    			array(
+	    				'id' => 'ographr-settings',
+	    				'parent' => 'ographr',
+	    				'title' => 'Settings',
+	    				'href' => admin_url('options-general.php?page=meta-ographr/meta-ographr_admin.php')
+	    			),
+	    			array(
+	    				'id' => 'ographr-faq',
+	    				'parent' => 'ographr',
+	    				'title' => 'FAQ',
+	    				'href' => 'http://wordpress.org/extend/plugins/meta-ographr/faq/'
+	    			),
+	    			array(
+	    				'id' => 'ographr-support',
+	    				'parent' => 'ographr',
+	    				'title' => 'Support',
+	    				'href' => 'https://wordpress.org/tags/meta-ographr?forum_id=10'
+	    			),
+	    			array(
+	    				'id' => 'ographr-git',
+	    				'parent' => 'ographr',
+	    				'title' => 'GitHub',
+	    				'href' => 'http://github.com/idleberg/OGraphr'
+	    			)
+	    		);
 
-	        foreach ($menu_items as $menu_item) {
-	            $wp_admin_bar->add_menu($menu_item);
-	        }
-	    }	
+	    	foreach ($menu_items as $menu_item) {
+	    		$wp_admin_bar->add_menu($menu_item);
+	    	}
+	    }
 	}
 
 }; // end of class
