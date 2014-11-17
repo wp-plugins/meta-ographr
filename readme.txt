@@ -671,7 +671,7 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 == Upgrade Notice ==
 
 = 0.8.29 =
-Some files have been renamed, hence there could be problems updating. Please check whether the plugin is still activated. In worst case, a re-install should fix all issues. Don't worry, your settings will be preserved.
+Some files have been renamed and you will have to *reactivate* the plugin after the update!
 
 = 0.8.25 =
 Should you find yourself in an update loop, please remove the old plugin first. Sorry about this!
