@@ -1,41 +1,24 @@
 <?php
 /*
-Plugin Name: OGraphr
-Plugin URI: https://github.com/idleberg/OGraphr
-Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-Version: 0.8.30
-Author: Jan T. Sott
-Author URI: https://github.com/idleberg
-License: GPLv2 
-*/
+	Plugin Name: OGraphr
+	Plugin URI: https://github.com/idleberg/OGraphr
+	Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
+	Version: 0.8.32
+	Author: Jan T. Sott
+	Author URI: https://github.com/idleberg
+	License: GPLv2, MIT
 
-/*
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSandro
+	Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSandro
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.30");
+    define("OGRAPHR_VERSION", "0.8.32");
 	// enables developer settings on WordPress interface, can be overwritten from plug-in settings once activated
 	define("OGRAPHR_DEVMODE", FALSE);
 	// replace default description with user agent in use
 	define("OGRAPHR_UATEST", FALSE);
 	// specify timeout for all HTTP requests (default is 1 second, http://googlecode.blogspot.co.at/2012/01/lets-make-tcp-faster.html)
 	define("OGRAPHR_TIMEOUT", 1);
-
 // ATTACHMENT IMAGE
 	// default image size (thumbnail, medium, large, full)
 	define("ATTACHMENT_IMAGE_SIZE", "medium");
@@ -49,7 +32,6 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 // BAMBUSER
 	// no need to change this unless you want to use your own Bambuser API key (-> http://bambuser.com/api/keys)
 	define("BAMBUSER_API_KEY", "0b2d6b4a0c990fe87c64af3fff13832e");
-
 // BANDCAMP
 	// default artwork size (small_art_url=100x100, large_art_url=350x350)
 	define("BANDCAMP_IMAGE_SIZE", "large_art_url");
@@ -63,15 +45,12 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 // MIXCLOUD
 	// default artwork size (small=25x25, thumbnail=50x50, medium_mobile=80x80, medium=150x150, large=300x300, extra_large=600x600)
 	define("MIXCLOUD_IMAGE_SIZE", "extra_large");
-
 // OFFICIAL.FM
 	// default artwork size (tiny=40x40, small=120x120, medium=300x300, large=600x600)
 	define("OFFICIAL_IMAGE_SIZE", "large");
-
 // SOCIALCAM
 	// default artwork size (main_thumb, small_thumb)
 	define("SOCIALCAM_IMAGE_SIZE", "small_thumb");
-
 // SOUNDCLOUD
 	// no need to change this unless you want to use your own SoundCloud API key (-> http://soundcloud.com/you/apps)
 	define("SOUNDCLOUD_API_KEY", "15fd95172fa116c0837c4af8e45aa702");
@@ -81,7 +60,6 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 // SPOTIFY
 	// default artwork size (60, 85, 120, 300, and 640)
 	define("SPOTIFY_IMAGE_SIZE", "640");
-
 // VIMEO
 	// default snapshot size (thumbnail_small=100, thumbnail_medium=200, thumbnail_large=640)
 	define("VIMEO_IMAGE_SIZE", "thumbnail_large");
@@ -95,11 +73,9 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 // JUSTIN.TV
 	// default snapshot size (small=100, medium=200, large=640)
 	define("JUSTINTV_IMAGE_SIZE", "image_url_large");
-
 // TWITTER CARD
 	// default size for Twitter Card (summary=120x120, summary_large_image=438x?)
 	define("TWITTER_CARD_TYPE", "summary");
-
 // USER-AGENTS
 	// facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)
 	define('FACEBOOK_USERAGENT', '/facebookexternalhit/i');
@@ -109,7 +85,7 @@ Thanks to Sutherland Boswell, Matthias Gutjahr, Michael Wöhrer and David DeSand
 	define('LINKEDIN_USERAGENT', '/LinkedInBot/i');
 	// Twitterbot
 	define('TWITTER_USERAGENT', '/Twitterbot/i');
-	
+
 $core = new OGraphr_Core();
 
 add_action('init', array(&$core,'ographr_core_init'));
@@ -338,7 +314,7 @@ class OGraphr_Core {
 		global $post;
 
 		if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) {
-			$s_time = microtime();
+			$s_time = microtime(true);
 		}
 
 		// ographr_meta_disable
@@ -642,7 +618,7 @@ class OGraphr_Core {
 		}
 				// close debugger tag
 				if( ($options['debug_level'] > 0) && (current_user_can('edit_plugins')) ) {	
-					$e_time = microtime();
+					$e_time = microtime(true);
 					$time = $e_time - $s_time;
 					print "\n\tBenchmark\n";
 					print "\t Processed in " . abs($time) . " seconds\n";
