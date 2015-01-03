@@ -108,6 +108,9 @@ There's a [well-known bug](http://xcache.lighttpd.net/ticket/300 "well-known bug
 
 == Changelog ==
 
+= 0.8.32.1 =
+* added missing jqPlot plugin
+
 = 0.8.32 =
 * reverted new configuration file (to be addressed in 0.9)
 
