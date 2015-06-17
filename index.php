@@ -3,7 +3,7 @@
 	Plugin Name: OGraphr
 	Plugin URI: https://github.com/idleberg/OGraphr
 	Description: This plugin scans posts for embedded video and music players and adds their thumbnails URL as an OpenGraph meta-tag. While at it, the plugin also adds OpenGraph tags for the title, description (excerpt) and permalink. Facebook and other social networks can use these to style shared or "liked" articles.
-	Version: 0.8.35
+	Version: 0.8.36
 	Author: Jan T. Sott
 	Author URI: https://github.com/idleberg
 	License: GPLv2, MIT
@@ -12,7 +12,7 @@
 */
 
 // OGRAPHR OPTIONS
-    define("OGRAPHR_VERSION", "0.8.35");
+    define("OGRAPHR_VERSION", "0.8.36");
 	// replace default description with user agent in use
 	define("OGRAPHR_UATEST", FALSE);
 	// specify timeout for all HTTP requests (default is 1 second, http://googlecode.blogspot.co.at/2012/01/lets-make-tcp-faster.html)
@@ -1631,9 +1631,9 @@ class OGraphr_Core {
 									'name' => 'YouTube',
 									'patterns' => array(
 										'#<object[^>]+>.+?https?://w*.?youtube.com/[ve]/([A-Za-z0-9\-_]+).+?</object>#s',
-										'#//w*.?youtube.com/embed/([A-Za-z0-9\-_]+)#s',
+										'#//w*.?(?:youtube.com|youtube-nocookie.com)/embed/([A-Za-z0-9\-_]+)#s',
 										'/\[youtube.*?]https?:\/\/w*.?youtube.com\/watch\?v=([A-Za-z0-9\-_]+).+?\[\/youtube]/i',
-										'/^(?:href\=){0,1}https?:\/\/w*.?(?:youtube.com|youtu.be)\/(?:watch\/\?v=|v\/)([A-Za-z0-9\-_]+)/i',
+										'/^(?:href\=){0,1}https?:\/\/w*.?(?:youtube.com|youtu.be|youtube-nocookie.com)\/(?:watch\/\?v=|v\/)([A-Za-z0-9\-_]+)/i',
 									),
 									'url' => 'http://img.youtube.com/vi/%MATCH%',
 									'queries' => array(
